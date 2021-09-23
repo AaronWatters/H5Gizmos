@@ -183,7 +183,7 @@ var H5Gizmos = {};
             var result = [];
             for (var i=0; i<commands.length; i++) {
                 var c = commands[i];
-                var e = c.execute();
+                var e = c.execute(this);
                 result.push(e);
             }
             return result;
@@ -236,7 +236,8 @@ var H5Gizmos = {};
             var value = pair.value;
             this.json_value = this.translator.json_safe(value, this.to_depth);
             this.payload = [h5.GET, this.oid, this.json_value];
-            return this.payload;
+            translator.send(this.payload);
+            return value;
         };
     };
     indicator_to_message_parser[h5.GET] = GetMessageParser;

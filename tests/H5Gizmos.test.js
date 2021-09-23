@@ -118,6 +118,16 @@ test("rejects bad messages", () => {
     expect(() => { tr.parse_message(["bad", "message"]); }).toThrow();
 });
 
+function lit(val) {
+    var h5 = H5Gizmos;
+    return [h5.LITERAL, val];
+};
+
+function exec_(val) {
+    var h5 = H5Gizmos;
+    return [h5.EXEC, val];
+};
+
 test("rejects bad commands", () => {
     var dthis = {};
     var save_message = null;
@@ -129,6 +139,18 @@ test("rejects bad commands", () => {
     expect(() => { tr.parse_command(["bad", "message"]); }).toThrow();
 });
 
+test("doesn't double wrap", () => {
+    var dthis = {};
+    var save_message = null;
+    var sender = function(message) {
+        save_message = message;
+    };
+    var tr = new H5Gizmos.Translator(dthis, sender);
+    var pair = tr.value_pair("test value");
+    expect(pair.value).toEqual("test value");
+    expect(() => { tr.value_pair(pair); }).toThrow();
+});
+
 test("parses a literal", () => {
     var h5 = H5Gizmos;
     var dthis = {};
@@ -138,7 +160,7 @@ test("parses a literal", () => {
     };
     var tr = new h5.Translator(dthis, sender);
     var val = ["some", "value"];
-    var json_cmd = [h5.LITERAL, val];
+    var json_cmd = lit(val); //[h5.LITERAL, val];
     var cmd = tr.parse_command(json_cmd);
     var exec = cmd.execute(tr);
     expect(exec.value).toEqual(val);
@@ -153,9 +175,34 @@ test("executes a literal", () => {
     };
     var tr = new h5.Translator(dthis, sender);
     var val = ["some", "value"];
-    var json_cmd = [h5.LITERAL, val];
-    var json_msg = [h5.EXEC, json_cmd];
+    var json_cmd = lit(val); //[h5.LITERAL, val];
+    var json_msg = exec_(json_cmd); //[h5.EXEC, json_cmd];
     var msg = tr.parse_message(json_msg);
     var exec = msg.execute(tr);
     expect(exec).toEqual(val);
+});
+
+function get(oid, cmd, dpth) {
+    var h5 = H5Gizmos;
+    return [h5.GET, oid, cmd, dpth];
+};
+
+test("gets a literal", () => {
+    var h5 = H5Gizmos;
+    var dthis = {};
+    var save_message = null;
+    var sender = function(message) {
+        save_message = message;
+    };
+    var tr = new h5.Translator(dthis, sender);
+    var val = ["some", "value"];
+    var oid = "oid123";
+    var to_depth = 5;
+    var json_cmd = lit(val); //[h5.LITERAL, val];
+    var json_msg = get(oid, json_cmd, to_depth);
+    var msg = tr.parse_message(json_msg);
+    var exec = msg.execute(tr);
+    expect(exec).toEqual(val);
+    var expected = [h5.GET, oid, val]
+    expect(save_message).toEqual(expected);
 });
