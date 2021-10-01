@@ -393,9 +393,9 @@ var H5Gizmos = {};
             var args_values = translator.values_from_pairs(args);
             var json_args = translator.json_safe(args_values, to_depth + 1);
             var payload = [h5.CALLBACK, id_string, json_args];
-            self.payload = payload;
+            this.payload = payload;
             translator.send(payload)
-            return translator.value_pair(args);
+            return translator.value_pair(args_values);  // arbitray choice:::
         };
     };
     indicator_to_command_parser[h5.CALLBACK] = CallbackCommandParser;

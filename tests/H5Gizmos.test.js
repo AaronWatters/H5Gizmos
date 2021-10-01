@@ -25,7 +25,7 @@ test("caches objects", () => {
         save_message = message;
     };
     var tr = new H5Gizmos.Translator(dthis, sender);
-    expect(() => { tr.get_reference("thing"); }).toThrow()
+    expect(() => { tr.get_reference("thing"); }).toThrow();
     var object = ["hello", "world"];
     tr.set_reference("thing", object);
     var pair = tr.get_reference("thing");
@@ -206,3 +206,277 @@ test("gets a literal", () => {
     var expected = [h5.GET, oid, val]
     expect(save_message).toEqual(expected);
 });
+
+function connect(id, cmd) {
+    var h5 = H5Gizmos;
+    return [h5.CONNECT, id, cmd];
+};
+function disconnect(id) {
+    var h5 = H5Gizmos;
+    return [h5.DISCONNECT, id];
+};
+function reference(id) {
+    var h5 = H5Gizmos;
+    return [h5.REFERENCE, id];
+};
+
+test("sets and gets references", () => {
+    var h5 = H5Gizmos;
+    var dthis = {};
+    var save_message = null;
+    var sender = function(message) {
+        save_message = message;
+    };
+    var tr = new h5.Translator(dthis, sender);
+    var val = ["some", "value"];
+    // store the value
+    var json_cmd = lit(val); //[h5.LITERAL, val];
+    var id = "object_123"
+    var json_msg = connect(id, json_cmd);
+    var msg = tr.parse_message(json_msg);
+    var exec = msg.execute(tr);
+    expect(exec).toEqual(val);
+    // get the value from storage
+    var json_ref = reference(id);
+    var oid = "oid456";
+    var dpth = 5;
+    var json_get = get(oid, json_ref, dpth);
+    var get_msg = tr.parse_message(json_get);
+    var get_exec = get_msg.execute(tr);
+    expect(get_exec).toEqual(val);
+    var expected = [h5.GET, oid, val]
+    expect(save_message).toEqual(expected);
+    // disconnect the value
+    var json_disc = disconnect(id);
+    var msg_disc = tr.parse_message(json_disc);
+    var msg_exec = msg_disc.execute(tr);
+    expect(() => { get_msg.execute(tr); }).toThrow();
+});
+
+function _bytes(hexstring) {
+    var h5 = H5Gizmos;
+    return [h5.BYTES, hexstring];
+};
+
+test("converts bytes", () => {
+    var h5 = H5Gizmos;
+    var dthis = {};
+    var save_message = null;
+    var sender = function(message) {
+        save_message = message;
+    };
+    var tr = new h5.Translator(dthis, sender);
+    var hexstring = "0123456789abcdef";
+    var bytes_cmd = _bytes(hexstring);
+    var exec_msg = exec_(bytes_cmd); //[h5.EXEC, json_cmd];
+    var msg = tr.parse_message(exec_msg);
+    var exec = msg.execute(tr);
+    var hex_back = tr.to_hex(exec)
+    expect(hex_back).toEqual(hexstring);
+});
+
+function _map(dictionary) {
+    var h5 = H5Gizmos;
+    return [h5.MAP, dictionary];
+};
+
+test("parses maps", () => {
+    var h5 = H5Gizmos;
+    var dthis = {};
+    var save_message = null;
+    var sender = function(message) {
+        save_message = message;
+    };
+    var tr = new h5.Translator(dthis, sender);
+    var dictionary = {
+        "first": lit(1),
+        "second": lit("two"),
+        "third": lit([3]),
+    };
+    var expected = {
+        "first": 1,
+        "second": "two",
+        "third": [3],
+    };
+    var map_cmd = _map(dictionary);
+    var map_msg = exec_(map_cmd); //[h5.EXEC, json_cmd];
+    var msg = tr.parse_message(map_msg);
+    var exec = msg.execute(tr);
+    expect(exec).toEqual(expected);
+});
+
+function _sequence(list) {
+    var h5 = H5Gizmos;
+    return [h5.SEQUENCE, list];
+};
+
+test("parses maps", () => {
+    var h5 = H5Gizmos;
+    var dthis = {};
+    var save_message = null;
+    var sender = function(message) {
+        save_message = message;
+    };
+    var tr = new h5.Translator(dthis, sender);
+    var list = [
+        lit(1),
+        lit("two"),
+        lit([3]),
+    ];
+    var expected = [
+        1,
+        "two",
+        [3],
+    ]
+    var seq_cmd = _sequence(list);
+    var seq_msg = exec_(seq_cmd); //[h5.EXEC, json_cmd];
+    var msg = tr.parse_message(seq_msg);
+    var exec = msg.execute(tr);
+    expect(exec).toEqual(expected);
+});
+
+function _get(target_cmd, index_cmd) {
+    var h5 = H5Gizmos;
+    return [h5.GET, target_cmd, index_cmd];
+};
+
+test("gets attributes", () => {
+    var h5 = H5Gizmos;
+    var dthis = {};
+    var save_message = null;
+    var sender = function(message) {
+        save_message = message;
+    };
+    var tr = new h5.Translator(dthis, sender);
+    var target = {"attr": 42};
+    var index = "attr";
+    var target_cmd = lit(target);
+    var index_cmd = lit(index);
+    var get_cmd = _get(target_cmd, index_cmd);
+    var expected = 42;
+    var get_msg = exec_(get_cmd); //[h5.EXEC, json_cmd];
+    var msg = tr.parse_message(get_msg);
+    var exec = msg.execute(tr);
+    expect(exec).toEqual(expected);
+});
+
+function _call(callable_command, args_commands) {
+    var h5 = H5Gizmos;
+    return [h5.CALL, callable_command, args_commands];
+};
+
+test("calls a function", () => {
+    var h5 = H5Gizmos;
+    var dthis = {};
+    var save_message = null;
+    var sender = function(message) {
+        save_message = message;
+    };
+    var tr = new h5.Translator(dthis, sender);
+    // connect a function reference
+    function increment(x) { return x + 1; };
+    var id_string = "xxx"
+    tr.set_reference(id_string, increment);
+    // call the function using the command interface
+    var json_ref = reference(id_string);
+    var json_args = [lit(44)];
+    var json_call = _call(json_ref, json_args);
+    var call_json_msg = exec_(json_call);
+    var msg = tr.parse_message(call_json_msg);
+    var exec = msg.execute(tr);
+    var expected = 45;
+    expect(exec).toEqual(expected);
+});
+
+test("calls a method", () => {
+    var h5 = H5Gizmos;
+    var dthis = {};
+    var save_message = null;
+    var sender = function(message) {
+        save_message = message;
+    };
+    var tr = new h5.Translator(dthis, sender);
+    // connect an object instance
+    class TestObject {
+        constructor(step) {
+            this.step = step;
+        };
+        increment_method (input) {
+            return input + this.step;
+        };
+    };
+    var my_instance = new TestObject(13);
+    var id_string = "yyy"
+    tr.set_reference(id_string, my_instance);
+    // call the function using the command interface
+    var json_ref = reference(id_string);
+    var json_name = lit("increment_method");
+    var json_method = _get(json_ref, json_name);
+    var json_args = [lit(44)];
+    var json_call = _call(json_method, json_args);
+    var call_json_msg = exec_(json_call);
+    var msg = tr.parse_message(call_json_msg);
+    var exec = msg.execute(tr);
+    var expected = 44 + 13;
+    expect(exec).toEqual(expected);
+});
+
+
+function _set(target_cmd, index_cmd, value_command) {
+    var h5 = H5Gizmos;
+    return [h5.SET, target_cmd, index_cmd, value_command];
+};
+
+test("sets an attribute", () => {
+    var h5 = H5Gizmos;
+    var dthis = {};
+    var save_message = null;
+    var sender = function(message) {
+        save_message = message;
+    };
+    var tr = new h5.Translator(dthis, sender);
+    // connect an object instance
+    var attr_name = "attr";
+    var my_instance = {};
+    my_instance[attr_name] = -99;
+    var id_string = "yyy"
+    tr.set_reference(id_string, my_instance);
+    // call the function using the command interface
+    var json_ref = reference(id_string);
+    var json_name = lit(attr_name);
+    var set_value = 42;
+    var json_value = lit(set_value);
+    var json_set = _set(json_ref, json_name, json_value);
+    var set_json_msg = exec_(json_set);
+    var msg = tr.parse_message(set_json_msg);
+    var exec = msg.execute(tr);
+    var expected = set_value;
+    expect(my_instance[attr_name]).toEqual(expected);
+});
+
+function _callback(id_string, to_depth, args_commands) {
+    var h5 = H5Gizmos;
+    return [h5.CALLBACK, id_string, to_depth, args_commands];
+};
+
+test("sends a callback request", () => {
+    var h5 = H5Gizmos;
+    var dthis = {};
+    var save_message = null;
+    var sender = function(message) {
+        save_message = message;
+    };
+    var tr = new h5.Translator(dthis, sender);
+    var id_string = "callback0";
+    var to_depth = 5;
+    var json_args = [lit(44)];
+    var json_callback = _callback(id_string, to_depth, json_args);
+    var callback_json_msg = exec_(json_callback);
+    var msg = tr.parse_message(callback_json_msg);
+    var exec = msg.execute(tr);
+    var expected_args = [44]
+    var expected_message = [h5.CALLBACK, id_string, expected_args];
+    expect(save_message).toEqual(expected_message);
+    expect(exec).toEqual(expected_args)
+});
+
