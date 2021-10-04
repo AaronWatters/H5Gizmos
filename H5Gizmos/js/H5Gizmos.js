@@ -1,14 +1,14 @@
 
 /*
 
-Gizmo protocol.
+Gizmo protocol. Child side.
 
 Top level messages:
 
 [EXEC, command]: 
     Evaluate command and discard result.
 [GET, oid, command, to_depth]: 
-    Evaluate  command and send back json converted result to depth as [GOT, oid, json_value]
+    Evaluate  command and send back json converted result to depth as [GET, oid, json_value]
 [CONNECT id, command]:
     Evaluate command and cache result internally using id.
 [DISCONNECT, id]:
@@ -36,7 +36,9 @@ Command formats:
 [SET, target_command, index_command, value_command]
     Index assign into target using index and value.
 
-XXXX - EXCEPTION PROPAGATION....
+Exception message:
+    [EXCEPTION, message, oid_or_null]
+    Indicates an exception was encountered.  If oid is provided then resolve GET for that oid.
 */
 
 var H5Gizmos = {};
@@ -55,6 +57,7 @@ var H5Gizmos = {};
     h5.CALL = "C";
     h5.CALLBACK = "CB";
     h5.SET = "S";
+    h5.EXCEPTION = "X"
 
     var indicator_to_message_parser = {};
     var indicator_to_command_parser = {};
@@ -80,6 +83,18 @@ var H5Gizmos = {};
         };
         send(json_object) {
             this.sender(json_object);
+        };
+        send_error(message, err, oid) {
+            if (!err) {
+                err = new Error(message);
+                message = "Error in Gizmo message processing."
+            }
+            if (!oid) {
+                oid = null; 
+            }
+            var json = [h5.EXCEPTION, "" + err, oid];
+            this.send(json);
+            throw err;
         };
         json_safe(val, depth) {
             // convert value to acceptible JSON  value truncated at depth
@@ -149,28 +164,33 @@ var H5Gizmos = {};
         };
         parse_message(message_json_ob) {
             if (!Array.isArray(message_json_ob)) {
-                throw new Error("top level message json should be array: " + (typeof message_json_ob));
+                this.send_error("top level message json should be array: " + (typeof message_json_ob));
             }
             var remainder = message_json_ob.slice();
             var indicator = remainder[0];
             remainder.shift();
             var Parser = indicator_to_message_parser[indicator];
             if (!Parser) {
-                throw new Error("No message parser for indicator: " + indicator);
+                this.send_error("No message parser for indicator: " + indicator);
             }
-            return new Parser(this, remainder);
+            try {
+                return new Parser(this, remainder);
+            } catch (err) {
+                this.send_error("failed to parse message", err)
+            }
         };
         parse_command(command_json_ob) {
             if (!Array.isArray(command_json_ob)) {
-                throw new Error("top level message json should be array: " + (typeof command_json_ob));
+                this.send_error("top level message json should be array: " + (typeof command_json_ob));
             }
             var remainder = command_json_ob.slice();
             var indicator = remainder[0];
             remainder.shift();
             var Parser = indicator_to_command_parser[indicator];
             if (!Parser) {
-                throw new Error("No command parser for indicator: " + indicator);
+                this.send_error("No command parser for indicator: " + indicator);
             }
+            // exceptions should be caught in calling parse_message (?)
             return new Parser(this, remainder);
         };
         parse_commands(commands_json_obs) {
@@ -190,6 +210,14 @@ var H5Gizmos = {};
                 result.push(e);
             }
             return result;
+        };
+        execute_command(command) {
+            // execute command and catch exceptions
+            try {
+                return command.execute(this);
+            } catch (err) {
+                this.send_error("exception in command execution", err);
+            }
         };
         this_value_pair(this_ob, this_value) {
             return new ThisValuePair(this_ob, this_value, this.default_this);
@@ -235,12 +263,17 @@ var H5Gizmos = {};
             this.to_depth = to_depth;
         };
         execute(translator) {
-            var pair = this.command.execute(translator);
-            var value = pair.value;
-            this.json_value = this.translator.json_safe(value, this.to_depth);
-            this.payload = [h5.GET, this.oid, this.json_value];
-            translator.send(this.payload);
-            return value;
+            // execute command and resolve, or resolve with an exception.
+            try {
+                var pair = this.command.execute(translator);
+                var value = pair.value;
+                this.json_value = this.translator.json_safe(value, this.to_depth);
+                this.payload = [h5.GET, this.oid, this.json_value];
+                translator.send(this.payload);
+                return value;
+            } catch (err) {
+                translator.send_error("Error executing GET", err, this.oid);
+            }
         };
     };
     indicator_to_message_parser[h5.GET] = GetMessageParser;

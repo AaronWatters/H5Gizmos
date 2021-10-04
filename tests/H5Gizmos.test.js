@@ -301,8 +301,23 @@ test("parses maps", () => {
     var map_cmd = _map(dictionary);
     var map_msg = exec_(map_cmd); //[h5.EXEC, json_cmd];
     var msg = tr.parse_message(map_msg);
-    var exec = msg.execute(tr);
+    //var exec = msg.execute(tr);
+    var exec = tr.execute_command(msg);
     expect(exec).toEqual(expected);
+});
+
+test("sends parse errors", () => {
+    var h5 = H5Gizmos;
+    var dthis = {};
+    var save_message = null;
+    var sender = function(message) {
+        save_message = message;
+    };
+    var tr = new h5.Translator(dthis, sender);
+    var map_cmd = ['no such indicator'];  // invalid message
+    var map_msg = exec_(map_cmd); //[h5.EXEC, json_cmd];
+    expect(function() { tr.parse_message(map_msg); }).toThrow();
+    expect(save_message[0]).toEqual(h5.EXCEPTION);
 });
 
 function _sequence(list) {
@@ -421,6 +436,30 @@ test("calls a method", () => {
     expect(exec).toEqual(expected);
 });
 
+test("sends an exception for a bad get", () => {
+    var h5 = H5Gizmos;
+    var dthis = {};
+    var save_message = null;
+    var oiderr = null;
+    var sender = function(message) {
+        save_message = message;
+        if (message[2]) {
+            oiderr = message[2]
+        }
+    };
+    var tr = new h5.Translator(dthis, sender);
+    var val = ["some", "value"];
+    var oid = "oid123";
+    var to_depth = 5;
+    var json_lit = lit(val); //[h5.LITERAL, val];
+    var json_call = _call(json_lit, []);
+    var json_msg = get(oid, json_call, to_depth);
+    var msg = tr.parse_message(json_msg);
+    expect(function () { tr.execute_command(msg); }).toThrow();
+    var indicator = save_message[0];
+    expect(indicator).toEqual(h5.EXCEPTION);
+    expect(oiderr).toEqual(oid);
+});
 
 function _set(target_cmd, index_cmd, value_command) {
     var h5 = H5Gizmos;
