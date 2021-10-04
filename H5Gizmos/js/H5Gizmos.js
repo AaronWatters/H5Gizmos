@@ -30,10 +30,13 @@ Command formats:
     Index into target using index.
 [CALL, callable_command, [args_command...]]
     Call callable with args (using appropriate this binding).
-[CALLBACK, id_string, to_depth, [args_command, ...]]
-    Send [CALLBACK, id_string, [json_arg, ...]] with args json converted and truncated to depth.
+[CALLBACK, id_string, to_depth] 
+    Create function f(arg,...) which when called sends [CALLBACK, id_string, [json_arg, ...]
+    with json_args truncated to depth.
 [SET, target_command, index_command, value_command]
     Index assign into target using index and value.
+
+XXXX - EXCEPTION PROPAGATION....
 */
 
 var H5Gizmos = {};
@@ -380,22 +383,25 @@ var H5Gizmos = {};
 
     class CallbackCommandParser extends ExecMessageParser {
         parse(translator, payload) {
-            var [id_string, to_depth, args_commands] = payload;
+            var [id_string, to_depth] = payload;
             this.id_string = id_string;
             this.to_depth = to_depth;
-            this.args_commands = translator.parse_commands(args_commands);
         };
         execute(translator) {
-            var args = translator.execute_commands(this.args_commands);
             var to_depth = this.to_depth;
             var id_string = this.id_string;
-            // convert args one level deeper to account for list wrapping
-            var args_values = translator.values_from_pairs(args);
-            var json_args = translator.json_safe(args_values, to_depth + 1);
-            var payload = [h5.CALLBACK, id_string, json_args];
-            this.payload = payload;
-            translator.send(payload)
-            return translator.value_pair(args_values);  // arbitray choice:::
+            var that = this;
+            var callback_function = function(...args) {
+                var json_args = [];
+                for (var i=0; i<args.length; i++) {
+                    var jsoni = translator.json_safe(args[i], to_depth);
+                    json_args.push(jsoni);
+                }
+                var payload = [h5.CALLBACK, id_string, json_args];
+                translator.send(payload);
+                return payload;
+            };
+            return translator.value_pair(callback_function);
         };
     };
     indicator_to_command_parser[h5.CALLBACK] = CallbackCommandParser;

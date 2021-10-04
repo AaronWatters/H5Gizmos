@@ -454,12 +454,12 @@ test("sets an attribute", () => {
     expect(my_instance[attr_name]).toEqual(expected);
 });
 
-function _callback(id_string, to_depth, args_commands) {
+function _callback(id_string, to_depth) {
     var h5 = H5Gizmos;
-    return [h5.CALLBACK, id_string, to_depth, args_commands];
+    return [h5.CALLBACK, id_string, to_depth];
 };
 
-test("sends a callback request", () => {
+test("creates a callback which calls back.", () => {
     var h5 = H5Gizmos;
     var dthis = {};
     var save_message = null;
@@ -469,14 +469,15 @@ test("sends a callback request", () => {
     var tr = new h5.Translator(dthis, sender);
     var id_string = "callback0";
     var to_depth = 5;
-    var json_args = [lit(44)];
-    var json_callback = _callback(id_string, to_depth, json_args);
-    var callback_json_msg = exec_(json_callback);
+    var json_args = [lit(44), lit("arg2")];
+    var json_callback = _callback(id_string, to_depth);
+    var json_call_callback = _call(json_callback, json_args);
+    var callback_json_msg = exec_(json_call_callback);
     var msg = tr.parse_message(callback_json_msg);
     var exec = msg.execute(tr);
-    var expected_args = [44]
+    var expected_args = [44, "arg2"]
     var expected_message = [h5.CALLBACK, id_string, expected_args];
     expect(save_message).toEqual(expected_message);
-    expect(exec).toEqual(expected_args)
+    //expect(exec).toEqual(expected_args)
 });
 
