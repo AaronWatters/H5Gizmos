@@ -9,7 +9,7 @@ Top level messages:
     Evaluate command and discard result.
 [GET, oid, command, to_depth]: 
     Evaluate  command and send back json converted result to depth as [GET, oid, json_value]
-[CONNECT id, command]:
+[CONNECT, id, command]:
     Evaluate command and cache result internally using id.
 [DISCONNECT, id]:
     Uncache id.
