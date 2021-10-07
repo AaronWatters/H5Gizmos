@@ -492,6 +492,64 @@ var H5Gizmos = {};
         };
     };
 
+    const FINISHED_UNICODE = "F";
+    const CONTINUE_UNICODE = "C";
+
+    class Packer {
+        constructor(ws_url, process_packet, packet_limit, socketMaker) {
+            socketMaker = socketMaker || WebSocket;
+            var that = this;
+            this.packet_limit = packet_limit || 1000000;
+            this.collector = [];
+            this.ws_url = ws_url;
+            this.packet_receiver = process_packet;
+            var ws = new socketMaker(ws_url);
+            this.ws = ws;
+            ws.onmessage = function(event) {
+                that.onmessage(event);
+            };
+        };
+        onmessage(event) {
+            //debugger;
+            var data = event.data;
+            //console.log("got data: ", data)
+            var indicator = data.slice(0, 1);
+            var payload = data.slice(1);
+            var collector = this.collector;
+            if (indicator == CONTINUE_UNICODE) {
+                collector.push(payload);
+            } else if (indicator == FINISHED_UNICODE) {
+                this.collector = []
+                collector.push(payload);
+                var packet = collector.join("");
+                //console.log("finishing: ", packet)
+                this.packet_receiver(packet);
+            } else {
+                throw new Error("unknown indicator: " + data.slice(0, 10));
+            }
+        };
+        send_unicode(packet_unicode) {
+            var ln = packet_unicode.length;
+            var limit = this.packet_limit;
+            var ws = this.ws;
+            for (var start=0; start<ln; start+=limit) {
+                var end = start + limit;
+                var chunk = packet_unicode.slice(start, end);
+                var last = (end >= ln);
+                var indicator = CONTINUE_UNICODE;
+                if (last) {
+                    indicator = FINISHED_UNICODE;
+                }
+                var data = indicator + chunk;
+                console.log("sending data: ", data);
+                ws.send(data);
+            }
+        };
+    };
+    H5Gizmos.Packer = Packer;
+    H5Gizmos.FINISHED_UNICODE = FINISHED_UNICODE;
+    H5Gizmos.CONTINUE_UNICODE = CONTINUE_UNICODE;
+
     H5Gizmos.is_loaded = true;
 
 }) ();  // execute initialization in protected scope.

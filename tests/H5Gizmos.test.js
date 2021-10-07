@@ -520,3 +520,77 @@ test("creates a callback which calls back.", () => {
     //expect(exec).toEqual(expected_args)
 });
 
+class MockSocketMaker {
+    constructor(ws_url) {
+        this.ws_url = ws_url;
+        this.onmessage = null;
+        this.sends = [];
+    };
+    send(data) {
+        this.sends.push(data);
+    };
+    fake_receive(chunk) {
+        var event = new MockEvent(chunk);
+        this.onmessage(event);
+    };
+};
+class MockEvent {
+    constructor(data) {
+        this.data = data;
+    };
+};
+
+test('creates a Packer and processes a packet', () => {
+    var h5 = H5Gizmos;
+    var url = "ws://dummy.com/ws";
+    var packets = [];
+    var process_packet = function(packet) {
+        packets.push(packet);
+    };
+    var packet_limit = 4;
+    var socketMaker = MockSocketMaker;
+    var packer = new h5.Packer(url, process_packet, packet_limit, socketMaker);
+    expect(packer.ws_url).toEqual(url);
+    var message1 = "123"
+    packer.ws.fake_receive(h5.CONTINUE_UNICODE + message1);
+    var message2 = "abc"
+    packer.ws.fake_receive(h5.FINISHED_UNICODE + message2);
+    var message = message1 + message2;
+    expect(packets).toEqual([message]);
+});
+
+test('breaks a packet into chunks', () => {
+    var h5 = H5Gizmos;
+    var url = "ws://dummy.com/ws";
+    var packets = [];
+    var process_packet = function(packet) {
+        packets.push(packet);
+    };
+    var packet_limit = 4;
+    var socketMaker = MockSocketMaker;
+    var packer = new h5.Packer(url, process_packet, packet_limit, socketMaker);
+    var message = "01234hello_world";
+    var chunks = [
+        "C0123",
+        "C4hel",
+        "Clo_w",
+        "Forld",
+        ];
+    packer.send_unicode(message);
+    expect(packer.ws.sends).toEqual(chunks);
+});
+
+test('rejects bad send', () => {
+    var h5 = H5Gizmos;
+    var url = "ws://dummy.com/ws";
+    var packets = [];
+    var process_packet = function(packet) {
+        packets.push(packet);
+    };
+    var packet_limit = 4;
+    var socketMaker = MockSocketMaker;
+    var packer = new h5.Packer(url, process_packet, packet_limit, socketMaker);
+    expect(packer.ws_url).toEqual(url);
+    var message1 = "123"
+    expect(function () { packer.ws.fake_receive("*" + message1) }).toThrow();
+});
