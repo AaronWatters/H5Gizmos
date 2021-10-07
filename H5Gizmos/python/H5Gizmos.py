@@ -298,7 +298,7 @@ class GizmoCallback(GizmoLink):
         self._to_depth = to_depth
         self._owner_gizmo = owner
         self._callable_object = callable_object
-        self._oid = owner._register_callback(callable)
+        self._oid = owner._register_callback(callable_object)
 
     def _command(self):
         return [GZ.CALLBACK, self._oid, self._to_depth]
@@ -359,7 +359,7 @@ class ValueConverter:
             self.command = translation
         elif callable(translation):
             self.is_literal = False
-            self.command = GizmoCallback(translation)
+            self.command = GizmoCallback(translation, owner)
         else:
             raise CantConvertValue("No conversion for: " + repr(ty))
 

@@ -6,6 +6,8 @@
 
 import unittest
 
+import numpy as np
+
 from H5Gizmos.python.H5Gizmos import (
     Gizmo, 
     GZ,
@@ -14,6 +16,7 @@ from H5Gizmos.python.H5Gizmos import (
     NoSuchCallback,
     GizmoLink,
     GizmoReference,
+    CantConvertValue,
 )
 
 '''
@@ -49,6 +52,12 @@ def _seq(cmds):
 
 def _map(mapping):
     return [GZ.MAP, mapping]
+
+def _callback(oid, to_depth):
+    return [GZ.CALLBACK, oid, to_depth]
+
+def _bytes(hex):
+    return [GZ.BYTES, hex]
 
 def get_msg(oid, cmd, to_depth):
     return [GZ.GET, oid, cmd, to_depth]
@@ -192,6 +201,56 @@ class TestGizmo(unittest.TestCase):
             X._command()
         with self.assertRaises(NotImplementedError):
             X._get_id()
+
+    def test_wraps_callable(self):
+        def example_callable(x):
+            return x + 1
+        GW = GizmoWrapper()
+        G = GW.G
+        ref = GizmoReference("someFunction", G)
+        call = ref("abc", example_callable)
+        call._exec()
+        #self.assertEqual(G._callable_to_oid, None)
+        oid = G._callable_to_oid[example_callable]
+        cb_json = _callback(oid, G._default_depth)
+        expected = exec_msg(_call(_ref("someFunction"), [_lit("abc"), cb_json]))
+        self.assertEqual(GW.sent_data, [expected])
+
+    def test_converts_bytes(self):
+        example_bytes = bytearray([1,2,3])
+        GW = GizmoWrapper()
+        G = GW.G
+        ref = GizmoReference("someFunction", G)
+        call = ref("abc", example_bytes)
+        call._exec()
+        hex = "010203"
+        bytes_json = _bytes(hex)
+        expected = exec_msg(_call(_ref("someFunction"), [_lit("abc"), bytes_json]))
+        self.assertEqual(GW.sent_data, [expected])
+
+    def test_converts_array(self):
+        L = [100, 200, 300]
+        example_array = np.array(L)
+        GW = GizmoWrapper()
+        G = GW.G
+        ref = GizmoReference("someFunction", G)
+        call = ref("abc", example_array)
+        call._exec()
+        hex = "010203"
+        array_json = _lit(L)
+        expected = exec_msg(_call(_ref("someFunction"), [_lit("abc"), array_json]))
+        self.assertEqual(GW.sent_data, [expected])
+
+    def test_unconvertible(self):
+        cant_convert = np
+        GW = GizmoWrapper()
+        G = GW.G
+        ref = GizmoReference("someFunction", G)
+        with self.assertRaises(CantConvertValue):
+            call = ref("abc", cant_convert)
+            call._exec()
+            expected = exec_msg(_call(_ref("someFunction"), [_lit("abc")]))
+            self.assertEqual(GW.sent_data, [expected])
 
 class TestGizmoAsync(unittest.IsolatedAsyncioTestCase):
 
