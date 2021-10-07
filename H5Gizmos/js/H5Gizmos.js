@@ -496,16 +496,15 @@ var H5Gizmos = {};
     const CONTINUE_UNICODE = "C";
 
     class Packer {
-        constructor(ws_url, process_packet, packet_limit, socketMaker) {
-            socketMaker = socketMaker || WebSocket;
+        constructor(web_socket, process_packet, packet_limit) {
             var that = this;
             this.packet_limit = packet_limit || 1000000;
             this.collector = [];
-            this.ws_url = ws_url;
+            //this.ws_url = ws_url;
             this.packet_receiver = process_packet;
-            var ws = new socketMaker(ws_url);
-            this.ws = ws;
-            ws.onmessage = function(event) {
+            //var ws = new socketMaker(ws_url);
+            this.ws = web_socket;
+            this.ws.onmessage = function(event) {
                 that.onmessage(event);
             };
         };
@@ -541,7 +540,7 @@ var H5Gizmos = {};
                     indicator = FINISHED_UNICODE;
                 }
                 var data = indicator + chunk;
-                console.log("sending data: ", data);
+                //console.log("sending data: ", data);
                 ws.send(data);
             }
         };
