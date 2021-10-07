@@ -7,6 +7,7 @@ See js/H5Gizmos.js for protocol JSON formats.
 """
 
 
+from logging import raiseExceptions
 import numpy as np
 import asyncio
 from .hex_codec import bytearray_to_hex
@@ -52,14 +53,23 @@ class Gizmo:
         self._sender(json_message)
 
     def _receive(self, json_response):
-        indicator = json_response[0]
-        payload = json_response[1:]
+        try:
+            indicator = json_response[0]
+            payload = json_response[1:]
+        except Exception as e:
+            truncated_payload = repr(json_response)[:50]
+            info = "Error: %s; payload=%s" % (e, truncated_payload)
+            raise BadResponseFormat(info)
         if indicator == Gizmo.GET:
             return self._resolve_get(payload)
         elif indicator == Gizmo.CALLBACK:
             return self._call_back(payload)
         elif indicator == Gizmo.EXCEPTION:
             return self._receive_exception(payload)
+        else:
+            truncated_payload = repr(json_response)[:50]
+            info = "Unknown indicator: %s; payload=%s" % (indicator, truncated_payload)
+            raise BadResponseFormat(info)
 
     def _resolve_get(self, payload):
         [oid, json_value] = payload
@@ -110,6 +120,9 @@ class Gizmo:
 
 
 GZ = Gizmo
+
+class BadResponseFormat(ValueError):
+    "Javascript reports error during command interpretation."
 
 class JavascriptEvalException(ValueError):
     "Javascript reports error during command interpretation."

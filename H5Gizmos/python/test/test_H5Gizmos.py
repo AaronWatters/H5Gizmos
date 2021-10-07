@@ -18,6 +18,7 @@ from H5Gizmos.python.H5Gizmos import (
     GizmoReference,
     CantConvertValue,
     NoRequestForOid,
+    BadResponseFormat,
 )
 
 '''
@@ -260,6 +261,20 @@ class TestGizmo(unittest.TestCase):
         json_ob = [1, "two", 3]
         get_response = [GZ.GET, oid, json_ob]
         with self.assertRaises(NoRequestForOid):
+             G._receive(get_response)
+
+    def test_dont_receive_maps(self):
+        GW = GizmoWrapper()
+        G = GW.G
+        get_response = {"a": "mapping"}
+        with self.assertRaises(BadResponseFormat):
+             G._receive(get_response)
+
+    def test_bad_indicator(self):
+        GW = GizmoWrapper()
+        G = GW.G
+        get_response = ["nonsense", "reply"]
+        with self.assertRaises(BadResponseFormat):
              G._receive(get_response)
 
 class TestGizmoAsync(unittest.IsolatedAsyncioTestCase):
