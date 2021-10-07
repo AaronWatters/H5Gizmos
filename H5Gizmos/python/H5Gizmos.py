@@ -122,7 +122,7 @@ class Gizmo:
 GZ = Gizmo
 
 class BadResponseFormat(ValueError):
-    "Javascript reports error during command interpretation."
+    "Javascript sent a message which was not understood."
 
 class JavascriptEvalException(ValueError):
     "Javascript reports error during command interpretation."
