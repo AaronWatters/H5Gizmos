@@ -69,6 +69,8 @@ class Gizmo:
             del o2f[oid]
             if not get_future.done():
                 get_future.set_result(json_value)
+        else:
+            raise NoRequestForOid("No known request matching oid: " + repr(oid))
         return json_value
 
     def _call_back(self, payload):
@@ -114,6 +116,9 @@ class JavascriptEvalException(ValueError):
 
 class NoSuchCallback(ValueError):
     "Callback id not found."
+
+class NoRequestForOid(ValueError):
+    "Target for GET reply not found."
 
 class CantConvertValue(ValueError):
     "Can't convert value for transmission of JSON link."

@@ -17,6 +17,7 @@ from H5Gizmos.python.H5Gizmos import (
     GizmoLink,
     GizmoReference,
     CantConvertValue,
+    NoRequestForOid,
 )
 
 '''
@@ -251,6 +252,15 @@ class TestGizmo(unittest.TestCase):
             call._exec()
             expected = exec_msg(_call(_ref("someFunction"), [_lit("abc")]))
             self.assertEqual(GW.sent_data, [expected])
+
+    def test_no_request_for_oid(self):
+        GW = GizmoWrapper()
+        G = GW.G
+        oid = "oid123_doesn't exist"
+        json_ob = [1, "two", 3]
+        get_response = [GZ.GET, oid, json_ob]
+        with self.assertRaises(NoRequestForOid):
+             G._receive(get_response)
 
 class TestGizmoAsync(unittest.IsolatedAsyncioTestCase):
 
