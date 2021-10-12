@@ -549,6 +549,47 @@ var H5Gizmos = {};
     H5Gizmos.FINISHED_UNICODE = FINISHED_UNICODE;
     H5Gizmos.CONTINUE_UNICODE = CONTINUE_UNICODE;
 
+    // JSON_Codec -- coder decoder
+    class JSON_Codec {
+        constructor(process_json, send_unicode, on_error) {
+            this.process_json = process_json;
+            this.send_unicode = send_unicode;
+            this.on_error = on_error;
+            // xxx hypothetical infinite recursion if there is bug in error processing...
+        };
+        receive_unicode(unicode_str) {
+            var json_ob = null;
+            try {
+                json_ob = JSON.parse(unicode_str);
+            } catch (err) {
+                if (this.on_error) {
+                    var s = "" + unicode_str;
+                    this.on_error("Failed to parse JSON: " + s.substring(0, 50))
+                }
+                throw err;
+            }
+            this.process_json(json_ob);
+        };
+        send_json(json_ob) {
+            var unicode = null;
+            try {
+                unicode = JSON.stringify(json_ob);
+                if (!unicode) {
+                    throw new Error("JSON.stringify returned falsy.")
+                }
+            } catch (err) {
+                var s = "" + json_ob;
+                if (this.on_error) {
+                    this.on_error("Failed to encode JSON: " + s.substring(0, 50));
+                }
+                throw err;
+            }
+            this.send_unicode(unicode);
+        };
+    };
+    H5Gizmos.JSON_Codec = JSON_Codec;
+    // Pipeline ... hooks everything together...
+
     H5Gizmos.is_loaded = true;
 
 }) ();  // execute initialization in protected scope.

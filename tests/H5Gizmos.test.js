@@ -595,3 +595,90 @@ test('rejects bad send', () => {
     var message1 = "123"
     expect(function () { packer.ws.fake_receive("*" + message1) }).toThrow();
 });
+
+test('parses unicode JSON', () => {
+    var h5 = H5Gizmos;
+    var unicode = '{"name":"John", "age":30, "city":"New York"}';
+    var json_ob = {"name":"John", "age":30, "city":"New York"};
+    var got_json = null;
+    var process_json = function(json_ob) {
+        got_json = json_ob;
+    };
+    var sent_unicode = null;
+    var send_unicode = function(str) {
+        sent_unicode = str;
+    };
+    var error_message = null;
+    var on_error = function(message, error) {
+        error_message = message;
+    };
+    var codec = new h5.JSON_Codec(process_json, send_unicode, on_error);
+    codec.receive_unicode(unicode);
+    expect(got_json).toEqual(json_ob);
+});
+
+test('errors bad unicode JSON', () => {
+    var h5 = H5Gizmos;
+    var unicode = '{"name":"John", "age":30, "city":"New York"}';
+    var json_ob = {"name":"John", "age":30, "city":"New York"};
+    var got_json = null;
+    var process_json = function(json_ob) {
+        got_json = json_ob;
+    };
+    var sent_unicode = null;
+    var send_unicode = function(str) {
+        sent_unicode = str;
+    };
+    var error_message = null;
+    var on_error = function(message, error) {
+        error_message = message;
+    };
+    var codec = new h5.JSON_Codec(process_json, send_unicode, on_error);
+    expect(function () { codec.receive_unicode("xxx" + unicode); }).toThrow();
+    expect(error_message).not.toEqual(null);
+    expect(got_json).toEqual(null);
+});
+
+test('encodes JSON objects', () => {
+    var h5 = H5Gizmos;
+    //var unicode = '{"name":"John", "age":30, "city":"New York"}';
+    var json_ob = {"name":"John", "age":30, "city":"New York"};
+    var unicode = JSON.stringify(json_ob);
+    var got_json = null;
+    var process_json = function(json_ob) {
+        got_json = json_ob;
+    };
+    var sent_unicode = null;
+    var send_unicode = function(str) {
+        sent_unicode = str;
+    };
+    var error_message = null;
+    var on_error = function(message, error) {
+        error_message = message;
+    };
+    var codec = new h5.JSON_Codec(process_json, send_unicode, on_error);
+    codec.send_json(json_ob);
+    expect(sent_unicode).toEqual(unicode);
+});
+
+test('fails to encode bad JSON objects', () => {
+    var h5 = H5Gizmos;
+    //var unicode = '{"name":"John", "age":30, "city":"New York"}';
+    var json_ob = function (x) { return x + 1; }
+    //var unicode = JSON.stringify(json_ob);
+    var got_json = null;
+    var process_json = function(json_ob) {
+        got_json = json_ob;
+    };
+    var sent_unicode = null;
+    var send_unicode = function(str) {
+        sent_unicode = str;
+    };
+    var error_message = null;
+    var on_error = function(message, error) {
+        error_message = message;
+    };
+    var codec = new h5.JSON_Codec(process_json, send_unicode, on_error);
+    expect(function () { codec.send_json(json_ob); }).toThrow();
+    expect(sent_unicode).toEqual(null);
+});
