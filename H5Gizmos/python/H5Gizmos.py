@@ -6,8 +6,6 @@ See js/H5Gizmos.js for protocol JSON formats.
 
 """
 
-
-from logging import raiseExceptions
 import numpy as np
 import asyncio
 from .hex_codec import bytearray_to_hex
@@ -408,3 +406,77 @@ class ValueConverter:
         if hasattr(np, type_name):
             ty = getattr(np, type_name)
             translators[ty] = int
+
+FINISHED_UNICODE = "F"
+CONTINUE_UNICODE = "C"
+
+class GizmoPacker:
+
+    def __init__(self, process_packet, awaitable_sender, packet_limit=1000000, auto_flush=True):
+        self.process_packet = process_packet
+        self.packet_limit = packet_limit
+        self.collector = []
+        self.outgoing_packets = []
+        self.auto_flush = auto_flush
+        self.awaitable_sender = awaitable_sender
+
+    def flush(self):
+        outgoing = self.outgoing_packets
+        self.outgoing_packets = []
+        if outgoing:
+            awaitable = self.awaitable_flush(outgoing)
+            task = schedule_task(awaitable)
+            #print ("flush returns task", task)
+            return task
+        else:
+            return None
+
+    async def awaitable_flush(self, outgoing=None):
+        limit = self.packet_limit
+        if outgoing is None:
+            outgoing = self.outgoing_packets
+            self.outgoing_packets = []
+        for string in outgoing:
+            ln = len(string)
+            for start in range(0, ln, limit):
+                end = start + limit
+                chunk = string[start : end]
+                final = end >= ln
+                if final:
+                    data = FINISHED_UNICODE + chunk
+                else:
+                    data = CONTINUE_UNICODE + chunk
+                await self.awaitable_sender(data)
+
+    def send_unicode(self, string):
+        self.outgoing_packets.append(string)
+        if self.auto_flush:
+            task = self.flush()
+            #print ("send unicode returns task", task)
+            return task
+        else:
+            return None
+
+    def on_unicode_message(self, message):
+        indicator = message[0:1]
+        remainder = message[1:]
+        if indicator == CONTINUE_UNICODE:
+            self.collector.append(remainder)
+        elif indicator == FINISHED_UNICODE:
+            collector = self.collector
+            self.collector = []
+            collector.append(remainder)
+            packet = "".join(collector)
+            self.process_packet(packet)
+        else:
+            raise BadMessageIndicator(repr(message[:20]))
+
+class BadMessageIndicator(ValueError):
+    "Message fragment first character not understood."
+
+def schedule_task(awaitable):
+    "Schedule a task in the global event loop."
+    # Convenience
+    loop = asyncio.get_event_loop()
+    task = loop.create_task(awaitable)
+    return task

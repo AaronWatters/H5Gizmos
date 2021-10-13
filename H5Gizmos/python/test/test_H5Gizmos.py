@@ -19,6 +19,10 @@ from H5Gizmos.python.H5Gizmos import (
     CantConvertValue,
     NoRequestForOid,
     BadResponseFormat,
+    GizmoPacker,
+    FINISHED_UNICODE,
+    CONTINUE_UNICODE,
+    BadMessageIndicator,
 )
 
 '''
@@ -277,6 +281,35 @@ class TestGizmo(unittest.TestCase):
         with self.assertRaises(BadResponseFormat):
              G._receive(get_response)
 
+    def test_receive_chunks(self):
+        packets_processed = []
+        def process_packet(packet):
+            packets_processed.append(packet)
+        strings_sent = []
+        def awaitable_sender(string):
+            strings_sent.append(string)
+        packet_limit = 1000000
+        auto_flush = True
+        P = GizmoPacker(process_packet, awaitable_sender, packet_limit, auto_flush)
+        P.on_unicode_message(CONTINUE_UNICODE + "abc")
+        P.on_unicode_message(FINISHED_UNICODE + "123")
+        self.assertEqual(packets_processed,  ['abc123'])
+
+    def test_rejects_bad_chunks(self):
+        packets_processed = []
+        def process_packet(packet):
+            packets_processed.append(packet)
+        strings_sent = []
+        def awaitable_sender(string):
+            strings_sent.append(string)
+        packet_limit = 1000000
+        auto_flush = True
+        P = GizmoPacker(process_packet, awaitable_sender, packet_limit, auto_flush)
+        with self.assertRaises(BadMessageIndicator):
+            P.on_unicode_message("*" + "abc")
+        self.assertEqual(packets_processed,  [])
+
+
 class TestGizmoAsync(unittest.IsolatedAsyncioTestCase):
 
     async def test_resolves_get(self):
@@ -330,3 +363,34 @@ class TestGizmoAsync(unittest.IsolatedAsyncioTestCase):
         awaitable = lit._get(to_depth=None, oid=None, future=None, test_result=json_ob)
         result = await awaitable
         self.assertEqual(result, json_ob)
+
+    async def test_auto_flushes(self):
+        packets_processed = []
+        def process_packet(packet):
+            packets_processed.append(packet)
+        strings_sent = []
+        async def awaitable_sender(string):
+            strings_sent.append(string)
+        packet_limit = 4
+        auto_flush = True
+        P = GizmoPacker(process_packet, awaitable_sender, packet_limit, auto_flush)
+        flush_task = P.send_unicode("123abc")
+        expect_sends =  ['C123a', 'Fbc']
+        await flush_task
+        self.assertEqual(strings_sent, expect_sends)
+
+    async def test_manual_flushes(self):
+        packets_processed = []
+        def process_packet(packet):
+            packets_processed.append(packet)
+        strings_sent = []
+        async def awaitable_sender(string):
+            strings_sent.append(string)
+        packet_limit = 4
+        auto_flush = False
+        P = GizmoPacker(process_packet, awaitable_sender, packet_limit, auto_flush)
+        P.flush()
+        P.send_unicode("123abc")
+        expect_sends =  ['C123a', 'Fbc']
+        await P.awaitable_flush()
+        self.assertEqual(strings_sent, expect_sends)
