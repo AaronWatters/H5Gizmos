@@ -163,6 +163,7 @@ var H5Gizmos = {};
             return result;
         };
         parse_message(message_json_ob) {
+            //cl("parsing", message_json_ob);
             if (!Array.isArray(message_json_ob)) {
                 this.send_error("top level message json should be array: " + (typeof message_json_ob));
             }
@@ -178,6 +179,11 @@ var H5Gizmos = {};
             } catch (err) {
                 this.send_error("failed to parse message", err)
             }
+        };
+        handle_message(message_json_ob) {
+            var msg = this.parse_message(message_json_ob);
+            //cl("executing msg", msg)
+            return msg.execute(this);
         };
         parse_command(command_json_ob) {
             if (!Array.isArray(command_json_ob)) {
@@ -511,7 +517,7 @@ var H5Gizmos = {};
         onmessage(event) {
             //debugger;
             var data = event.data;
-            //console.log("got data: ", data)
+            ////cl("got data: ", data)
             var indicator = data.slice(0, 1);
             var payload = data.slice(1);
             var collector = this.collector;
@@ -521,7 +527,7 @@ var H5Gizmos = {};
                 this.collector = []
                 collector.push(payload);
                 var packet = collector.join("");
-                //console.log("finishing: ", packet)
+                ////cl("finishing: ", packet)
                 this.packet_receiver(packet);
             } else {
                 throw new Error("unknown indicator: " + data.slice(0, 10));
@@ -540,7 +546,7 @@ var H5Gizmos = {};
                     indicator = FINISHED_UNICODE;
                 }
                 var data = indicator + chunk;
-                //console.log("sending data: ", data);
+                ////cl("sending data: ", data);
                 ws.send(data);
             }
         };
@@ -558,6 +564,7 @@ var H5Gizmos = {};
             // xxx hypothetical infinite recursion if there is bug in error processing...
         };
         receive_unicode(unicode_str) {
+            //cl("codec rcv: ", unicode_str)
             var json_ob = null;
             try {
                 json_ob = JSON.parse(unicode_str);
@@ -588,7 +595,49 @@ var H5Gizmos = {};
         };
     };
     H5Gizmos.JSON_Codec = JSON_Codec;
-    // Pipeline ... hooks everything together...
+
+    // pipeline ... hooks everything together...
+    function pipeline(from_web_socket, to_translator, packet_limit) {
+        packet_limit = packet_limit || 1000000;
+        var process_json = function(json_ob) {
+            //cl("process json: ", json_ob)
+            to_translator.handle_message(json_ob);
+        };
+        var send_unicode = function(packet_unicode) {
+            packer.send_unicode(packet_unicode);
+        };
+        var in_codec_error = false;
+        var on_codec_error = function(message) {
+            // commented check is not needed?
+            //if (in_codec_error) {
+            //    throw new Error("error during error processing -- punting.")
+            //}
+            in_codec_error = true;
+            try {
+                to_translator.send_error(message);
+            } finally {
+                in_codec_error = false;
+            }
+        };
+        var process_packet = function(packet) {
+            //cl("process packet", packet)
+            codec.receive_unicode(packet);
+        };
+        var send_json = function(json_ob) {
+            codec.send_json(json_ob);
+        };
+        to_translator.sender = send_json;
+        var codec = new JSON_Codec(process_json, send_unicode, on_codec_error);
+        var packer = new Packer(from_web_socket, process_packet, packet_limit);
+        return {
+            ws: from_web_socket,
+            packer: packer,
+            codec: codec,
+            translator: to_translator,
+        }
+    };
+
+    H5Gizmos.pipeline = pipeline;
 
     H5Gizmos.is_loaded = true;
 

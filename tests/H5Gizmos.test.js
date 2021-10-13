@@ -325,7 +325,7 @@ function _sequence(list) {
     return [h5.SEQUENCE, list];
 };
 
-test("parses maps", () => {
+test("parses lists", () => {
     var h5 = H5Gizmos;
     var dthis = {};
     var save_message = null;
@@ -530,6 +530,7 @@ class MockSocketMaker {
         this.sends.push(data);
     };
     fake_receive(chunk) {
+        //cl("fake receive", chunk)
         var event = new MockEvent(chunk);
         this.onmessage(event);
     };
@@ -681,4 +682,51 @@ test('fails to encode bad JSON objects', () => {
     var codec = new h5.JSON_Codec(process_json, send_unicode, on_error);
     expect(function () { codec.send_json(json_ob); }).toThrow();
     expect(sent_unicode).toEqual(null);
+});
+
+test('pipelines a received message', () => {
+    var h5 = H5Gizmos;
+    var url = "ws://dummy.com/ws";
+    var ws = new MockSocketMaker(url);
+    var sender = null;  // overridden by pipeline
+    var dthis = {};
+    var tr = new h5.Translator(dthis, sender);
+    var pipeline = h5.pipeline(ws, tr);
+    // encapsulate a command
+    var val = ["some", "value"];
+    var json_cmd = lit(val); //[h5.LITERAL, val];
+    //var json_msg = get(json_cmd); //[h5.EXEC, json_cmd];
+    var oid = "abc";
+    var depth = 5;
+    var json_msg = get(oid, json_cmd, depth)
+    var json_packet = h5.FINISHED_UNICODE + JSON.stringify(json_msg);
+    ws.fake_receive(json_packet);
+    var expect_ob = ["G", "abc", ["some", "value"]];
+    var expect_packet = "F" + JSON.stringify(expect_ob);
+    expect(ws.sends).toEqual([expect_packet]);
+});
+
+test("doesn't pipeline a bad message.", () => {
+    var h5 = H5Gizmos;
+    var url = "ws://dummy.com/ws";
+    var ws = new MockSocketMaker(url);
+    var sender = null;  // overridden by pipeline
+    var dthis = {};
+    var tr = new h5.Translator(dthis, sender);
+    var pipeline = h5.pipeline(ws, tr);
+    // encapsulate a command
+    var val = ["some", "value"];
+    var json_cmd = lit(val); //[h5.LITERAL, val];
+    //var json_msg = get(json_cmd); //[h5.EXEC, json_cmd];
+    var oid = "abc";
+    var depth = 5;
+    var json_msg = get(oid, json_cmd, depth)
+    var json_packet = h5.FINISHED_UNICODE + JSON.stringify(json_msg) + "oops";
+    expect(function () { ws.fake_receive(json_packet); }).toThrow();
+    expect(ws.sends.length).toEqual(1);
+    var packet = ws.sends[0];
+    expect(packet.substring(0,1)).toEqual("F");
+    var json_str = packet.substring(1);
+    var json_reply = JSON.parse(json_str);
+    expect(json_reply[0]).toEqual(h5.EXCEPTION);
 });
