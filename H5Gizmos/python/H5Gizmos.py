@@ -7,6 +7,7 @@ See js/H5Gizmos.js for protocol JSON formats.
 """
 
 import numpy as np
+import json
 import asyncio
 from .hex_codec import bytearray_to_hex
 
@@ -473,6 +474,35 @@ class GizmoPacker:
 
 class BadMessageIndicator(ValueError):
     "Message fragment first character not understood."
+
+class JsonCodec:
+
+    def __init__(self, process_json, send_unicode, on_error=None):
+        self.process_json = process_json
+        self.send_unicode = send_unicode
+        self.on_error = on_error
+
+    def receive_unicode(self, unicode_str):
+        on_error = self.on_error
+        try:
+            json_ob = json.loads(unicode_str)
+        except Exception as e:
+            if on_error:
+                on_error("failed to parse json " + repr((repr(unicode_str)[:20], e)))
+            raise e
+        self.process_json(json_ob)
+        return json_ob
+
+    def send_json(self, json_ob):
+        on_error = self.on_error
+        try:
+            unicode_str = json.dumps(json_ob)
+        except Exception as e:
+            if on_error:
+                on_error("failed to encode json " + repr((repr(json_ob)[:20], e)))
+            raise e
+        self.send_unicode(unicode_str)
+        return unicode_str
 
 def schedule_task(awaitable):
     "Schedule a task in the global event loop."

@@ -7,6 +7,7 @@
 import unittest
 
 import numpy as np
+import json
 
 from H5Gizmos.python.H5Gizmos import (
     Gizmo, 
@@ -23,6 +24,7 @@ from H5Gizmos.python.H5Gizmos import (
     FINISHED_UNICODE,
     CONTINUE_UNICODE,
     BadMessageIndicator,
+    JsonCodec,
 )
 
 '''
@@ -309,6 +311,71 @@ class TestGizmo(unittest.TestCase):
             P.on_unicode_message("*" + "abc")
         self.assertEqual(packets_processed,  [])
 
+    def test_processes_json_string(self):
+        processed_json = []
+        def process_json(json_ob):
+            processed_json.append(json_ob)
+        sent_unicode = []
+        def send_unicode(x):
+            sent_unicode.append(x)
+        errors = []
+        def on_error(msg):
+            errors.append(msg)
+        codec = JsonCodec(process_json, send_unicode, on_error)
+        expected = ["this", 1, "json"]
+        jstring = '["this", 1, "json"]'
+        codec.receive_unicode(jstring)
+        self.assertEqual(processed_json, [expected])
+
+    def test_rejects_bad_json_string(self):
+        processed_json = []
+        def process_json(json_ob):
+            processed_json.append(json_ob)
+        sent_unicode = []
+        def send_unicode(x):
+            sent_unicode.append(x)
+        errors = []
+        def on_error(msg):
+            errors.append(msg)
+        codec = JsonCodec(process_json, send_unicode, on_error)
+        jstring = '["this", 1, "json]'
+        with self.assertRaises(Exception):
+            codec.receive_unicode(jstring)
+        self.assertEqual(len(errors), 1)
+
+    def test_encodes_json_object(self):
+        processed_json = []
+        def process_json(json_ob):
+            processed_json.append(json_ob)
+        sent_unicode = []
+        def send_unicode(x):
+            sent_unicode.append(x)
+        errors = []
+        def on_error(msg):
+            errors.append(msg)
+        codec = JsonCodec(process_json, send_unicode, on_error)
+        json_ob = ["this", 1, "json"]
+        codec.send_json(json_ob)
+        self.assertEqual(len(sent_unicode), 1)
+        [ustr] = sent_unicode
+        parsed = json.loads(ustr)
+        self.assertEqual(parsed, json_ob)
+
+    def test_rejects_bad_json_object(self):
+        processed_json = []
+        def process_json(json_ob):
+            processed_json.append(json_ob)
+        sent_unicode = []
+        def send_unicode(x):
+            sent_unicode.append(x)
+        errors = []
+        def on_error(msg):
+            errors.append(msg)
+        codec = JsonCodec(process_json, send_unicode, on_error)
+        json_ob = ["this", 1, "json", json]
+        with self.assertRaises(Exception):
+            codec.send_json(json_ob)
+        self.assertEqual(len(errors), 1)
 
 class TestGizmoAsync(unittest.IsolatedAsyncioTestCase):
 
