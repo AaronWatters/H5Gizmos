@@ -9,8 +9,9 @@ See js/H5Gizmos.js for protocol JSON formats.
 import numpy as np
 import json
 import asyncio
+import aiohttp
 from .hex_codec import bytearray_to_hex
-
+from aiohttp import web
 
 class Gizmo:
     EXEC = "E"
@@ -27,7 +28,8 @@ class Gizmo:
     SET = "S"
     EXCEPTION = "X"
 
-    def __init__(self, sender, default_depth=5):
+    def __init__(self, sender, default_depth=5, pipeline=None):
+        self._pipeline = pipeline
         self._sender = sender
         self._default_depth = default_depth
         self._call_backs = {}
@@ -198,6 +200,10 @@ class GizmoLink:
         gz = self._owner_gizmo
         attribute_cmd = ValueConverter(attribute, gz)
         return GizmoGet(self, attribute_cmd, gz)
+
+    def __getitem__(self, key):
+        # in Javascript getitem and getattr are roughly the same
+        return self.__getattr__(key)
 
 
 class GizmoGet(GizmoLink):
@@ -420,6 +426,7 @@ class GizmoPacker:
         self.outgoing_packets = []
         self.auto_flush = auto_flush
         self.awaitable_sender = awaitable_sender
+        self.last_flush_task = None
 
     def flush(self):
         outgoing = self.outgoing_packets
@@ -428,12 +435,17 @@ class GizmoPacker:
             awaitable = self.awaitable_flush(outgoing)
             task = schedule_task(awaitable)
             #print ("flush returns task", task)
+            self.last_flush_task = task
             return task
         else:
             return None
 
     async def awaitable_flush(self, outgoing=None):
         limit = self.packet_limit
+        #if self.last_flush_task is not None:
+        #    # wait for last flush to complete (for testing mainly?)
+        #    await self.last_flush_task
+        #    self.last_flush_task = None
         if outgoing is None:
             outgoing = self.outgoing_packets
             self.outgoing_packets = []
@@ -503,6 +515,105 @@ class JsonCodec:
             raise e
         self.send_unicode(unicode_str)
         return unicode_str
+
+
+class GZPipeline:
+
+    def __init__(self, gizmo, packet_limit=1000000, auto_flush=True, default_depth=5):
+        self.gizmo = gizmo
+        self.sender = None
+        self.request = None
+        self.web_socket = None
+        self.waiting_chunks = []
+        self.packer = GizmoPacker(self.process_packet, self._send, packet_limit, auto_flush)
+        self.json_codec = JsonCodec(self.process_json, self.send_unicode, self.json_error)
+        self.last_json_error = None
+        self.clear()
+
+    auto_clear = True
+
+    def clear(self):
+        # release debug references
+        self.last_unicode_sent = None
+        self.last_json_received = None
+        self.last_packet_processed = None
+        self.last_unicode_received = None
+
+    def set_auto_flush(self, state=True):
+        self.packer.auto_flush = state
+        if state:
+            self.packer.flush()
+
+    def send_json(self, json_ob):
+        self.json_codec.send_json(json_ob)
+
+    async def _send(self, chunk):
+        if self.sender is not None:
+            await self.sender(chunk)
+        else:
+            self.waiting_chunks.append(chunk)
+        if self.auto_clear:
+            self.clear()
+
+    async def handle_websocket_request(self, request, get_websocket=web.WebSocketResponse):
+        if self.request is not None:
+            raise TooManyRequests("A pipeline can only support one request.")
+        ws = get_websocket()
+        self.web_socket = ws
+        await ws.prepare(request)
+        self.request = request
+        self.sender = ws.send_str
+        wc = self.waiting_chunks
+        self.waiting_chunks = []
+        for chunk in wc:
+            await self._send(chunk)
+        await self.listen_to_websocket(ws)
+
+    MSG_TYPE_TEXT = aiohttp.WSMsgType.text
+    MSG_TYPE_ERROR = aiohttp.WSMsgType.error
+
+    async def listen_to_websocket(self, ws):
+        self.web_socket = ws
+        got_exception = False
+        #print("listening to", ws)
+        async for msg in ws:
+            assert not got_exception, "Web socket should terminate after an exception."
+            typ = msg.type
+            print("got message", msg)
+            if typ == self.MSG_TYPE_TEXT:
+                data = msg.data
+                self.receive_unicode(data)
+            elif typ == self.MSG_TYPE_ERROR:
+                got_exception = True
+            else:
+                pass   # ??? ignore ???
+
+    def receive_unicode(self, unicode_str):
+        self.last_unicode_received = unicode_str
+        return self.packer.on_unicode_message(unicode_str)
+
+    def process_packet(self, packet):
+        self.last_packet_processed = packet
+        return self.json_codec.receive_unicode(packet)
+
+    def process_json(self, json_ob):
+        self.last_json_received = json_ob
+        self.gizmo._receive(json_ob)
+        if self.auto_clear:
+            self.clear()
+
+    def send_unicode(self, unicode_str):
+        "async send -- do not wait for completion."
+        task_or_none = self.packer.send_unicode(unicode_str)
+        self.last_unicode_sent = unicode_str
+        return task_or_none
+
+    def json_error(self, msg):
+        # ????
+        self.last_json_error = msg
+
+class TooManyRequests(ValueError):
+    "A pipeline can only support one request."
 
 def schedule_task(awaitable):
     "Schedule a task in the global event loop."
