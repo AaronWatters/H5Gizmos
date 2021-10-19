@@ -528,6 +528,8 @@ class GZPipeline:
         self.packer = GizmoPacker(self.process_packet, self._send, packet_limit, auto_flush)
         self.json_codec = JsonCodec(self.process_json, self.send_unicode, self.json_error)
         self.last_json_error = None
+        self.last_receive_error = None
+        self.ws_error_message = None
         self.clear()
 
     auto_clear = True
@@ -536,6 +538,7 @@ class GZPipeline:
         # release debug references
         self.last_unicode_sent = None
         self.last_json_received = None
+        self.last_json_sent = None
         self.last_packet_processed = None
         self.last_unicode_received = None
 
@@ -546,6 +549,7 @@ class GZPipeline:
 
     def send_json(self, json_ob):
         self.json_codec.send_json(json_ob)
+        self.last_json_sent = json_ob
 
     async def _send(self, chunk):
         if self.sender is not None:
@@ -579,12 +583,20 @@ class GZPipeline:
         async for msg in ws:
             assert not got_exception, "Web socket should terminate after an exception."
             typ = msg.type
-            print("got message", msg)
+            #print("got message", msg)
             if typ == self.MSG_TYPE_TEXT:
                 data = msg.data
-                self.receive_unicode(data)
+                try:
+                    self.receive_unicode(data)
+                except Exception as e:
+                    self.last_receive_error = e
+                    # continue to process messages.
+                    pass
             elif typ == self.MSG_TYPE_ERROR:
                 got_exception = True
+                if self.ws_error_message is None:
+                    self.ws_error_message = msg
+                # If the ws doesn't terminate the assertion will raise.
             else:
                 pass   # ??? ignore ???
 
