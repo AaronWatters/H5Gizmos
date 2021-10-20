@@ -155,7 +155,7 @@ class RequestUrlInfo:
 class GizmoManager:
 
     def __init__(self, identifier, server):
-        self.server = server  # xxx maybe make this a weak ref?
+        #self.server = server  # xxx maybe make this a weak ref?
         self.identifier = identifier
         self.web_socket = None
         self.filename_to_http_handler = {}
