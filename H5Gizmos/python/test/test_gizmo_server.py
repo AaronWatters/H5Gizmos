@@ -181,3 +181,50 @@ class TestFileServices(unittest.TestCase):
                 os.unlink(name)
             self.assertFalse(interface.file_exists(name))
 
+
+class StartStop(unittest.IsolatedAsyncioTestCase):
+
+    async def startup(self, server, delay):
+        #task = asyncio.sleep(1) # testing debug only
+        task = server.run_in_task()
+        await asyncio.sleep(delay)
+        return task
+
+    async def shutdown(self, server, task):
+        #context.server.finalize()
+        #context.finalize()
+        await server.shutdown()
+        #task2 = schedule_task(shutdown())
+        #await task2
+        await task
+        assert server.stopped == True
+
+class TestStartStop(StartStop):
+
+    async def test_start_stop(self, delay=0.1):
+        server = GzServer()
+        task = await self.startup(server, delay)
+        await self.shutdown(server, task)
+
+'''class TestHTTPdelivery(StartStop):
+
+    async def test_http_delivery(self):
+        class file_bytes_getter:
+            content = b"abcdef"
+            def __init__(self):
+                self.delivered = False
+            def __call__(self, path):
+                self.delivered = True
+                return self.content
+        get_file_bytes = file_bytes_getter()
+        def file_exists(path):
+            return True
+        interface = WebInterface(get_file_bytes=get_file_bytes, file_exists=file_exists)
+        S = GzServer()
+        mgr = S.get_new_manager()
+        handler = mgr.add_file("/var/index.html", interface=interface)
+        #self.assertEqual(handler.url_path, None)
+        req = MockFileRequest(handler.url_path)
+        await S.handle_http_get(req, interface=interface)
+        self.assertEqual(interface.body, interface.get_file_bytes())
+        self.assertEqual(interface.content_type, 'text/html')'''

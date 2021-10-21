@@ -105,7 +105,7 @@ class GzServer:
 
     def add_routes(self):
         app = self.app
-        prefix = self.prefix
+        prefix = "/" + self.prefix
         app.router.add_route('GET', prefix + '/http/{tail:.*}', self.handle_http_get)
         app.router.add_route('POST', prefix + '/http/{tail:.*}', self.handle_http_post)
         app.router.add_route('POST', prefix + '/ws/{tail:.*}', self.handle_web_socket)
@@ -132,6 +132,8 @@ class GzServer:
 
     async def shutdown(self):
         app = self.app
+        if self.task is not None:
+            self.task.cancel()
         if app is not None:
             # https://stackoverflow.com/questions/55236254/cant-stop-aiohttp-websocket-server
             await app.shutdown()
