@@ -1,4 +1,7 @@
 
+# Requires python 3.8
+# Run from setup folder:
+# nosetests --with-coverage --cover-html --cover-package=H5Gizmos --cover-erase --cover-inclusive
 
 import unittest
 
@@ -337,7 +340,7 @@ class TestNoFileForWebSocket(StartStop):
 class SillyWebSocketHandler:
 
     def __init__(self):
-        pass
+        self.data = None
 
     async def handle(self, info, request, interface):
         print("**** handler started")
@@ -350,7 +353,9 @@ class SillyWebSocketHandler:
                     print("closing", ws)
                     await ws.close()
                 else:
-                    print("answering", ws, msg.data)
+                    data = msg.data
+                    self.data = data
+                    print("answering", ws, data)
                     await ws.send_str(msg.data + '/answer')
             elif msg.tp == aiohttp.MsgType.error:
                 print(ws, 'ws connection closed with exception %s' %
@@ -360,6 +365,7 @@ class SillyWebSocketHandler:
 
 
 class TestSillySocketHandler(StartStop):
+
 
     async def test_silly_handler(self):
         S = GzServer()
@@ -375,6 +381,7 @@ class TestSillySocketHandler(StartStop):
         delay = 0.1
         session = aiohttp.ClientSession()
         task = None
+        reply = None
         try:
             task = await self.startup(S, delay)
             ws = await session.ws_connect(url)
@@ -384,12 +391,15 @@ class TestSillySocketHandler(StartStop):
             await ws.send_str("hello")
             print("awaiting reply")
             reply = await ws.receive()
-            print("replied", repr(reply.data), "now closing")
+            data = reply.data
+            self.reply = data
+            print("replied", repr(data), "now closing")
             await ws.close()
         finally:
             if task is not None:
                 await self.shutdown(S, task)
-        #self.assertEqual(1, 0)
+        self.assertNotEqual(reply, None)
+        self.assertNotEqual(handler.data, None)
 
 class TestNoWebSocketHandler(StartStop):
 
