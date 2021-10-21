@@ -9,7 +9,7 @@ import os
 DEFAULT_PORT = 9091
 GET = "GET"
 POST = "POST"
-WS = "WS"
+WS = "ws"
 REQUEST_METHODS = frozenset([GET, POST, WS])
 #UTF8 = "utf-8"
 
@@ -56,11 +56,11 @@ class GzServer:
         self.identifier_to_manager = {}
         self.counter = 0
 
-    def get_new_manager(self):
+    def get_new_manager(self, websocket_handler=None):
         c = self.counter
         self.counter = c + 1
         identifier = "MGR" + str(c)
-        result = GizmoManager(identifier, self)
+        result = GizmoManager(identifier, self, websocket_handler)
         self.identifier_to_manager[identifier] = result
         return result
 
@@ -178,13 +178,15 @@ class RequestUrlInfo:
 
 class GizmoManager:
 
-    def __init__(self, identifier, server):
+    def __init__(self, identifier, server, websocket_handler=None):
         #self.server = server  # xxx maybe make this a weak ref?
         self.identifier = identifier
-        self.web_socket = None
+        #self.web_socket = None
+        self.web_socket_handler = websocket_handler
         self.filename_to_http_handler = {}
         #self.url_path = "/%s/%s" % (server.prefix, identifier)
         self.prefix = server.prefix
+        print(self.identifier, "manager init with socket handler", self.web_socket_handler)
 
     def add_file(self, at_path, filename=None, content_type=None, interface=STDInterface):
         if filename is None:
@@ -194,12 +196,12 @@ class GizmoManager:
         return handler
 
     async def handle(self, method, info, request, interface=STDInterface):
-        print("... mgr handling", request.path)
+        print("... mgr handling", request.path, "method", method)
         filename = info.filename
         f2h = self.filename_to_http_handler
         if method == WS:
             assert filename is None, "WS request should have no filename " + repr(info.splitpath)
-            return self.handle_ws(info, request, interface)
+            return await self.handle_ws(info, request, interface)
         else:
             assert filename is not None, "HTTP requests should have a filename " + repr(info.splitpath)
             handler = f2h.get(filename)
@@ -212,6 +214,11 @@ class GizmoManager:
             else:
                 raise AssertionError("unknown http method: " + repr(method))
 
+    async def handle_ws(self, info, request, interface=STDInterface):
+        handler = self.web_socket_handler
+        print ("delegating web socket handling to", handler)
+        assert handler is not None, "No web socket handler for id " + repr(self.identifier)
+        await handler.handle(info, request, interface)
 
 class FileGetter:
 
@@ -237,7 +244,7 @@ class FileGetter:
         elif method == WS:
             mprefix = "ws"
         else:
-            raise ("unknown method: " + repr(method))
+            raise ValueError("unknown method: " + repr(method))
         components = ["", self.prefix, mprefix, self.identifier, self.filename]
         return "/".join(components)
 

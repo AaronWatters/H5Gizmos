@@ -6,6 +6,7 @@ import numpy as np
 import json
 import asyncio
 import aiohttp
+from aiohttp import web
 
 from H5Gizmos.python.gizmo_server import (
     GzServer,
@@ -227,10 +228,10 @@ class TestStartStop(StartStop):
         task = await self.startup(server, delay)
         await self.shutdown(server, task)
 
-def std_url(path):
+def std_url(path, protocol="http"):
     if path.startswith("/"):
         path = path[1:]
-    return "http://localhost:%s/%s" % (DEFAULT_PORT, path)
+    return "%s://localhost:%s/%s" % (protocol, DEFAULT_PORT, path)
 
 class TestHTTPdelivery(StartStop):
 
@@ -268,7 +269,7 @@ class TestHTTPdelivery(StartStop):
 
 class TestHTTP404(StartStop):
 
-    async def test_http_delivery(self, delay=0.1):
+    async def test_http_404(self, delay=0.1):
         class file_bytes_getter:
             content = b"abcdef"
             def __init__(self):
@@ -298,3 +299,118 @@ class TestHTTP404(StartStop):
                 await self.shutdown(S, task)
         self.assertEqual(get_file_bytes.delivered, False)
         self.assertEqual(info.status, 404)
+
+
+class TestNoFileForWebSocket(StartStop):
+
+    async def test_ws_no_file(self, delay=0.1):
+        class file_bytes_getter:
+            content = b"abcdef"
+            def __init__(self):
+                self.delivered = False
+            def __call__(self, path):
+                self.delivered = True
+                return self.content
+        get_file_bytes = file_bytes_getter()
+        def file_exists(path):
+            return True
+        interface = WebInterface(get_file_bytes=get_file_bytes, file_exists=file_exists)
+        S = GzServer(interface=interface)
+        mgr = S.get_new_manager()
+        handler = mgr.add_file("/var/index.html", interface=interface)
+        #self.assertEqual(handler.url_path, None)
+        path = handler.method_path("ws")
+        url = std_url(path)
+        print("   ... getting url", repr(url))
+        #req = MockFileRequest(handler.url_path)
+        #await S.handle_http_get(req, interface=interface)
+        task = None
+        try:
+            task = await self.startup(S, delay)
+            info = await self.get_url_response(url)
+        finally:
+            if task is not None:
+                await self.shutdown(S, task)
+        self.assertEqual(get_file_bytes.delivered, False)
+        self.assertEqual(info.status, 404)
+
+class SillyWebSocketHandler:
+
+    def __init__(self):
+        pass
+
+    async def handle(self, info, request, interface):
+        print("**** handler started")
+        ws = web.WebSocketResponse()
+        await ws.prepare(request)
+        print ("XXXX ws attached", ws)
+        async for msg in ws:
+            if msg.type == aiohttp.WSMsgType.text:
+                if msg.data == 'close':
+                    print("closing", ws)
+                    await ws.close()
+                else:
+                    print("answering", ws, msg.data)
+                    await ws.send_str(msg.data + '/answer')
+            elif msg.tp == aiohttp.MsgType.error:
+                print(ws, 'ws connection closed with exception %s' %
+                    ws.exception())
+        print('websocket connection closed', ws)
+        return ws
+
+
+class TestSillySocketHandler(StartStop):
+
+    async def test_silly_handler(self):
+        S = GzServer()
+        handler = SillyWebSocketHandler()
+        mgr = S.get_new_manager(websocket_handler=handler)
+        mprefix = "ws"
+        prefix = mgr.prefix
+        identifier = mgr.identifier
+        components = ["", prefix, mprefix, identifier]
+        path = "/".join(components)
+        url = std_url(path)
+        # https://docs.aiohttp.org/en/v0.18.3/client_websockets.html
+        delay = 0.1
+        session = aiohttp.ClientSession()
+        task = None
+        try:
+            task = await self.startup(S, delay)
+            ws = await session.ws_connect(url)
+            #ws.send_str(msg.data + 'hello')
+            msgtxt = "hello"
+            print ("sending", repr(msgtxt), "to", ws)
+            await ws.send_str("hello")
+            print("awaiting reply")
+            reply = await ws.receive()
+            print("replied", repr(reply.data), "now closing")
+            await ws.close()
+        finally:
+            if task is not None:
+                await self.shutdown(S, task)
+        #self.assertEqual(1, 0)
+
+class TestNoWebSocketHandler(StartStop):
+
+    async def test_no_handler(self):
+        S = GzServer()
+        mgr = S.get_new_manager()
+        mprefix = "ws"
+        prefix = mgr.prefix
+        identifier = mgr.identifier
+        components = ["", prefix, mprefix, identifier]
+        path = "/".join(components)
+        url = std_url(path)
+        # https://docs.aiohttp.org/en/v0.18.3/client_websockets.html
+        delay = 0.1
+        session = aiohttp.ClientSession()
+        task = None
+        try:
+            task = await self.startup(S, delay)
+            with self.assertRaises(Exception):
+                ws = await session.ws_connect(url)
+        finally:
+            if task is not None:
+                await self.shutdown(S, task)
+        #self.assertEqual(1, 0)
