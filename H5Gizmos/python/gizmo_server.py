@@ -12,6 +12,13 @@ POST = "POST"
 WS = "WS"
 #UTF8 = "utf-8"
 
+
+def get_file_bytes(path):
+    # xxxx what about binary files?
+    f = open(path, "rb")
+    bytes_content = f.read()
+    return bytes_content
+
 class WebInterface:
     "External interface encapsulation to help support debugging and testing."
 
@@ -20,19 +27,15 @@ class WebInterface:
         respond = web.Response,
         stream_respond = web.StreamResponse,
         ws_respond = web.WebSocketResponse,
+        get_file_bytes = get_file_bytes,
+        file_exists = os.path.isfile,
     ):
         self.respond = respond
         self.stream_respond = stream_respond
         self.ws_respond = ws_respond
+        self.get_file_bytes = get_file_bytes
+        self.file_exists = file_exists
 
-    def file_exists(self, path):
-        return os.path.isfile(path)
-
-    def get_file_bytes(self, path):
-        # xxxx what about binary files?
-        f = open(path, "rb")
-        bytes_content = f.read()
-        return bytes_content
 
 STDInterface = WebInterface()
 
