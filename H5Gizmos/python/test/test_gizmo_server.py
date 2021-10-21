@@ -5,11 +5,13 @@ import unittest
 import numpy as np
 import json
 import asyncio
+import aiohttp
 
 from H5Gizmos.python.gizmo_server import (
     GzServer,
     WebInterface,
     RequestUrlInfo,
+    DEFAULT_PORT,
 )
 
 class FakeApp:
@@ -89,11 +91,11 @@ class MockFileInterface:
     body = content_type = None
     exists_result = True
 
-    async def respond(self, body, content_type):
+    def respond(self, body, content_type):
         self.body = body
         self.content_type = content_type
 
-    async def stream_respond(self, *args, **kwargs):
+    def stream_respond(self, *args, **kwargs):
         raise MockFileDoesntExist(repr((args, kwargs)))
 
     def file_exists(self, path):
@@ -120,8 +122,9 @@ class TestMockFile(unittest.IsolatedAsyncioTestCase):
         S = GzServer()
         mgr = S.get_new_manager()
         handler = mgr.add_file("/var/index.html", interface=interface)
-        #self.assertEqual(handler.url_path, None)
-        req = MockFileRequest(handler.url_path)
+        path = handler.method_path()
+        #self.assertEqual(path, None)
+        req = MockFileRequest(path)
         await S.handle_http_get(req, interface=interface)
         self.assertEqual(interface.body, interface.get_file_bytes())
         self.assertEqual(interface.content_type, 'text/html')
@@ -136,7 +139,8 @@ class TestMockFile2(unittest.IsolatedAsyncioTestCase):
         # must be after handler
         interface.exists_result = False
         #self.assertEqual(handler.url_path, None)
-        req = MockFileRequest(handler.url_path)
+        path = handler.method_path()
+        req = MockFileRequest(path)
         with self.assertRaises(MockFileDoesntExist):
             await S.handle_http_post(req, interface=interface)
 
@@ -148,7 +152,8 @@ class TestMockFile3(unittest.IsolatedAsyncioTestCase):
         mgr = S.get_new_manager()
         handler = mgr.add_file("/var/index.html", interface=interface)
         #self.assertEqual(handler.url_path, None)
-        req = MockFileRequest(handler.url_path)
+        path = handler.method_path()
+        req = MockFileRequest(path)
         info = RequestUrlInfo(req, S.prefix)
         with self.assertRaises(AssertionError):
             await mgr.handle("Gulp", info, req, interface=interface)
@@ -182,6 +187,13 @@ class TestFileServices(unittest.TestCase):
             self.assertFalse(interface.file_exists(name))
 
 
+class ResponseInfo:
+
+    def __init__(self, status, text):
+        self.status = status
+        self.text = text
+
+
 class StartStop(unittest.IsolatedAsyncioTestCase):
 
     async def startup(self, server, delay):
@@ -199,6 +211,15 @@ class StartStop(unittest.IsolatedAsyncioTestCase):
         await task
         assert server.stopped == True
 
+    async def get_url_response(self, url):
+        # https://www.twilio.com/blog/asynchronous-http-requests-in-python-with-aiohttp
+        # https://docs.aiohttp.org/en/stable/client_reference.html
+        async with aiohttp.ClientSession() as client:
+            async with client.get(url) as resp:
+                status = resp.status
+                text = await resp.text()
+                return ResponseInfo(status, text)
+
 class TestStartStop(StartStop):
 
     async def test_start_stop(self, delay=0.1):
@@ -206,9 +227,14 @@ class TestStartStop(StartStop):
         task = await self.startup(server, delay)
         await self.shutdown(server, task)
 
-'''class TestHTTPdelivery(StartStop):
+def std_url(path):
+    if path.startswith("/"):
+        path = path[1:]
+    return "http://localhost:%s/%s" % (DEFAULT_PORT, path)
 
-    async def test_http_delivery(self):
+class TestHTTPdelivery(StartStop):
+
+    async def test_http_delivery(self, delay=0.1):
         class file_bytes_getter:
             content = b"abcdef"
             def __init__(self):
@@ -220,11 +246,55 @@ class TestStartStop(StartStop):
         def file_exists(path):
             return True
         interface = WebInterface(get_file_bytes=get_file_bytes, file_exists=file_exists)
-        S = GzServer()
+        S = GzServer(interface=interface)
         mgr = S.get_new_manager()
         handler = mgr.add_file("/var/index.html", interface=interface)
         #self.assertEqual(handler.url_path, None)
-        req = MockFileRequest(handler.url_path)
-        await S.handle_http_get(req, interface=interface)
-        self.assertEqual(interface.body, interface.get_file_bytes())
-        self.assertEqual(interface.content_type, 'text/html')'''
+        path = handler.method_path()
+        url = std_url(path)
+        print("   ... getting url", repr(url))
+        #req = MockFileRequest(handler.url_path)
+        #await S.handle_http_get(req, interface=interface)
+        task = None
+        try:
+            task = await self.startup(S, delay)
+            info = await self.get_url_response(url)
+        finally:
+            if task is not None:
+                await self.shutdown(S, task)
+        self.assertEqual(get_file_bytes.delivered, True)
+        self.assertEqual(info.status, 200)
+        self.assertEqual(info.text.encode("utf-8"), file_bytes_getter.content)
+
+class TestHTTP404(StartStop):
+
+    async def test_http_delivery(self, delay=0.1):
+        class file_bytes_getter:
+            content = b"abcdef"
+            def __init__(self):
+                self.delivered = False
+            def __call__(self, path):
+                self.delivered = True
+                return self.content
+        get_file_bytes = file_bytes_getter()
+        def file_exists(path):
+            return True
+        interface = WebInterface(get_file_bytes=get_file_bytes, file_exists=file_exists)
+        S = GzServer(interface=interface)
+        mgr = S.get_new_manager()
+        handler = mgr.add_file("/var/index.html", interface=interface)
+        #self.assertEqual(handler.url_path, None)
+        path = "/no/such/path"
+        url = std_url(path)
+        print("   ... getting url", repr(url))
+        #req = MockFileRequest(handler.url_path)
+        #await S.handle_http_get(req, interface=interface)
+        task = None
+        try:
+            task = await self.startup(S, delay)
+            info = await self.get_url_response(url)
+        finally:
+            if task is not None:
+                await self.shutdown(S, task)
+        self.assertEqual(get_file_bytes.delivered, False)
+        self.assertEqual(info.status, 404)

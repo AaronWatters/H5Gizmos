@@ -10,6 +10,7 @@ DEFAULT_PORT = 9091
 GET = "GET"
 POST = "POST"
 WS = "WS"
+REQUEST_METHODS = frozenset([GET, POST, WS])
 #UTF8 = "utf-8"
 
 
@@ -43,9 +44,10 @@ class GzServer:
 
     verbose = False
 
-    def __init__(self, prefix="gizmo", port=DEFAULT_PORT):
+    def __init__(self, prefix="gizmo", port=DEFAULT_PORT, interface=STDInterface):
         self.prefix = prefix
         self.port = port
+        self.interface = interface
         self.status = "initialized"
         self.task = None
         self.app = None
@@ -106,28 +108,42 @@ class GzServer:
     def add_routes(self):
         app = self.app
         prefix = "/" + self.prefix
-        app.router.add_route('GET', prefix + '/http/{tail:.*}', self.handle_http_get)
-        app.router.add_route('POST', prefix + '/http/{tail:.*}', self.handle_http_post)
-        app.router.add_route('POST', prefix + '/ws/{tail:.*}', self.handle_web_socket)
+        app.router.add_route(GET, prefix + '/http/{tail:.*}', self.handle_http_get)
+        app.router.add_route(POST, prefix + '/http/{tail:.*}', self.handle_http_post)
+        app.router.add_route(GET, prefix + '/ws/{tail:.*}', self.handle_web_socket)
 
-    async def handle(self, request, method="GET", interface=STDInterface):
+    async def handle(self, request, method="GET", interface=None):
+        if interface is None:
+            interface = self.interface
+        print(" ... server handling", request.path)
         i2m = self.identifier_to_manager
         try:
             info = RequestUrlInfo(request, self.prefix)
             identifier = info.identifier
             mgr = i2m.get(identifier)
             assert mgr is not None, "could not resolve " + repr(identifier)
+            print(" ... delegate handle to mgr", mgr)
             return await mgr.handle(method, info, request, interface=interface)
         except AssertionError as e:
-            return await interface.stream_respond(status=404, reason=repr(e))
+            print("... 404 for assertion failure: ", e)
+            return interface.stream_respond(status=404, reason=repr(e))
 
-    def handle_http_get(self, request, interface=STDInterface):
+    def handle_http_get(self, request, interface=None):
+        print(" ... server get", request.path)
+        if interface is None:
+            interface = self.interface
         return self.handle(request, method=GET, interface=interface)
 
-    def handle_http_post(self, request, interface=STDInterface):
+    def handle_http_post(self, request, interface=None):
+        print(" ... server post", request.path)
+        if interface is None:
+            interface = self.interface
         return self.handle(request, method=POST, interface=interface)
 
-    def handle_web_socket(self, request, method=WS, interface=STDInterface):
+    def handle_web_socket(self, request, interface=None):
+        print(" ... server socket", request.path)
+        if interface is None:
+            interface = self.interface
         return self.handle(request, method=WS, interface=interface)
 
     async def shutdown(self):
@@ -142,20 +158,23 @@ class GzServer:
 
 class RequestUrlInfo:
 
+    request_methods = ("http", "ws")
+
     def __init__(self, request, prefix):
         self.request = request
-        self.path = request.path
-        sp = self.splitpath = self.path.split("/")
-        got_front = list(sp[:2])
+        path = self.path = request.path
+        sp = self.splitpath = path.split("/")
         ln = len(sp)
         # ??? xxx eventually allow mounting directories?
-        assert 3 <= ln <= 4, "expected 3 or 4 components to path: " + repr(sp)
-        expect_front = ["", prefix]
-        assert got_front == expect_front, "No match: " + repr((got_front, expect_front))
-        self.identifier = sp[2]
+        assert 4 <= ln <= 5, "expected 4 or 5 components to path: " + repr(sp)
+        assert sp[0] == "", "path should start with slash: " + repr(path)
+        assert sp[1] == prefix, "path should have prefix: " + repr((prefix, path))
+        method = self.method = sp[2]
+        assert method in self.request_methods, "unknown request method: " + repr((method, path))
+        self.identifier = sp[3]
         self.filename = None
-        if ln == 4:
-            self.filename = sp[3]
+        if ln == 5:
+            self.filename = sp[4]
 
 class GizmoManager:
 
@@ -164,7 +183,8 @@ class GizmoManager:
         self.identifier = identifier
         self.web_socket = None
         self.filename_to_http_handler = {}
-        self.url_path = "/%s/%s" % (server.prefix, identifier)
+        #self.url_path = "/%s/%s" % (server.prefix, identifier)
+        self.prefix = server.prefix
 
     def add_file(self, at_path, filename=None, content_type=None, interface=STDInterface):
         if filename is None:
@@ -174,19 +194,21 @@ class GizmoManager:
         return handler
 
     async def handle(self, method, info, request, interface=STDInterface):
+        print("... mgr handling", request.path)
         filename = info.filename
         f2h = self.filename_to_http_handler
         if method == WS:
             assert filename is None, "WS request should have no filename " + repr(info.splitpath)
-            return await self.handle_ws(info, request, interface)
+            return self.handle_ws(info, request, interface)
         else:
             assert filename is not None, "HTTP requests should have a filename " + repr(info.splitpath)
             handler = f2h.get(filename)
             assert handler is not None, "No handler for filename " + repr(info.splitpath)
+            print("... mgr delegating to handler", handler)
             if method == GET:
-                return await handler.handle_get(info, request, interface=interface)
+                return handler.handle_get(info, request, interface=interface)
             elif method == POST:
-                return await handler.handle_post(info, request, interface=interface)
+                return handler.handle_post(info, request, interface=interface)
             else:
                 raise AssertionError("unknown http method: " + repr(method))
 
@@ -195,19 +217,35 @@ class FileGetter:
 
     def __init__(self, fs_path, filename, mgr, content_type=None, interface=STDInterface):
         assert interface.file_exists(fs_path)
-        self.url_path = "%s/%s" % (mgr.url_path, filename)
+        #self.url_path = "%s/%s" % (mgr.url_path, filename)
+        self.prefix = mgr.prefix
+        self.identifier = mgr.identifier
         self.fs_path = fs_path
+        self.filename = filename
         self.encoding = None
         if content_type is None:
             (content_type, encoding) = mimetypes.guess_type(fs_path)
             self.encoding = encoding # not used... xxx
         self.content_type = content_type
 
-    async def handle_get(self, info, request, interface=STDInterface):
+    def method_path(self, method=GET):
+        mprefix = None
+        if method == GET:
+            mprefix = "http"
+        elif method == POST:
+            mprefix = "http"
+        elif method == WS:
+            mprefix = "ws"
+        else:
+            raise ("unknown method: " + repr(method))
+        components = ["", self.prefix, mprefix, self.identifier, self.filename]
+        return "/".join(components)
+
+    def handle_get(self, info, request, interface=STDInterface):
         path = self.fs_path
         assert interface.file_exists(path)
         bytes = interface.get_file_bytes(path)
-        return await interface.respond(body=bytes, content_type=self.content_type)
+        return interface.respond(body=bytes, content_type=self.content_type)
 
-    async def handle_post(self, info, request, interface=STDInterface):
-        return await self.handle_get(info, request, interface=interface)
+    def handle_post(self, info, request, interface=STDInterface):
+        return self.handle_get(info, request, interface=interface)
