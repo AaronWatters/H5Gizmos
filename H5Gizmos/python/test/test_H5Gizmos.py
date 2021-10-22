@@ -590,35 +590,6 @@ class TestGizmoAsync(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(TooManyRequests):
             await P.handle_websocket_request(req, cnx.get_web_socket)
 
-    '''async def xtest_pipelines_a_message_received(self, auto_clear=False):
-        # I had to move this, I don't know why.
-        GW = GizmoWrapper()
-        G = GW.G
-        data = []
-        def callback_function(*args):
-            data.append(args)
-        oid = G._register_callback(callback_function)
-        arguments = ["this", "argument", "list"]
-        json_msg = [GZ.CALLBACK, oid, arguments]
-        ws_msg = FINISHED_UNICODE + json.dumps(json_msg)
-        P = GZPipeline(G)
-        P.auto_clear = auto_clear
-        # Make a "request" with the callback
-        cnx = FakeWebSocketUnicodeMessages([ws_msg])
-        #async for x in cnx.ws:
-        #    #p("for", x)
-        req = None  # the request is not used in the mock pipeline
-        # attach the web socket to the pipeline
-        await P.handle_websocket_request(req, cnx.get_web_socket)
-        # Send the request
-        ws = cnx.ws
-        self.assertEqual(data, [tuple(arguments)])
-        if auto_clear:
-            self.assertEqual(P.last_json_received, None)
-        else:
-            self.assertNotEqual(P.last_json_received, None)
-        self.assertEqual(P.last_unicode_sent, None)'''
-
     async def test_pipelines_a_message_sent_early(self, auto_clear=False):
         #p("stargint early test")
         GW = GizmoWrapper()

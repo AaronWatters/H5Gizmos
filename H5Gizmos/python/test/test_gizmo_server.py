@@ -416,7 +416,7 @@ class TestSillySocketHandler(StartStop):
 
 class TestBasicSocketSendPipeline(StartStop):
 
-    async def test_websocket_pipeline(self):
+    async def test_websocket_send_pipeline(self):
         from H5Gizmos.python.test.test_H5Gizmos import exec_msg, _lit, FINISHED_UNICODE
         import json
         S = GzServer()
@@ -451,6 +451,47 @@ class TestBasicSocketSendPipeline(StartStop):
         json_str = data[1:]
         json_ob_rcv = json.loads(json_str)
         self.assertEqual(json_ob_rcv, json_msg)
+
+class TestBasicSocketCallbackPipeline(StartStop):
+
+    async def test_websocket_callback_pipeline(self):
+        from H5Gizmos.python.test.test_H5Gizmos import GZ, FINISHED_UNICODE
+        import json
+        S = GzServer()
+        G = H5Gizmos.Gizmo()
+        data = []
+        def callback_function(*args):
+            data.append(args)
+        oid = G._register_callback(callback_function)
+        handler = GizmoPipelineSocketHandler(G)
+        mgr = S.get_new_manager(websocket_handler=handler)
+        url = ws_url(mgr)
+        # Make a message to send from JS
+        arguments = ["this", "argument", "list"]
+        json_msg = [GZ.CALLBACK, oid, arguments]
+        msg_str = FINISHED_UNICODE + json.dumps(json_msg)
+        delay = 0.1
+        session = aiohttp.ClientSession()
+        task = None
+        received = None
+        try:
+            print("starting task")
+            task = await self.startup(S, delay)
+            ws = await session.ws_connect(url)
+            print('send_str', msg_str)
+            await ws.send_str(msg_str)
+            print("closing ws")
+            await ws.close()
+            for i in range(100):
+                # wait for message to arrive
+                if len(data) > 0:
+                    break
+                print ("sleeping waiting for callback data", i)
+                asyncio.sleep(delay)
+        finally:
+            if task is not None:
+                await self.shutdown(S, task)
+        self.assertEqual(data, [tuple(arguments)])
 
 
 class TestNoWebSocketHandler(StartStop):
