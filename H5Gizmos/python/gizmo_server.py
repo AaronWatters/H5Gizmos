@@ -1,4 +1,6 @@
 
+from . import H5Gizmos
+
 from aiohttp import web
 import aiohttp
 import asyncio
@@ -88,6 +90,13 @@ class GzServer:
         self.app = app_factory()
         self.add_routes()
         return self.app
+
+    async def on_shutdown(self, app):
+        # https://docs.aiohttp.org/en/v0.22.4/web.html#aiohttp-web-graceful-shutdown
+        for mgr in self.identifier_to_manager.values():
+            ws = mgr.web_socket_handler.ws
+            if ws is not None:
+                await ws.close(code=999, message='Server shutdown')
           
     async def make_runner(self, app, async_run=web._run_app, **args):
         self.status = "starting runner"
@@ -256,3 +265,14 @@ class FileGetter:
 
     def handle_post(self, info, request, interface=STDInterface):
         return self.handle_get(info, request, interface=interface)
+
+class GizmoPipelineSocketHandler:
+
+    def __init__(self, gizmo, packet_limit=1000000, auto_flush=True):
+        pipeline = H5Gizmos.GZPipeline(gizmo, packet_limit=packet_limit, auto_flush=auto_flush)
+        self.pipeline = pipeline
+        self.ws = None
+
+    async def handle(self, info, request, interface):
+        print("**** pipeline handler started")
+        await self.pipeline.handle_websocket_request(request)

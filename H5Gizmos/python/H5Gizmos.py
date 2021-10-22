@@ -28,7 +28,7 @@ class Gizmo:
     SET = "S"
     EXCEPTION = "X"
 
-    def __init__(self, sender, default_depth=5, pipeline=None):
+    def __init__(self, sender=None, default_depth=5, pipeline=None):
         self._pipeline = pipeline
         self._sender = sender
         self._default_depth = default_depth
@@ -38,6 +38,10 @@ class Gizmo:
         self._oid_to_get_futures = {}
         self._on_exception = None
         self._last_exception_payload = None
+
+    def _set_pipeline(self, pipeline):
+        self._pipeline = pipeline
+        self._sender = pipeline.send_json
 
     def _register_callback(self, callable):
         c2o = self._callable_to_oid
@@ -519,8 +523,9 @@ class JsonCodec:
 
 class GZPipeline:
 
-    def __init__(self, gizmo, packet_limit=1000000, auto_flush=True, default_depth=5):
+    def __init__(self, gizmo, packet_limit=1000000, auto_flush=True):
         self.gizmo = gizmo
+        gizmo._set_pipeline(self)
         self.sender = None
         self.request = None
         self.web_socket = None
@@ -532,7 +537,7 @@ class GZPipeline:
         self.ws_error_message = None
         self.clear()
 
-    auto_clear = True
+    auto_clear = True  # set false only for debug
 
     def clear(self):
         # release debug references
@@ -583,7 +588,7 @@ class GZPipeline:
         async for msg in ws:
             assert not got_exception, "Web socket should terminate after an exception."
             typ = msg.type
-            #print("got message", msg)
+            print("got message", typ, msg.data)
             if typ == self.MSG_TYPE_TEXT:
                 data = msg.data
                 try:
@@ -601,14 +606,17 @@ class GZPipeline:
                 pass   # ??? ignore ???
 
     def receive_unicode(self, unicode_str):
+        print("pipeline receive unicode", repr(unicode_str))
         self.last_unicode_received = unicode_str
         return self.packer.on_unicode_message(unicode_str)
 
     def process_packet(self, packet):
+        print("pipeline process packet", repr(packet))
         self.last_packet_processed = packet
         return self.json_codec.receive_unicode(packet)
 
     def process_json(self, json_ob):
+        print("pipeline process_json", repr(json_ob))
         self.last_json_received = json_ob
         self.gizmo._receive(json_ob)
         if self.auto_clear:
@@ -616,12 +624,14 @@ class GZPipeline:
 
     def send_unicode(self, unicode_str):
         "async send -- do not wait for completion."
+        print("pipeline send unicode", repr(unicode_str))
         task_or_none = self.packer.send_unicode(unicode_str)
         self.last_unicode_sent = unicode_str
         return task_or_none
 
     def json_error(self, msg):
         # ????
+        print("pipeline json err", msg)
         self.last_json_error = msg
 
 class TooManyRequests(ValueError):

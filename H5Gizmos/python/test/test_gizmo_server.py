@@ -11,11 +11,14 @@ import asyncio
 import aiohttp
 from aiohttp import web
 
+from H5Gizmos.python import H5Gizmos
+
 from H5Gizmos.python.gizmo_server import (
     GzServer,
     WebInterface,
     RequestUrlInfo,
     DEFAULT_PORT,
+    GizmoPipelineSocketHandler,
 )
 
 class FakeApp:
@@ -345,6 +348,7 @@ class SillyWebSocketHandler:
     async def handle(self, info, request, interface):
         print("**** handler started")
         ws = web.WebSocketResponse()
+        self.ws = ws
         await ws.prepare(request)
         print ("XXXX ws attached", ws)
         async for msg in ws:
@@ -360,23 +364,30 @@ class SillyWebSocketHandler:
             elif msg.tp == aiohttp.MsgType.error:
                 print(ws, 'ws connection closed with exception %s' %
                     ws.exception())
+        self.ws = None
         print('websocket connection closed', ws)
         return ws
 
 
+def ws_url(mgr):
+    mprefix = "ws"
+    prefix = mgr.prefix
+    identifier = mgr.identifier
+    components = ["", prefix, mprefix, identifier]
+    path = "/".join(components)
+    url = std_url(path)
+    return url
+
+
 class TestSillySocketHandler(StartStop):
 
+    ws = None
 
     async def test_silly_handler(self):
         S = GzServer()
         handler = SillyWebSocketHandler()
         mgr = S.get_new_manager(websocket_handler=handler)
-        mprefix = "ws"
-        prefix = mgr.prefix
-        identifier = mgr.identifier
-        components = ["", prefix, mprefix, identifier]
-        path = "/".join(components)
-        url = std_url(path)
+        url = ws_url(mgr)
         # https://docs.aiohttp.org/en/v0.18.3/client_websockets.html
         delay = 0.1
         session = aiohttp.ClientSession()
@@ -385,6 +396,7 @@ class TestSillySocketHandler(StartStop):
         try:
             task = await self.startup(S, delay)
             ws = await session.ws_connect(url)
+            self.ws = ws
             #ws.send_str(msg.data + 'hello')
             msgtxt = "hello"
             print ("sending", repr(msgtxt), "to", ws)
@@ -398,8 +410,48 @@ class TestSillySocketHandler(StartStop):
         finally:
             if task is not None:
                 await self.shutdown(S, task)
+        self.ws = None
         self.assertNotEqual(reply, None)
-        self.assertNotEqual(handler.data, None)
+
+
+class TestBasicSocketSendPipeline(StartStop):
+
+    async def test_websocket_pipeline(self):
+        from H5Gizmos.python.test.test_H5Gizmos import exec_msg, _lit, FINISHED_UNICODE
+        import json
+        S = GzServer()
+        G = H5Gizmos.Gizmo()
+        handler = GizmoPipelineSocketHandler(G)
+        mgr = S.get_new_manager(websocket_handler=handler)
+        url = ws_url(mgr)
+        # Make a message to send to JS
+        json_ob = [1, "json", None]
+        json_msg = exec_msg(_lit(json_ob))
+        delay = 0.1
+        session = aiohttp.ClientSession()
+        task = None
+        received = None
+        data = None
+        try:
+            task = await self.startup(S, delay)
+            ws = await session.ws_connect(url)
+            G._send(json_msg)
+            print("awaiting receive")
+            received = await ws.receive()
+            data = received.data
+            #self.reply = data
+            #print("replied", repr(data), "now closing")
+            await ws.close()
+        finally:
+            if task is not None:
+                await self.shutdown(S, task)
+        self.assertNotEqual(received, None)
+        self.assertNotEqual(data, None)
+        self.assertEqual(data[0], FINISHED_UNICODE)
+        json_str = data[1:]
+        json_ob_rcv = json.loads(json_str)
+        self.assertEqual(json_ob_rcv, json_msg)
+
 
 class TestNoWebSocketHandler(StartStop):
 

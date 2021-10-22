@@ -561,7 +561,7 @@ class TestGizmoAsync(unittest.IsolatedAsyncioTestCase):
         # attach the web socket to the pipeline
         await P.handle_websocket_request(req, cnx.get_web_socket)
         # Send the request
-        P.send_json(json_msg)
+        G._send(json_msg)
         # wait for the request to go through
         expect_str = FINISHED_UNICODE + json.dumps(json_msg)
         await P.packer.last_flush_task
@@ -578,7 +578,7 @@ class TestGizmoAsync(unittest.IsolatedAsyncioTestCase):
         G = GW.G
         P = GZPipeline(G)
         P.auto_clear = auto_clear
-        # Make a message to receive from JS
+        # Make a message to send to JS
         json_ob = [1, "json", None]
         json_msg = exec_msg(_lit(json_ob))
         # Make a "request" for that message
@@ -634,7 +634,8 @@ class TestGizmoAsync(unittest.IsolatedAsyncioTestCase):
         req = None  # the request is not used in the mock pipeline
         # Send the request
         self.assertEqual(P.sender, None)
-        P.send_json(json_msg)
+        #P.send_json(json_msg)
+        G._send(json_msg)
         await P.packer.last_flush_task
         # attach the web socket to the pipeline, after the send
         await P.handle_websocket_request(req, cnx.get_web_socket)
