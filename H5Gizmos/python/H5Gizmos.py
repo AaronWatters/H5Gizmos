@@ -149,6 +149,14 @@ class GizmoLink:
     """
 
     _owner_gizmo = None  # set this in subclass
+    _get_oid = None
+    _get_future = None
+
+    def _register_get_future(self):
+        if self._get_oid is not None:
+            return (self._get_oid, self._get_future)
+        result = (self._get_oid, self._get_future) = self._owner_gizmo._register_future()
+        return result
 
     def _exec(self, detail=False):
         gz = self._owner_gizmo
@@ -165,7 +173,8 @@ class GizmoLink:
         cmd = self._command()
         if oid is None:
             # allow the test suite to pass in the future for testing only...
-            (oid, future) = gz._register_future()
+            (oid, future) = self._register_get_future()
+        self._get_oid = oid
         if to_depth is None:
             to_depth = gz._default_depth
         msg = [GZ.EXEC, oid, cmd, to_depth]
@@ -173,6 +182,8 @@ class GizmoLink:
         if test_result is not None:
             return test_result  # only for code coverage...
         await future
+        self._get_oid = None
+        self._get_future = None
         return future.result()
 
     def _connect(self, id):

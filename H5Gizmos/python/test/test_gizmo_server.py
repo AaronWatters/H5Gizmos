@@ -494,6 +494,106 @@ class TestBasicSocketCallbackPipeline(StartStop):
         self.assertEqual(data, [tuple(arguments)])
 
 
+class TestBasicSocketGetPipeline(StartStop):
+
+    async def test_websocket_get_pipeline(self):
+        print("pipeline get test")
+        from H5Gizmos.python.test.test_H5Gizmos import (
+            GZ, GizmoLiteral, JavascriptEvalException, FINISHED_UNICODE)
+        import json
+        S = GzServer()
+        G = H5Gizmos.Gizmo()
+        exception_data = []
+        def on_exception(payload):
+            exception_data.append(payload)
+        G._on_exception = on_exception
+        json_ob = [1, "two", 3]
+        lit = GizmoLiteral(json_ob, G)
+        got_results = []
+        async def get_lit():
+            print ("attempting to get lit")
+            result = await lit._get()
+            got_results.append(result)
+        (oid, future) = lit._register_get_future()
+        handler = GizmoPipelineSocketHandler(G)
+        mgr = S.get_new_manager(websocket_handler=handler)
+        url = ws_url(mgr)
+        delay = 0.1
+        session = aiohttp.ClientSession()
+        task = None
+        request = None
+        response = [GZ.GET, oid, json_ob]
+        response_str = FINISHED_UNICODE + json.dumps(response)
+        try:
+            print("starting task")
+            task = await self.startup(S, delay)
+            get_task = H5Gizmos.schedule_task(get_lit())
+            ws = await session.ws_connect(url)
+            print("awaiting request")
+            request = await ws.receive()
+            print('send_str', response_str)
+            await ws.send_str(response_str)
+            print("closing ws")
+            await ws.close()
+            await get_task
+        finally:
+            if task is not None:
+                await self.shutdown(S, task)
+        self.assertNotEqual(request, None)
+        self.assertEqual(got_results, [json_ob])
+        self.assertEqual(exception_data, [])
+
+class TestBasicSocketErrorPipeline(StartStop):
+
+    async def test_websocket_error_pipeline(self):
+        print("pipeline error test")
+        from H5Gizmos.python.test.test_H5Gizmos import (
+            GZ, GizmoLiteral, JavascriptEvalException, FINISHED_UNICODE)
+        import json
+        S = GzServer()
+        G = H5Gizmos.Gizmo()
+        exception_data = []
+        def on_exception(payload):
+            exception_data.append(payload)
+        G._on_exception = on_exception
+        json_ob = [1, "two", 3]
+        lit = GizmoLiteral(json_ob, G)
+        got_results = []
+        async def get_lit():
+            with self.assertRaises(JavascriptEvalException):
+                print ("attempting to get lit")
+                result = await lit._get()
+                got_results.append(result)
+        (oid, future) = lit._register_get_future()
+        handler = GizmoPipelineSocketHandler(G)
+        mgr = S.get_new_manager(websocket_handler=handler)
+        url = ws_url(mgr)
+        delay = 0.1
+        session = aiohttp.ClientSession()
+        task = None
+        request = None
+        response = [GZ.EXCEPTION, "Fake exception", oid]
+        response_str = FINISHED_UNICODE + json.dumps(response)
+        try:
+            print("starting task")
+            task = await self.startup(S, delay)
+            get_task = H5Gizmos.schedule_task(get_lit())
+            ws = await session.ws_connect(url)
+            print("awaiting request")
+            request = await ws.receive()
+            print('send_str', response_str)
+            await ws.send_str(response_str)
+            print("closing ws")
+            await ws.close()
+            await get_task
+        finally:
+            if task is not None:
+                await self.shutdown(S, task)
+        self.assertNotEqual(request, None)
+        self.assertEqual(got_results, [])
+        self.assertNotEqual(exception_data, [])
+
+
 class TestNoWebSocketHandler(StartStop):
 
     async def test_no_handler(self):
