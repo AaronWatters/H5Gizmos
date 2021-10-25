@@ -93,6 +93,9 @@ class HTMLPage(DelegatePOSTtoGETMixin):
     def remote_css(self, url):
         return self.remote_js(url, in_body=False, init=RemoteCSS)
 
+    def embedded_css(self, text):
+        return self.remote_js(text, in_body=False, init=EmbeddedStyle)
+
     def embedded_script(self, script_text, in_body=True):
         return self.remote_js(script_text, in_body=in_body, init=EmbeddedScript)
 
@@ -151,6 +154,22 @@ class EmbeddedScript(Resource):
 
     def html_embedding(self):
         return HTML_EMBED_SCRIPT_TEMPLATE.format(script_text=self.script_text)
+
+
+STYLE_EMBED_TEMPLATE = """
+<style type="text/css">
+{style_text}
+</style>
+"""
+
+class EmbeddedStyle(Resource):
+
+    def __init__(self, style_text):
+        self.style_text = style_text
+
+    def html_embedding(self):
+        return STYLE_EMBED_TEMPLATE.format(style_text=self.style_text)
+
 
 class InsertHTML(Resource):
 
