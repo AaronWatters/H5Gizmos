@@ -667,6 +667,10 @@ class TestStaticHelloWorldGizmo(unittest.IsolatedAsyncioTestCase):
             self.assertNotEqual(response, None)
             self.assertIn(title, text)
             self.assertIn(message, text)
+            self.assertIn(style_text, text)
+            self.assertIn(css_url, text)
+            self.assertIn(js_url, text)
+            self.assertIn(script_text, text)
             self.assertEqual(status, 200)
             #self.assertEqual(1,0)
         finally:
