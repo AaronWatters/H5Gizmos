@@ -106,15 +106,15 @@ class GzServer:
         #app = self.get_app()
         try:
             port = self.port
-            print ("runner using port", port)
+            #pr ("runner using port", port)
             await async_run(app, port=port, **args)
         except asyncio.CancelledError:
             self.status = "app has been cancelled,"
-            print(self.status)
+            #pr(self.status)
             self.cancelled = True
         finally:
             self.status = "app has stopped."
-            print(self.status)
+            #pr(self.status)
             self.stopped = True
 
     def add_routes(self):
@@ -127,33 +127,33 @@ class GzServer:
     async def handle(self, request, method="GET", interface=None):
         if interface is None:
             interface = self.interface
-        print(" ... server handling", request.path)
+        #pr(" ... server handling", request.path)
         i2m = self.identifier_to_manager
         try:
             info = RequestUrlInfo(request, self.prefix)
             identifier = info.identifier
             mgr = i2m.get(identifier)
             assert mgr is not None, "could not resolve " + repr(identifier)
-            print(" ... delegate handle to mgr", mgr)
+            #pr(" ... delegate handle to mgr", mgr)
             return await mgr.handle(method, info, request, interface=interface)
         except AssertionError as e:
-            print("... 404 for assertion failure: ", e)
+            #pr("... 404 for assertion failure: ", e)
             return interface.stream_respond(status=404, reason=repr(e))
 
     def handle_http_get(self, request, interface=None):
-        print(" ... server get", request.path)
+        #pr(" ... server get", request.path)
         if interface is None:
             interface = self.interface
         return self.handle(request, method=GET, interface=interface)
 
     def handle_http_post(self, request, interface=None):
-        print(" ... server post", request.path)
+        #pr(" ... server post", request.path)
         if interface is None:
             interface = self.interface
         return self.handle(request, method=POST, interface=interface)
 
     def handle_web_socket(self, request, interface=None):
-        print(" ... server socket", request.path)
+        #pr(" ... server socket", request.path)
         if interface is None:
             interface = self.interface
         return self.handle(request, method=WS, interface=interface)
@@ -198,7 +198,7 @@ class GizmoManager:
         self.filename_to_http_handler = {}
         #self.url_path = "/%s/%s" % (server.prefix, identifier)
         self.prefix = server.prefix
-        print(self.identifier, "manager init with socket handler", self.web_socket_handler)
+        #pr(self.identifier, "manager init with socket handler", self.web_socket_handler)
 
     def add_file(self, at_path, filename=None, content_type=None, interface=STDInterface):
         if filename is None:
@@ -208,7 +208,7 @@ class GizmoManager:
         return handler
 
     async def handle(self, method, info, request, interface=STDInterface):
-        print("... mgr handling", request.path, "method", method)
+        #pr("... mgr handling", request.path, "method", method)
         filename = info.filename
         f2h = self.filename_to_http_handler
         if method == WS:
@@ -218,7 +218,7 @@ class GizmoManager:
             assert filename is not None, "HTTP requests should have a filename " + repr(info.splitpath)
             handler = f2h.get(filename)
             assert handler is not None, "No handler for filename " + repr(info.splitpath)
-            print("... mgr delegating to handler", handler)
+            #pr("... mgr delegating to handler", handler)
             if method == GET:
                 return handler.handle_get(info, request, interface=interface)
             elif method == POST:
@@ -228,7 +228,7 @@ class GizmoManager:
 
     async def handle_ws(self, info, request, interface=STDInterface):
         handler = self.web_socket_handler
-        print ("delegating web socket handling to", handler)
+        #pr ("delegating web socket handling to", handler)
         assert handler is not None, "No web socket handler for id " + repr(self.identifier)
         await handler.handle(info, request, interface)
 
@@ -277,5 +277,5 @@ class GizmoPipelineSocketHandler:
         self.ws = None
 
     async def handle(self, info, request, interface):
-        print("**** pipeline handler started")
+        #pr("**** pipeline handler started")
         await self.pipeline.handle_websocket_request(request)
