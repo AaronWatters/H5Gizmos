@@ -27,6 +27,7 @@ class FakeApp:
         self.router = FakeRouter()
         self.shut = False
         self.clean = False
+        self.on_shutdown = []
 
     async def shutdown(self):
         self.shut = True

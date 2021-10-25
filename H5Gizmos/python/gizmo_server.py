@@ -89,14 +89,17 @@ class GzServer:
     def get_app(self, app_factory=web.Application):
         self.app = app_factory()
         self.add_routes()
+        self.app.on_shutdown.append(self.on_shutdown)
         return self.app
 
     async def on_shutdown(self, app):
         # https://docs.aiohttp.org/en/v0.22.4/web.html#aiohttp-web-graceful-shutdown
         for mgr in self.identifier_to_manager.values():
-            ws = mgr.web_socket_handler.ws
-            if ws is not None:
-                await ws.close(code=999, message='Server shutdown')
+            h = mgr.web_socket_handler
+            if h is not None:
+                ws = h.ws
+                if ws is not None:
+                    await ws.close(code=999, message='Server shutdown')
           
     async def make_runner(self, app, async_run=web._run_app, **args):
         self.status = "starting runner"
