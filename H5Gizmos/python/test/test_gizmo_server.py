@@ -75,7 +75,7 @@ class TestMockServerAsync(unittest.IsolatedAsyncioTestCase):
         assert S.app.clean
 
 async def trivial_fake_async_run_cancel(*args, **kwargs):
-    print("raising cancel error")
+    #pr("raising cancel error")
     raise asyncio.CancelledError
 
 class TestMockServerAsyncCancel(unittest.IsolatedAsyncioTestCase):
@@ -183,7 +183,7 @@ class TestFileServices(unittest.TestCase):
         with tempfile.NamedTemporaryFile(delete=False) as tf:
             name = tf.name
             try:
-                #print ("temp file at", name)
+                ##pr ("temp file at", name)
                 content = b"bytes"
                 tf.write(content)
                 tf.close()
@@ -260,7 +260,7 @@ class TestHTTPdelivery(StartStop):
         #self.assertEqual(handler.url_path, None)
         path = handler.method_path()
         url = std_url(path)
-        print("   ... getting url", repr(url))
+        #pr("   ... getting url", repr(url))
         #req = MockFileRequest(handler.url_path)
         #await S.handle_http_get(req, interface=interface)
         task = None
@@ -294,7 +294,7 @@ class TestHTTP404(StartStop):
         #self.assertEqual(handler.url_path, None)
         path = "/no/such/path"
         url = std_url(path)
-        print("   ... getting url", repr(url))
+        #pr("   ... getting url", repr(url))
         #req = MockFileRequest(handler.url_path)
         #await S.handle_http_get(req, interface=interface)
         task = None
@@ -328,7 +328,7 @@ class TestNoFileForWebSocket(StartStop):
         #self.assertEqual(handler.url_path, None)
         path = handler.method_path("ws")
         url = std_url(path)
-        print("   ... getting url", repr(url))
+        #pr("   ... getting url", repr(url))
         #req = MockFileRequest(handler.url_path)
         #await S.handle_http_get(req, interface=interface)
         task = None
@@ -347,26 +347,27 @@ class SillyWebSocketHandler:
         self.data = None
 
     async def handle(self, info, request, interface):
-        print("**** handler started")
+        #pr("**** handler started")
         ws = web.WebSocketResponse()
         self.ws = ws
         await ws.prepare(request)
-        print ("XXXX ws attached", ws)
+        #pr ("XXXX ws attached", ws)
         async for msg in ws:
             if msg.type == aiohttp.WSMsgType.text:
                 if msg.data == 'close':
-                    print("closing", ws)
+                    #pr("closing", ws)
                     await ws.close()
                 else:
                     data = msg.data
                     self.data = data
-                    print("answering", ws, data)
+                    #pr("answering", ws, data)
                     await ws.send_str(msg.data + '/answer')
             elif msg.tp == aiohttp.MsgType.error:
-                print(ws, 'ws connection closed with exception %s' %
-                    ws.exception())
+                #pr(ws, 'ws connection closed with exception %s' %
+                #    ws.exception())
+                pass
         self.ws = None
-        print('websocket connection closed', ws)
+        #pr('websocket connection closed', ws)
         return ws
 
 
@@ -400,13 +401,13 @@ class TestSillySocketHandler(StartStop):
             self.ws = ws
             #ws.send_str(msg.data + 'hello')
             msgtxt = "hello"
-            print ("sending", repr(msgtxt), "to", ws)
+            #pr ("sending", repr(msgtxt), "to", ws)
             await ws.send_str("hello")
-            print("awaiting reply")
+            #pr("awaiting reply")
             reply = await ws.receive()
             data = reply.data
             self.reply = data
-            print("replied", repr(data), "now closing")
+            #pr("replied", repr(data), "now closing")
             await ws.close()
         finally:
             if task is not None:
@@ -437,11 +438,11 @@ class TestBasicSocketSendPipeline(StartStop):
             task = await self.startup(S, delay)
             ws = await session.ws_connect(url)
             G._send(json_msg)
-            print("awaiting receive")
+            #pr("awaiting receive")
             received = await ws.receive()
             data = received.data
             #self.reply = data
-            #print("replied", repr(data), "now closing")
+            ##pr("replied", repr(data), "now closing")
             await ws.close()
         finally:
             if task is not None:
@@ -476,18 +477,18 @@ class TestBasicSocketCallbackPipeline(StartStop):
         task = None
         received = None
         try:
-            print("starting task")
+            #pr("starting task")
             task = await self.startup(S, delay)
             ws = await session.ws_connect(url)
-            print('send_str', msg_str)
+            #pr('send_str', msg_str)
             await ws.send_str(msg_str)
-            print("closing ws")
+            #pr("closing ws")
             await ws.close()
             for i in range(100):
                 # wait for message to arrive
                 if len(data) > 0:
                     break
-                print ("sleeping waiting for callback data", i)
+                #pr ("sleeping waiting for callback data", i)
                 asyncio.sleep(delay)
         finally:
             if task is not None:
@@ -498,7 +499,7 @@ class TestBasicSocketCallbackPipeline(StartStop):
 class TestBasicSocketGetPipeline(StartStop):
 
     async def test_websocket_get_pipeline(self):
-        print("pipeline get test")
+        #pr("pipeline get test")
         from H5Gizmos.python.test.test_H5Gizmos import (
             GZ, GizmoLiteral, JavascriptEvalException, FINISHED_UNICODE)
         import json
@@ -512,7 +513,7 @@ class TestBasicSocketGetPipeline(StartStop):
         lit = GizmoLiteral(json_ob, G)
         got_results = []
         async def get_lit():
-            print ("attempting to get lit")
+            #pr ("attempting to get lit")
             result = await lit._get()
             got_results.append(result)
         (oid, future) = lit._register_get_future()
@@ -526,15 +527,15 @@ class TestBasicSocketGetPipeline(StartStop):
         response = [GZ.GET, oid, json_ob]
         response_str = FINISHED_UNICODE + json.dumps(response)
         try:
-            print("starting task")
+            #pr("starting task")
             task = await self.startup(S, delay)
             get_task = H5Gizmos.schedule_task(get_lit())
             ws = await session.ws_connect(url)
-            print("awaiting request")
+            #pr("awaiting request")
             request = await ws.receive()
-            print('send_str', response_str)
+            #pr('send_str', response_str)
             await ws.send_str(response_str)
-            print("closing ws")
+            #pr("closing ws")
             await ws.close()
             await get_task
         finally:
@@ -547,7 +548,7 @@ class TestBasicSocketGetPipeline(StartStop):
 class TestBasicSocketErrorPipeline(StartStop):
 
     async def test_websocket_error_pipeline(self):
-        print("pipeline error test")
+        #pr("pipeline error test")
         from H5Gizmos.python.test.test_H5Gizmos import (
             GZ, GizmoLiteral, JavascriptEvalException, FINISHED_UNICODE)
         import json
@@ -562,7 +563,7 @@ class TestBasicSocketErrorPipeline(StartStop):
         got_results = []
         async def get_lit():
             with self.assertRaises(JavascriptEvalException):
-                print ("attempting to get lit")
+                #pr ("attempting to get lit")
                 result = await lit._get()
                 got_results.append(result)
         (oid, future) = lit._register_get_future()
@@ -576,15 +577,15 @@ class TestBasicSocketErrorPipeline(StartStop):
         response = [GZ.EXCEPTION, "Fake exception", oid]
         response_str = FINISHED_UNICODE + json.dumps(response)
         try:
-            print("starting task")
+            #pr("starting task")
             task = await self.startup(S, delay)
             get_task = H5Gizmos.schedule_task(get_lit())
             ws = await session.ws_connect(url)
-            print("awaiting request")
+            #pr("awaiting request")
             request = await ws.receive()
-            print('send_str', response_str)
+            #pr('send_str', response_str)
             await ws.send_str(response_str)
-            print("closing ws")
+            #pr("closing ws")
             await ws.close()
             await get_task
         finally:

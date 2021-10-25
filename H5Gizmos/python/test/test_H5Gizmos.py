@@ -629,14 +629,6 @@ class TestGizmoAsync(unittest.IsolatedAsyncioTestCase):
             #p("data", d)
             pass
 
-    async def xxxtest_iterate_fake_websocket(self):
-        ws = FakeWebSocketResponse()
-        for letter in "abc":
-            ws.append(letter)
-        async for x in ws:
-            print ("data", x)
-        self.assertEqual(1, 0)
-
 class AsyncIterable:
 
     def __init__(self, items):
