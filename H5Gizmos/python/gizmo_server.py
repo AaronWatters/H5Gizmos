@@ -1,5 +1,6 @@
 
 from . import H5Gizmos
+from . import gz_resources
 
 from aiohttp import web
 import aiohttp
@@ -32,22 +33,49 @@ class WebInterface:
         ws_respond = web.WebSocketResponse,
         get_file_bytes = get_file_bytes,
         file_exists = os.path.isfile,
+        app_factory=web.Application,
+        async_run=web._run_app,
     ):
         self.respond = respond
         self.stream_respond = stream_respond
         self.ws_respond = ws_respond
         self.get_file_bytes = get_file_bytes
         self.file_exists = file_exists
+        self.app_factory = app_factory
+        self.async_run = async_run
 
 
 STDInterface = WebInterface()
+
+def gizmo_task_server(
+        prefix="gizmo", 
+        server="localhost", 
+        port=DEFAULT_PORT, 
+        interface=STDInterface,
+        **args,
+        ):
+    S = GzServer(
+        prefix=prefix,
+        server=server,
+        port=port,
+        interface=interface,
+    )
+    S.run_in_task(app_factory=interface.app_factory, async_run=interface.async_run, **args)
+    return S
 
 class GzServer:
 
     verbose = False
 
-    def __init__(self, prefix="gizmo", port=DEFAULT_PORT, interface=STDInterface):
+    def __init__(
+            self, 
+            prefix="gizmo", 
+            server="localhost", 
+            port=DEFAULT_PORT, 
+            interface=STDInterface,
+            ):
         self.prefix = prefix
+        self.server = server
         self.port = port
         self.interface = interface
         self.status = "initialized"
@@ -57,6 +85,21 @@ class GzServer:
         self.cancelled = False
         self.identifier_to_manager = {}
         self.counter = 0
+
+    def gizmo(
+            self, 
+            title="Gizmo",
+            packet_limit=1000000, 
+            auto_flush=True,
+            entry_filename="index.html"
+            ):
+        result = H5Gizmos.Gizmo()
+        handler = GizmoPipelineSocketHandler(result, packet_limit=packet_limit, auto_flush=auto_flush)
+        result._set_pipeline(handler.pipeline)
+        mgr = self.get_new_manager(websocket_handler=handler)
+        result._set_manager(self, mgr)
+        result._configure_entry_page(title=title, filename=entry_filename)
+        return result
 
     def get_new_manager(self, websocket_handler=None):
         c = self.counter
@@ -204,6 +247,9 @@ class GizmoManager:
         if filename is None:
             filename = os.path.split(at_path)[-1]
         handler = FileGetter(at_path, filename, self, content_type, interface=interface)
+        return self.add_http_handler(filename, handler)
+
+    def add_http_handler(self, filename, handler):
         self.filename_to_http_handler[filename] = handler
         return handler
 
@@ -232,6 +278,29 @@ class GizmoManager:
         assert handler is not None, "No web socket handler for id " + repr(self.identifier)
         await handler.handle(info, request, interface)
 
+    def local_url(
+            self, 
+            for_gizmo, 
+            method,
+            protocol="http", 
+            server=None,
+            port=None,
+            prefix=None,
+            identifier=None,
+            filename=None,
+            ):
+        assert method in ("http", "ws"), "method should be http or ws: " + repr(method)
+        server = server or for_gizmo._server
+        port = port or for_gizmo._port
+        prefix = prefix or self.prefix
+        identifier = identifier or self.identifier
+        path_components = [prefix, method, identifier]
+        if filename is not None:
+            path_components.append(filename)
+        path = "/".join(path_components)
+        url = "%s://%s:%s/%s" % (protocol, server, port, path)
+        return url
+
 class FileGetter:
 
     def __init__(self, fs_path, filename, mgr, content_type=None, interface=STDInterface):
@@ -248,13 +317,14 @@ class FileGetter:
         self.content_type = content_type
 
     def method_path(self, method=GET):
+        # xxxx duplicated code with local_url above
         mprefix = None
         if method == GET:
             mprefix = "http"
         elif method == POST:
             mprefix = "http"
         elif method == WS:
-            mprefix = "ws"
+             mprefix = "ws"
         else:
             raise ValueError("unknown method: " + repr(method))
         components = ["", self.prefix, mprefix, self.identifier, self.filename]

@@ -38,6 +38,24 @@ class Gizmo:
         self._oid_to_get_futures = {}
         self._on_exception = None
         self._last_exception_payload = None
+        self._manager = None
+        self._server = None
+        self._port = None
+        self._entry_url = None
+        self._html_page = None
+
+    def _configure_entry_page(self, title="Gizmo", filename="index.html"):
+        from . import gz_resources
+        mgr = self._manager
+        assert mgr is not None, "manager must be set before page configuration."
+        handler = self._html_page = gz_resources.HTMLPage(title=title)
+        mgr.add_http_handler(filename, handler)
+        self._entry_url = mgr.local_url(for_gizmo=self, method="http", filename=filename)
+
+    def _set_manager(self, gz_server, mgr):
+        self._manager = mgr
+        self._server = gz_server.server
+        self._port = gz_server.port
 
     def _set_pipeline(self, pipeline):
         self._pipeline = pipeline

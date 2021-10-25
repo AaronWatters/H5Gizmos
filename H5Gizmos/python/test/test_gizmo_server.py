@@ -19,6 +19,7 @@ from H5Gizmos.python.gizmo_server import (
     RequestUrlInfo,
     DEFAULT_PORT,
     GizmoPipelineSocketHandler,
+    gizmo_task_server,
 )
 
 class FakeApp:
@@ -519,6 +520,18 @@ class TestBasicSocketGetPipeline(StartStop):
         (oid, future) = lit._register_get_future()
         handler = GizmoPipelineSocketHandler(G)
         mgr = S.get_new_manager(websocket_handler=handler)
+        G._set_manager(S, mgr)
+        test_url = mgr.local_url(
+            for_gizmo=G,
+            method="ws",
+            protocol="http",
+            server="x.y.z",
+            port=9090,
+            prefix="test_prefix",
+            identifier="id000",
+            filename="index.html"
+        )
+        self.assertEqual(test_url, 'http://x.y.z:9090/test_prefix/ws/id000/index.html')
         url = ws_url(mgr)
         delay = 0.1
         session = aiohttp.ClientSession()
@@ -619,3 +632,42 @@ class TestNoWebSocketHandler(StartStop):
             if task is not None:
                 await self.shutdown(S, task)
         #self.assertEqual(1, 0)
+
+
+class TestStaticHelloWorldGizmo(unittest.IsolatedAsyncioTestCase):
+
+    async def test_hello_world(self, delay=0.01):
+        #task = asyncio.sleep(1) # testing debug only
+        S = gizmo_task_server()
+        try:
+            await asyncio.sleep(delay)
+            title = "GIZMO123XYZ"
+            message = "Hello world!"
+            G = S.gizmo(title=title)
+            G._html_page.insert_html(message)
+            #self.assertEqual(G._entry_url, None)
+            url = G._entry_url
+            # get the url...
+            response = None
+            text = None
+            async with aiohttp.ClientSession() as client:
+                async with client.get(url) as resp:
+                    status = resp.status
+                    text = await resp.text()
+                    response = ResponseInfo(status, text)
+            print(text)
+            self.assertNotEqual(response, None)
+            self.assertIn(title, text)
+            self.assertIn(message, text)
+            self.assertEqual(status, 200)
+        finally:
+            await S.shutdown()
+
+    async def shutdown(self, server, task):
+        #context.server.finalize()
+        #context.finalize()
+        await server.shutdown()
+        #task2 = schedule_task(shutdown())
+        #await task2
+        await task
+        assert server.stopped == True
