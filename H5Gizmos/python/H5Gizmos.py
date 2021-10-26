@@ -6,6 +6,7 @@ See js/H5Gizmos.js for protocol JSON formats.
 
 """
 
+from os import name
 import numpy as np
 import json
 import asyncio
@@ -51,6 +52,33 @@ class Gizmo:
         handler = self._html_page = gz_resources.HTMLPage(title=title)
         mgr.add_http_handler(filename, handler)
         self._entry_url = mgr.local_url(for_gizmo=self, method="http", filename=filename)
+
+    def _initial_reference(self, identity, js_expression=None):
+        assert type(identity) == str, "identity must be str " + repr(identity)
+        if js_expression is None:
+            js_expression = identity   # like "window"
+        assert self._html_page is not None, "reference requires initialized html page."
+        if hasattr(self, identity):
+            raise NameError(
+                "initial reference will not override in-use slot: " + repr(identity))
+        reference = GizmoReference(identity, self)
+        setattr(self, identity, reference)
+        self._html_page.link_reference(identity, js_expression)
+
+    def _insert_html(self, html_text):
+        self._html_page.insert_html(html_text)
+
+    def _embedded_css(self, style_text):
+        self._html_page.embedded_css(style_text)
+
+    def _embedded_script(self, javascript_code, in_body=True):
+        self._html_page.embedded_script(javascript_code, in_body=in_body)
+
+    def _remote_css(self, css_url):
+        self._html_page.remote_css(css_url)
+
+    def _remote_js(self, js_url, in_body=False):
+        self._html_page.remote_js(js_url, in_body=in_body)
 
     def _set_manager(self, gz_server, mgr):
         self._manager = mgr

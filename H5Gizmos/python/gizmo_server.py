@@ -63,6 +63,45 @@ def gizmo_task_server(
     S.run_in_task(app_factory=interface.app_factory, async_run=interface.async_run, **args)
     return S
 
+def gizmo_standalone_server(
+        prefix="gizmo", 
+        server="localhost", 
+        port=DEFAULT_PORT, 
+        interface=STDInterface,
+        **args,
+        ):
+    S = GzServer(
+        prefix=prefix,
+        server=server,
+        port=port,
+        interface=interface,
+    )
+    S.run_standalone(app_factory=interface.app_factory, async_run=interface.async_run, **args)
+    return S
+
+
+async def run_gizmo_standalone(server, gizmo, delay=0.1, interface=STDInterface, **args):
+    server_task = server.run_in_task(
+        app_factory=interface.app_factory, 
+        async_run=interface.async_run, 
+        **args)
+    async def start_gizmo():
+        import webbrowser
+        await asyncio.sleep(delay)
+        webbrowser.open(gizmo._entry_url)
+    start_task = H5Gizmos.schedule_task(start_gizmo())
+    await start_task
+    #await server_task
+    # terminate with control-c
+
+def standalone_gizmo(server, gizmo, run_forever=True, delay=0.1, interface=STDInterface, **args):
+    start_server = run_gizmo_standalone(server, gizmo, delay, interface, **args)
+    asyncio.get_event_loop().run_until_complete(start_server)
+    if run_forever:
+        print ("entering run_forever loop -- terminate with control-C")
+        asyncio.get_event_loop().run_forever()
+
+
 class GzServer:
 
     verbose = False

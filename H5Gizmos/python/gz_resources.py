@@ -55,11 +55,18 @@ class HTMLPage(DelegatePOSTtoGETMixin):
     def __init__(self, title="Gizmo", embed_gizmo=True, template=None):
         if template is None:
             template = STD_HTML_PAGE_TEMPLATE
+        self.embed_gizmo = embed_gizmo
         self.template = template
         self.head_resources = []
         self.body_resources = []
         if title is not None:
             self.add_head_resource(PageTitle(title))
+        if embed_gizmo:
+            self.ref_id_and_js_expression = []
+
+    def link_reference(self, identity, js_expression):
+        assert self.embed_gizmo, "Embed gizmo must be enabled for standard link references."
+        self.ref_id_and_js_expression.append([identity, js_expression])
 
     def handle_get(self, info, request, interface=None):
         interface = interface or gizmo_server.STDInterface
@@ -70,6 +77,10 @@ class HTMLPage(DelegatePOSTtoGETMixin):
         template = self.template
         head_string = self.resource_strings(self.head_resources)
         body_string = self.resource_strings(self.body_resources)
+        if self.embed_gizmo:
+            std_init = standard_embedded_initialization_code(self.ref_id_and_js_expression)
+            embed_init = EmbeddedScript(std_init)
+            body_string = "%s\n%s" % (body_string, embed_init.html_embedding())
         result = template.format(HEAD=head_string, BODY=body_string)
         return result
 
@@ -107,6 +118,37 @@ class HTMLPage(DelegatePOSTtoGETMixin):
             self.add_body_resource(resource)
         else:
             self.add_head_resource(resource)
+
+STD_INIT_TEMPLATE = """
+var H5GIZMO_INTERFACE;
+
+(function () {
+    function initialize_gizmo() {
+        // Initialize the H5GIZMO_INTERFACE.
+        var tr = H5Gizmos.Translator();
+        H5GIZMO_INTERFACE = tr;
+
+        [SET_REFERENCES_HERE]
+    };
+    // https://stackoverflow.com/questions/33785313/javascript-loading-multiple-functions-onload
+    window.addEventListener("load", initialize_gizmo, true);
+})();
+"""
+
+SET_REFERENCE_TEMPLATE = """
+        tr.set_reference({id_string}, {js_expression});
+"""
+
+def standard_embedded_initialization_code(ref_id_and_js_expression):
+    L = []
+    for [identity, expression] in ref_id_and_js_expression:
+        id_repr = repr(identity)
+        set_code = SET_REFERENCE_TEMPLATE.format(id_string=id_repr, js_expression=expression)
+        L.append(set_code);
+    all_set_code = "".join(L).strip()
+    result = STD_INIT_TEMPLATE.replace("[SET_REFERENCES_HERE]", all_set_code)
+    return result
+
 
 class Resource:
 

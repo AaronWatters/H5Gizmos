@@ -644,6 +644,8 @@ class TestStaticHelloWorldGizmo(unittest.IsolatedAsyncioTestCase):
             title = "GIZMO123XYZ"
             message = "Hello world!"
             G = S.gizmo(title=title)
+            G._initial_reference("window")
+            G._initial_reference("doc", "window.document")
             G._html_page.insert_html(message)
             style_text = "// nothing."
             G._html_page.embedded_css(style_text)
