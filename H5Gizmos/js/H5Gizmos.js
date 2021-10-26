@@ -68,6 +68,11 @@ var H5Gizmos = {};
             this.sender = sender;
             this.object_cache = {};
         };
+        pipeline_websocket(ws_url) {
+            var ws = new WebSocket(ws_url);
+            this.ws = ws;
+            this.pipeline = pipeline(ws, this);
+        };
         get_reference(id_string) {
             var obj = this.object_cache[id_string];
             if (!obj) {
@@ -163,7 +168,7 @@ var H5Gizmos = {};
             return result;
         };
         parse_message(message_json_ob) {
-            //cl("parsing", message_json_ob);
+            console.log("parsing", message_json_ob);
             if (!Array.isArray(message_json_ob)) {
                 this.send_error("top level message json should be array: " + (typeof message_json_ob));
             }
@@ -351,7 +356,7 @@ var H5Gizmos = {};
         execute(translator) {
             var map_commands = this.map_commands;
             var map_values = {};
-            for (var attr in map_commands) {
+            for (var attr in map_commands) {
                 var cmd = map_commands[attr];
                 var pair = cmd.execute(translator);
                 var value = pair.value;
@@ -465,10 +470,20 @@ var H5Gizmos = {};
     };
     indicator_to_command_parser[h5.SET] = SetCommandParser;
 
+    function value_pair_test(ob) {
+        if (!ob) {
+            return false;
+        }
+        return ob.hasOwnProperty("_is_value_pair");
+    };
+
     class ThisValuePair {
         // A value paired with a "this" calling context.
         constructor(this_ob, value, default_this) {
-            if ((this_ob._is_value_pair) || (value._is_value_pair) || (default_this._is_value_pair)) {
+            //if ((this_ob._is_value_pair) || (value._is_value_pair) || (default_this._is_value_pair)) {
+            //    throw new Error("Do not double wrap value pairs.");
+            //}
+            if ((value_pair_test(this_ob)) || (value_pair_test(value)) || (value_pair_test(default_this))) {
                 throw new Error("Do not double wrap value pairs.");
             }
             this.this_ob = this_ob;
@@ -643,7 +658,11 @@ var H5Gizmos = {};
 
 }) ();  // execute initialization in protected scope.
 
-if (module !== undefined) {
-    // For node/jest.
-    module.exports = H5Gizmos;
+try {
+    if (module !== undefined) {
+        // For node/jest.
+        module.exports = H5Gizmos;
+    }
+} catch (e) {
+    // ignore any reference error
 }

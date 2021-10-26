@@ -386,5 +386,5 @@ class GizmoPipelineSocketHandler:
         self.ws = None
 
     async def handle(self, info, request, interface):
-        #pr("**** pipeline handler started")
+        print("**** pipeline handler started")
         await self.pipeline.handle_websocket_request(request)

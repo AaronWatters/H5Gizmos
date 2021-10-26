@@ -6,13 +6,15 @@ See js/H5Gizmos.js for protocol JSON formats.
 
 """
 
-from os import name
+import os
 import numpy as np
 import json
 import asyncio
 import aiohttp
 from .hex_codec import bytearray_to_hex
 from aiohttp import web
+from . import gz_resources
+from . import gizmo_server
 
 class Gizmo:
     EXEC = "E"
@@ -29,7 +31,7 @@ class Gizmo:
     SET = "S"
     EXCEPTION = "X"
 
-    def __init__(self, sender=None, default_depth=5, pipeline=None):
+    def __init__(self, sender=None, default_depth=3, pipeline=None):
         self._pipeline = pipeline
         self._sender = sender
         self._default_depth = default_depth
@@ -43,14 +45,19 @@ class Gizmo:
         self._server = None
         self._port = None
         self._entry_url = None
+        self._ws_url = None
         self._html_page = None
 
     def _configure_entry_page(self, title="Gizmo", filename="index.html"):
-        from . import gz_resources
         mgr = self._manager
         assert mgr is not None, "manager must be set before page configuration."
-        handler = self._html_page = gz_resources.HTMLPage(title=title)
+        ws_url = mgr.local_url(for_gizmo=self, method="ws", filename=None)
+        if ws_url.startswith("http:"):
+            ws_url = "ws:" + ws_url[5:]
+        self._ws_url = ws_url
+        handler = self._html_page = gz_resources.HTMLPage(ws_url=self._ws_url, title=title)
         mgr.add_http_handler(filename, handler)
+        self._js_file("../../H5Gizmos/js/H5Gizmos.js")
         self._entry_url = mgr.local_url(for_gizmo=self, method="http", filename=filename)
 
     def _initial_reference(self, identity, js_expression=None):
@@ -79,6 +86,15 @@ class Gizmo:
 
     def _remote_js(self, js_url, in_body=False):
         self._html_page.remote_js(js_url, in_body=in_body)
+
+    def _js_file(self, os_path, url_path=None, in_body=False):
+        mgr = self._manager
+        full_path = gz_resources.get_file_path(os_path)
+        handler = mgr.add_file(full_path, url_path, content_type="text/javascript")
+        filename = handler.filename
+        # XXXXXX this should be a RELATIVE URL
+        full_url = mgr.local_url(for_gizmo=self, method="http", filename=filename)
+        self._remote_js(full_url)
 
     def _set_manager(self, gz_server, mgr):
         self._manager = mgr
@@ -255,12 +271,19 @@ class GizmoLink:
     def __call__(self, *args):
         gz = self._owner_gizmo
         arg_commands = [ValueConverter(x, gz) for x in args]
+        #pr(self, "making gizmocall", arg_commands)
         return GizmoCall(self, arg_commands, gz)
 
     def __getattr__(self, attribute):
         gz = self._owner_gizmo
         attribute_cmd = ValueConverter(attribute, gz)
         return GizmoGet(self, attribute_cmd, gz)
+
+    def _set(self, attribute, value):
+        gz = self._owner_gizmo
+        attribute_cmd = ValueConverter(attribute, gz)
+        value_cmd = ValueConverter(value, gz)
+        return GizmoSet(self, attribute_cmd, value_cmd, gz)
 
     def __getitem__(self, key):
         # in Javascript getitem and getattr are roughly the same
@@ -280,6 +303,25 @@ class GizmoGet(GizmoLink):
 
     def _command(self):
         return [GZ.GET, self._target_cmd._command(), self._index_cmd._command()]
+
+class GizmoSet(GizmoLink):
+
+    """
+    Proxy get javascript object property..
+    """
+
+    def __init__(self, target_cmd, index_cmd, value_cmd, owner):
+        self._owner_gizmo = owner
+        self._target_cmd = target_cmd
+        self._value_cmd = value_cmd
+        self._index_cmd = index_cmd
+
+    def _command(self):
+        return [
+            GZ.SET, 
+            self._target_cmd._command(), 
+            self._index_cmd._command(), 
+            self._value_cmd.command()]
 
 class GizmoCall(GizmoLink):
 
@@ -614,6 +656,7 @@ class GZPipeline:
         self.last_json_sent = json_ob
 
     async def _send(self, chunk):
+        #pr ("pipeline sending", repr(chunk))
         if self.sender is not None:
             await self.sender(chunk)
         else:
@@ -622,6 +665,7 @@ class GZPipeline:
             self.clear()
 
     async def handle_websocket_request(self, request, get_websocket=web.WebSocketResponse):
+        #pr("pipeline handling request", request)
         if self.request is not None:
             raise TooManyRequests("A pipeline can only support one request.")
         ws = get_websocket()
@@ -632,6 +676,7 @@ class GZPipeline:
         wc = self.waiting_chunks
         self.waiting_chunks = []
         for chunk in wc:
+            #pr ("pipeline sending waiting chunk", repr(chunk))
             await self._send(chunk)
         await self.listen_to_websocket(ws)
 
