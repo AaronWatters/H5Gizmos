@@ -51,6 +51,9 @@ class Gizmo:
         self._html_page = None
         self._print_callback_exception = True
 
+    async def _awaitable_flush(self):
+        await self._pipeline.packer.awaitable_flush()
+
     def _configure_entry_page(self, title="Gizmo", filename="index.html"):
         mgr = self._manager
         assert mgr is not None, "manager must be set before page configuration."
@@ -77,11 +80,17 @@ class Gizmo:
         self._html_page.link_reference(identity, js_expression)
 
     def _reference_identity(self, identity):
-        if hasattr(self, identity):
+        if hasattr(self, identity) and getattr(self, identity) is not None:
             raise NameError(
-                "initial reference will not override in-use slot: " + repr(identity))
+                "id reference will not override in-use slot: " + repr(identity))
         reference = GizmoReference(identity, self)
         setattr(self, identity, reference)
+
+    def _dereference_identity(self, identity):
+        print("deref id", repr(identity))
+        old_value = getattr(self, identity)
+        assert isinstance(old_value, GizmoReference), "Deref does not apply to non-references."
+        setattr(self, identity, None)
 
     def _insert_html(self, html_text):
         self._html_page.insert_html(html_text)
@@ -283,6 +292,7 @@ class GizmoLink:
             id = self._get_id()
         gz = self._owner_gizmo
         msg = [GZ.DISCONNECT, id]
+        self._owner_gizmo._dereference_identity(id)
         gz._send(msg)
 
     def _command(self, to_depth):
@@ -381,6 +391,9 @@ class GizmoReference(GizmoLink):
 
     def _get_id(self):
         return self._id
+
+    def disconnect(self):
+        return self._disconnect(self._id)
 
 
 class GizmoLiteral(GizmoLink):
