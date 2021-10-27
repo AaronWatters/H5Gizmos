@@ -123,7 +123,8 @@ class HTMLPage(DelegatePOSTtoGETMixin):
 
     def standard_embedded_initialization_code(self):
         ref_id_and_js_expression = self.ref_id_and_js_expression
-        L = [PIPELINE_WEBSOCKET_TEMPLATE.format(ws_url=repr(self.ws_url))]
+        #L = [PIPELINE_WEBSOCKET_TEMPLATE.format(ws_url=repr(self.ws_url))]
+        L = []
         for [identity, expression] in ref_id_and_js_expression:
             id_repr = repr(identity)
             set_code = SET_REFERENCE_TEMPLATE.format(id_string=id_repr, js_expression=expression)
@@ -142,6 +143,8 @@ var H5GIZMO_INTERFACE;
         // Initialize the H5GIZMO_INTERFACE using window as default this
         var tr = new H5Gizmos.Translator(window);
         H5GIZMO_INTERFACE = tr;
+        
+        tr.pipeline_websocket(tr.get_ws_url(window.location));
 
         [SET_REFERENCES_HERE]
         console.log("gizmo interface initialized");

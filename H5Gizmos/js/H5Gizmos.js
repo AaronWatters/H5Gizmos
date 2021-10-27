@@ -67,11 +67,28 @@ var H5Gizmos = {};
             this.default_this = default_this;
             this.sender = sender;
             this.object_cache = {};
+            this.ws_url = null;
+            this.ws = null;
         };
         pipeline_websocket(ws_url) {
+            this.ws_url = ws_url;
             var ws = new WebSocket(ws_url);
             this.ws = ws;
             this.pipeline = pipeline(ws, this);
+        };
+        get_ws_url(location) {
+            location = location || window.location;
+            var path_split = location.pathname.split("/");
+            var ws_path_split = path_split.slice(0, path_split.length - 1);
+            var i = ws_path_split.length - 2;
+            console.log("fixing path", ws_path_split);
+            if (ws_path_split[i] == "http") {
+                ws_path_split[i] = "ws"
+            }
+            var ws_path = ws_path_split.join("/");
+            var url = "ws://" + location.host + ws_path;
+            console.log("ws url", url)
+            return url;
         };
         get_reference(id_string) {
             var obj = this.object_cache[id_string];

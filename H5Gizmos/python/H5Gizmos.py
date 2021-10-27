@@ -89,7 +89,8 @@ class Gizmo:
     def _dereference_identity(self, identity):
         print("deref id", repr(identity))
         old_value = getattr(self, identity)
-        assert isinstance(old_value, GizmoReference), "Deref does not apply to non-references."
+        assert isinstance(old_value, GizmoReference), (
+            "Deref does not apply to non-references.")
         setattr(self, identity, None)
 
     def _insert_html(self, html_text):
@@ -112,9 +113,13 @@ class Gizmo:
         full_path = gz_resources.get_file_path(os_path)
         handler = mgr.add_file(full_path, url_path, content_type="text/javascript")
         filename = handler.filename
-        # XXXXXX this should be a RELATIVE URL
-        full_url = mgr.local_url(for_gizmo=self, method="http", filename=filename)
-        self._remote_js(full_url)
+        # this should be a RELATIVE URL
+        #full_url = mgr.local_url(for_gizmo=self, method="http", filename=filename)
+        relative_url = self.relative_url(filename)
+        self._remote_js(relative_url)
+
+    def relative_url(self, filename):
+        return "./" + filename
 
     def _set_manager(self, gz_server, mgr):
         self._manager = mgr
