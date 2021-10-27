@@ -291,7 +291,7 @@ class TestGizmo(unittest.TestCase):
     def test_raises_not_implemented(self):
         X = GizmoLink()
         with self.assertRaises(NotImplementedError):
-            X._command()
+            X._command(to_depth=10)
         with self.assertRaises(NotImplementedError):
             X._get_id()
 

@@ -87,6 +87,7 @@ var H5Gizmos = {};
             delete this.object_cache[id_string];
         };
         send(json_object) {
+            console.log("sending", json_object)
             this.sender(json_object);
         };
         send_error(message, err, oid) {

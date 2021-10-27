@@ -11,6 +11,8 @@ import numpy as np
 import json
 import asyncio
 import aiohttp
+import sys, traceback
+
 from .hex_codec import bytearray_to_hex
 from aiohttp import web
 from . import gz_resources
@@ -47,6 +49,7 @@ class Gizmo:
         self._entry_url = None
         self._ws_url = None
         self._html_page = None
+        self._print_callback_exception = True
 
     def _configure_entry_page(self, title="Gizmo", filename="index.html"):
         mgr = self._manager
@@ -117,6 +120,7 @@ class Gizmo:
         return oid
 
     def _send(self, json_message):
+        print("gizmo sending json", repr(json_message))
         self._sender(json_message)
 
     def _receive(self, json_response):
@@ -155,7 +159,15 @@ class Gizmo:
         callback_for_id = self._call_backs.get(id_string)
         if callback_for_id is None:
             raise NoSuchCallback(id_string)
-        return callback_for_id(*json_args)
+        try:
+            return callback_for_id(*json_args)
+        except Exception as e:
+            if self._print_callback_exception:
+                print("exception in gizmo callback: " + repr(e))
+                print("-"*60)
+                traceback.print_exc(file=sys.stdout)
+                print("-"*60)
+            raise e
 
     def _receive_exception(self, payload):
         self._last_exception_payload = payload
@@ -220,9 +232,11 @@ class GizmoLink:
         result = (self._get_oid, self._get_future) = self._owner_gizmo._register_future()
         return result
 
-    def _exec(self, detail=False):
+    def _exec(self, to_depth=None, detail=False):
+        to_depth = to_depth or self._owner_gizmo._default_depth
         gz = self._owner_gizmo
-        cmd = self._command()
+        cmd = self._command(to_depth)
+        print("cmd", cmd)
         msg = [GZ.EXEC, cmd]
         gz._send(msg)
         if detail:
@@ -232,14 +246,13 @@ class GizmoLink:
 
     async def _get(self, to_depth=None, oid=None, future=None, test_result=None):
         gz = self._owner_gizmo
-        cmd = self._command()
+        to_depth = to_depth or gz._default_depth
+        cmd = self._command(to_depth)
         if oid is None:
             # allow the test suite to pass in the future for testing only...
             (oid, future) = self._register_get_future()
         self._get_oid = oid
-        if to_depth is None:
-            to_depth = gz._default_depth
-        msg = [GZ.EXEC, oid, cmd, to_depth]
+        msg = [GZ.GET, oid, cmd, to_depth]
         gz._send(msg)
         if test_result is not None:
             return test_result  # only for code coverage...
@@ -248,9 +261,10 @@ class GizmoLink:
         self._get_future = None
         return future.result()
 
-    def _connect(self, id):
+    def _connect(self, id, to_depth=None):
         gz = self._owner_gizmo
-        cmd = self._command()
+        to_depth = to_depth or gz._default_depth
+        cmd = self._command(to_depth)
         msg = [GZ.CONNECT, id, cmd]
         gz._send(msg)
         return GizmoReference(id, gz)
@@ -262,7 +276,7 @@ class GizmoLink:
         msg = [GZ.DISCONNECT, id]
         gz._send(msg)
 
-    def _command(self):
+    def _command(self, to_depth):
         raise NotImplementedError("This method must be implemented in subclass.")
 
     def _get_id(self):
@@ -301,8 +315,12 @@ class GizmoGet(GizmoLink):
         self._target_cmd = target_cmd
         self._index_cmd = index_cmd
 
-    def _command(self):
-        return [GZ.GET, self._target_cmd._command(), self._index_cmd._command()]
+    def _command(self, to_depth):
+        return [
+            GZ.GET, 
+            self._target_cmd._command(to_depth), 
+            self._index_cmd._command(to_depth)
+            ]
 
 class GizmoSet(GizmoLink):
 
@@ -316,12 +334,13 @@ class GizmoSet(GizmoLink):
         self._value_cmd = value_cmd
         self._index_cmd = index_cmd
 
-    def _command(self):
+    def _command(self, to_depth):
         return [
             GZ.SET, 
-            self._target_cmd._command(), 
-            self._index_cmd._command(), 
-            self._value_cmd.command()]
+            self._target_cmd._command(to_depth), 
+            self._index_cmd._command(to_depth), 
+            self._value_cmd._command(to_depth)
+            ]
 
 class GizmoCall(GizmoLink):
 
@@ -334,9 +353,9 @@ class GizmoCall(GizmoLink):
         self._callable_cmd = callable_cmd
         self._args_cmds = args_cmds
 
-    def _command(self):
-        args_json = [x._command() for x in self._args_cmds]
-        return [GZ.CALL, self._callable_cmd._command(), args_json]
+    def _command(self, to_depth):
+        args_json = [x._command(to_depth) for x in self._args_cmds]
+        return [GZ.CALL, self._callable_cmd._command(to_depth), args_json]
 
 class GizmoReference(GizmoLink):
 
@@ -348,7 +367,7 @@ class GizmoReference(GizmoLink):
         self._owner_gizmo = owner
         self._id = id
 
-    def _command(self):
+    def _command(self, to_depth):
         return [GZ.REFERENCE, self._id]
 
     def _get_id(self):
@@ -365,7 +384,7 @@ class GizmoLiteral(GizmoLink):
         self._owner_gizmo = owner
         self._value = value
 
-    def _command(self):
+    def _command(self, to_depth):
         return [GZ.LITERAL, self._value]
 
 
@@ -379,8 +398,8 @@ class GizmoSequence(GizmoLink):
         self._owner_gizmo = owner
         self._commands = commands
 
-    def _command(self):
-        cmds_json = [x._command() for x in self._commands]
+    def _command(self, to_depth):
+        cmds_json = [x._command(to_depth) for x in self._commands]
         return [GZ.SEQUENCE, cmds_json]
 
 
@@ -394,8 +413,11 @@ class GizmoMapping(GizmoLink):
         self._owner_gizmo = owner
         self._command_dictionary = command_dictionary
 
-    def _command(self):
-        cmds_json = {name: c._command() for (name, c) in self._command_dictionary.items()}
+    def _command(self, to_depth):
+        cmds_json = {
+            name: c._command(to_depth) 
+                for (name, c) in self._command_dictionary.items()
+            }
         return [GZ.MAP, cmds_json]
 
 class GizmoBytes(GizmoLink):
@@ -408,7 +430,7 @@ class GizmoBytes(GizmoLink):
         self._owner_gizmo = owner
         self._byte_array = byte_array
 
-    def _command(self):
+    def _command(self, to_depth):
         hex = bytearray_to_hex(self._byte_array)
         return [GZ.BYTES, hex]
 
@@ -418,16 +440,13 @@ class GizmoCallback(GizmoLink):
     Wrapped callback to callable.
     """
 
-    def __init__(self, callable_object, owner, to_depth=None):
-        if to_depth is None:
-            to_depth = owner._default_depth
-        self._to_depth = to_depth
+    def __init__(self, callable_object, owner):
         self._owner_gizmo = owner
         self._callable_object = callable_object
         self._oid = owner._register_callback(callable_object)
 
-    def _command(self):
-        return [GZ.CALLBACK, self._oid, self._to_depth]
+    def _command(self, to_depth):
+        return [GZ.CALLBACK, self._oid, to_depth]
 
 
 def np_array_to_list(a):
@@ -489,8 +508,8 @@ class ValueConverter:
         else:
             raise CantConvertValue("No conversion for: " + repr(ty))
 
-    def _command(self):
-        return self.command._command()
+    def _command(self, to_depth):
+        return self.command._command(to_depth)
 
     scalar_types = set([int, float, str,  bool])
 

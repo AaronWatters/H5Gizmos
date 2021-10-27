@@ -6,3 +6,7 @@ from .python.gizmo_server import (
     run_gizmo_standalone,
     standalone_gizmo,
 )
+
+from .python.H5Gizmos import (
+    schedule_task,
+)

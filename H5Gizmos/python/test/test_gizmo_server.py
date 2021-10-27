@@ -646,15 +646,17 @@ class TestStaticHelloWorldGizmo(unittest.IsolatedAsyncioTestCase):
             G = S.gizmo(title=title)
             G._initial_reference("window")
             G._initial_reference("doc", "window.document")
-            G._html_page.insert_html(message)
+            with self.assertRaises(NameError):
+                G._initial_reference("doc", "document")
+            G._insert_html(message)
             style_text = "// nothing."
-            G._html_page.embedded_css(style_text)
+            G._embedded_css(style_text)
             css_url = "http:/x.y.z/aaa.css"
-            G._html_page.remote_css(css_url)
+            G._remote_css(css_url)
             js_url = "http:/a.b.c/x.js"
-            G._html_page.remote_js(js_url)
+            G._remote_js(js_url)
             script_text = "initialize();"
-            G._html_page.embedded_script(script_text)
+            G._embedded_script(script_text)
             #self.assertEqual(G._entry_url, None)
             url = G._entry_url
             # get the url...
