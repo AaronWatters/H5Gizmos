@@ -68,12 +68,20 @@ class Gizmo:
         if js_expression is None:
             js_expression = identity   # like "window"
         assert self._html_page is not None, "reference requires initialized html page."
+        #if hasattr(self, identity):
+        #    raise NameError(
+        #        "initial reference will not override in-use slot: " + repr(identity))
+        #reference = GizmoReference(identity, self)
+        #setattr(self, identity, reference)
+        self._reference_identity(identity)
+        self._html_page.link_reference(identity, js_expression)
+
+    def _reference_identity(self, identity):
         if hasattr(self, identity):
             raise NameError(
                 "initial reference will not override in-use slot: " + repr(identity))
         reference = GizmoReference(identity, self)
         setattr(self, identity, reference)
-        self._html_page.link_reference(identity, js_expression)
 
     def _insert_html(self, html_text):
         self._html_page.insert_html(html_text)
@@ -172,7 +180,7 @@ class Gizmo:
     def _receive_exception(self, payload):
         self._last_exception_payload = payload
         [message, oid] = payload
-        exc = JavascriptEvalException(message)
+        exc = JavascriptEvalException("js error: " + repr(message))
         o2f = self._oid_to_get_futures
         if oid is not None and oid in o2f:
             get_future = o2f[oid]
@@ -267,6 +275,7 @@ class GizmoLink:
         cmd = self._command(to_depth)
         msg = [GZ.CONNECT, id, cmd]
         gz._send(msg)
+        self._owner_gizmo._reference_identity(id)
         return GizmoReference(id, gz)
 
     def _disconnect(self, id=None):
