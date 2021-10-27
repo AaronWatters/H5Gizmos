@@ -9,12 +9,26 @@ import weakref
 import mimetypes
 import os
 
-DEFAULT_PORT = 9091
+DEFAULT_PORT = 8675 # 309 https://en.wikipedia.org/wiki/867-5309/Jenny
 GET = "GET"
 POST = "POST"
 WS = "ws"
 REQUEST_METHODS = frozenset([GET, POST, WS])
 #UTF8 = "utf-8"
+
+# https://stackoverflow.com/questions/2470971/fast-way-to-test-if-a-port-is-in-use-using-python
+def is_port_in_use(port):
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
+
+def choose_port(limit=1000):
+    for i in range(limit):
+        port = DEFAULT_PORT + i
+        if not is_port_in_use(port):
+            return port
+    raise ValueError("Could not find open port: " + repr(
+        (DEFAULT_PORT, DEFAULT_PORT+limit)))
 
 
 def get_file_bytes(path):
@@ -50,7 +64,7 @@ STDInterface = WebInterface()
 def gizmo_task_server(
         prefix="gizmo", 
         server="localhost", 
-        port=DEFAULT_PORT, 
+        port=None, 
         interface=STDInterface,
         **args,
         ):
@@ -188,6 +202,9 @@ class GzServer:
         #app = self.get_app()
         try:
             port = self.port
+            if port is None:
+                port = choose_port()
+                self.port = port
             #pr ("runner using port", port)
             await async_run(app, port=port, **args)
         except asyncio.CancelledError:

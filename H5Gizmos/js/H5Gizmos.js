@@ -81,13 +81,13 @@ var H5Gizmos = {};
             var path_split = location.pathname.split("/");
             var ws_path_split = path_split.slice(0, path_split.length - 1);
             var i = ws_path_split.length - 2;
-            console.log("fixing path", ws_path_split);
+            //console.log("fixing path", ws_path_split);
             if (ws_path_split[i] == "http") {
                 ws_path_split[i] = "ws"
             }
             var ws_path = ws_path_split.join("/");
             var url = "ws://" + location.host + ws_path;
-            console.log("ws url", url)
+            //console.log("ws url", url)
             return url;
         };
         get_reference(id_string) {
