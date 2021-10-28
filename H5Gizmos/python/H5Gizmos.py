@@ -66,6 +66,17 @@ class Gizmo:
         self._js_file("../../H5Gizmos/js/H5Gizmos.js")
         self._entry_url = mgr.local_url(for_gizmo=self, method="http", filename=filename)
 
+    def __call__(self, new_page=True):
+        return self.open_in_browser(new_page=new_page)
+
+    def open_in_browser(self, new_page=True):
+        import webbrowser
+        url = self._entry_url
+        if new_page:
+            webbrowser.open_new(url)
+        else:
+            webbrowser.open_new_tab(url)
+
     def _initial_reference(self, identity, js_expression=None):
         assert type(identity) == str, "identity must be str " + repr(identity)
         if js_expression is None:
