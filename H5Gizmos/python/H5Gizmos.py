@@ -127,7 +127,23 @@ class Gizmo:
         # this should be a RELATIVE URL
         #full_url = mgr.local_url(for_gizmo=self, method="http", filename=filename)
         relative_url = self.relative_url(filename)
-        self._remote_js(relative_url)
+        self._remote_js(relative_url, in_body=in_body)
+
+    def _css_file(self, os_path, url_path=None):
+        mgr = self._manager
+        full_path = gz_resources.get_file_path(os_path)
+        handler = mgr.add_file(full_path, url_path, content_type="text/css")
+        filename = handler.filename
+        # this should be a RELATIVE URL
+        #full_url = mgr.local_url(for_gizmo=self, method="http", filename=filename)
+        relative_url = self.relative_url(filename)
+        self._remote_css(relative_url)
+
+    def _add_content(self, os_path, content_type, url_path=None):
+        mgr = self._manager
+        full_path = gz_resources.get_file_path(os_path)
+        handler = mgr.add_file(full_path, url_path, content_type=content_type)
+        return handler.filename
 
     def relative_url(self, filename):
         return "./" + filename
