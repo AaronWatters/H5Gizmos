@@ -10,3 +10,8 @@ from .python.gizmo_server import (
 from .python.H5Gizmos import (
     schedule_task,
 )
+
+from .python.hex_codec import (
+    hex_to_bytearray,
+    bytearray_to_hex,
+)

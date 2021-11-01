@@ -46,15 +46,17 @@ class Gizmo:
         self._manager = None
         self._server = None
         self._port = None
-        self._entry_url = None
+        #self._entry_url = None
         self._ws_url = None
         self._html_page = None
         self._print_callback_exception = True
+        self._filename = None
 
     async def _awaitable_flush(self):
         await self._pipeline.packer.awaitable_flush()
 
     def _configure_entry_page(self, title="Gizmo", filename="index.html"):
+        self._filename = filename
         mgr = self._manager
         assert mgr is not None, "manager must be set before page configuration."
         ws_url = mgr.local_url(for_gizmo=self, method="ws", filename=None)
@@ -64,14 +66,17 @@ class Gizmo:
         handler = self._html_page = gz_resources.HTMLPage(ws_url=self._ws_url, title=title)
         mgr.add_http_handler(filename, handler)
         self._js_file("../../H5Gizmos/js/H5Gizmos.js")
-        self._entry_url = mgr.local_url(for_gizmo=self, method="http", filename=filename)
+        #self._entry_url = mgr.local_url(for_gizmo=self, method="http", filename=filename)
+
+    def _entry_url(self):
+        return self._manager.local_url(for_gizmo=self, method="http", filename=self._filename)
 
     def __call__(self, new_page=True):
-        return self.open_in_browser(new_page=new_page)
+        return self.open_in_browser(server, new_page=new_page)
 
     def open_in_browser(self, new_page=True):
         import webbrowser
-        url = self._entry_url
+        url = self._entry_url()
         if new_page:
             webbrowser.open_new(url)
         else:

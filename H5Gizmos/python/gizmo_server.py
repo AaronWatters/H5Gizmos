@@ -102,7 +102,9 @@ async def run_gizmo_standalone(server, gizmo, delay=0.1, interface=STDInterface,
     async def start_gizmo():
         import webbrowser
         await asyncio.sleep(delay)
-        webbrowser.open(gizmo._entry_url)
+        url = gizmo._entry_url()
+        print("openning browser", url)
+        webbrowser.open(url)
     start_task = H5Gizmos.schedule_task(start_gizmo())
     await start_task
     #await server_task
@@ -124,9 +126,11 @@ class GzServer:
             self, 
             prefix="gizmo", 
             server="localhost", 
-            port=DEFAULT_PORT, 
+            port=None,  # Choose an available port.
             interface=STDInterface,
             ):
+        if port is None:
+            port = choose_port()
         self.prefix = prefix
         self.server = server
         self.port = port
@@ -204,8 +208,12 @@ class GzServer:
             port = self.port
             if port is None:
                 port = choose_port()
+                print("chose port", port)
                 self.port = port
-            #pr ("runner using port", port)
+            else:
+                #raise ValueError("didn't choose port???")
+                pass
+            print ("runner using port", port)
             await async_run(app, port=port, **args)
         except asyncio.CancelledError:
             self.status = "app has been cancelled,"
