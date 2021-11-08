@@ -158,6 +158,14 @@ def FakeWebSocketUnicodeMessages(unicode_strings, msg_type=GZPipeline.MSG_TYPE_T
 
 class TestGizmo(unittest.TestCase):
 
+    def test_converts_None_in_dict(self):
+        import numpy as np
+        D = dict(key=None)
+        converted = ValueConverter(D, None)
+        assert converted.is_literal
+        DC = converted.command._value
+        self.assertEqual(DC, D)
+
     def test_converts_float32_in_dict(self):
         import numpy as np
         a = np.array([42.3], dtype=np.float32)
