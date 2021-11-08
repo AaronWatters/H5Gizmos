@@ -18,6 +18,22 @@ from aiohttp import web
 from . import gz_resources
 from . import gizmo_server
 
+
+def do(link_action, to_depth=None):
+    "Run the link in javascript and discard the result."
+    # command style convenience convenience accessor
+    return link_action._exec(to_depth=to_depth)
+
+async def get(link_action, to_depth=None):
+    "Run the link in javascript and return the result."
+    # command style convenience convenience accessor
+    return await link_action._get(to_depth=to_depth)
+
+def name(id, link_action, to_depth=None):
+    "Run the link in javascript and cache the result using the id."
+    # command style convenience convenience accessor
+    return link_action._connect(id, to_depth=to_depth)
+
 class Gizmo:
     EXEC = "E"
     GET = "G"
@@ -49,8 +65,23 @@ class Gizmo:
         #self._entry_url = None
         self._ws_url = None
         self._html_page = None
-        self._print_callback_exception = True
+        self.print_callback_exception = True
         self._filename = None
+
+    def _do(self, link_action, to_depth=None):
+        "Run the link in javascript and discard the result."
+        # gizmo object convenience accessor
+        return do(link_action, to_depth)
+
+    async def _get(self, link_action, to_depth=None):
+        "Run the link in javascript and return the result."
+        # gizmo object convenience accessor
+        return await get(link_action)
+
+    def _name(self, id, link_action, to_depth=None):
+        "Run the link in javascript and cache the result using the id."
+        # gizmo object convenience accessor
+        return name(id, link_action, to_depth=None)
 
     async def _awaitable_flush(self):
         await self._pipeline.packer.awaitable_flush()
@@ -103,7 +134,7 @@ class Gizmo:
         setattr(self, identity, reference)
 
     def _dereference_identity(self, identity):
-        print("deref id", repr(identity))
+        ##pr("deref id", repr(identity))
         old_value = getattr(self, identity)
         assert isinstance(old_value, GizmoReference), (
             "Deref does not apply to non-references.")
@@ -174,7 +205,7 @@ class Gizmo:
         return oid
 
     def _send(self, json_message):
-        print("gizmo sending json", repr(json_message))
+        #pr("gizmo sending json", repr(json_message)[:100])
         self._sender(json_message)
 
     def _receive(self, json_response):
@@ -290,7 +321,7 @@ class GizmoLink:
         to_depth = to_depth or self._owner_gizmo._default_depth
         gz = self._owner_gizmo
         cmd = self._command(to_depth)
-        print("cmd", cmd)
+        #pr("cmd", repr(cmd)[:200])
         msg = [GZ.EXEC, cmd]
         gz._send(msg)
         if detail:
@@ -433,6 +464,16 @@ class GizmoReference(GizmoLink):
         return self._disconnect(self._id)
 
 
+literalTypes = set([
+    int,
+    float,
+    str,
+    bool,
+    type(None),
+    list,
+    dict,
+])
+
 class GizmoLiteral(GizmoLink):
 
     """
@@ -440,6 +481,8 @@ class GizmoLiteral(GizmoLink):
     """
 
     def __init__(self, value, owner):
+        t = type(value)
+        assert t in literalTypes, "bad literal type" + repr(t)
         self._owner_gizmo = owner
         self._value = value
 
@@ -522,10 +565,13 @@ class ValueConverter:
         self.is_literal = True
         ty = type(value)
         translator = self.translators.get(ty)
+        #pr("checking translations", list(self.translators.keys()))
+        #pr("translation for",  ty, "is", translator)
         translation = value
         if translator is not None:
             translation = translator(value)
             ty = type(translation)
+            #pr ("translation", translation, ty)
         if ty in self.scalar_types:
             self.converted = translation
             self.command = GizmoLiteral(translation, owner)
@@ -537,6 +583,9 @@ class ValueConverter:
                     self.is_literal = False
                 conversions.append(c)
             if self.is_literal:
+                translation = [c.command._value for c in conversions]
+                #pr("literal types", list(map(type, translation)))
+                #pr("list", translation)
                 self.command = GizmoLiteral(translation, owner)
             else:
                 commands = [c.command for c in conversions]
@@ -551,6 +600,7 @@ class ValueConverter:
                 # XXX automatically convert keys to strings???
                 conversions[str(key)] = c
             if self.is_literal:
+                translation = {k: c.command._value for (k, c) in conversions.items()}
                 self.command = GizmoLiteral(translation, owner)
             else:
                 command_dict = {name: c.command for (name, c) in conversions.items()}
@@ -570,7 +620,7 @@ class ValueConverter:
     def _command(self, to_depth):
         return self.command._command(to_depth)
 
-    scalar_types = set([int, float, str,  bool])
+    scalar_types = set([int, float, str,  bool, type(None)])
 
     translators = {
         np.ndarray: np_array_to_list,

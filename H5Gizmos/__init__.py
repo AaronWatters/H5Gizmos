@@ -9,6 +9,9 @@ from .python.gizmo_server import (
 
 from .python.H5Gizmos import (
     schedule_task,
+    do,
+    get,
+    name,
 )
 
 from .python.hex_codec import (

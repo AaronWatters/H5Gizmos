@@ -28,6 +28,7 @@ from H5Gizmos.python.H5Gizmos import (
     GZPipeline,
     schedule_task,
     TooManyRequests,
+    ValueConverter,
 )
 
 '''
@@ -156,6 +157,26 @@ def FakeWebSocketUnicodeMessages(unicode_strings, msg_type=GZPipeline.MSG_TYPE_T
     return cnx
 
 class TestGizmo(unittest.TestCase):
+
+    def test_converts_float32_in_dict(self):
+        import numpy as np
+        a = np.array([42.3], dtype=np.float32)
+        D = dict(key=a[0])
+        self.assertEqual(type(D["key"]), np.float32)
+        converted = ValueConverter(D, None)
+        assert converted.is_literal
+        DC = converted.command._value
+        self.assertEqual(type(DC["key"]), float)
+
+    def test_converts_float32_in_list(self):
+        import numpy as np
+        a = np.array([42.3], dtype=np.float32)
+        L = [a[0]]
+        self.assertEqual(type(L[0]), np.float32)
+        converted = ValueConverter(L, None)
+        assert converted.is_literal
+        LC = converted.command._value
+        self.assertEqual(type(LC[0]), float)
 
     def test_calls_callback(self):
         data = []
