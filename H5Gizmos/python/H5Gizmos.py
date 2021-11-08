@@ -690,17 +690,35 @@ class GizmoPacker:
         self.outgoing_packets = []
         self.auto_flush = auto_flush
         self.awaitable_sender = awaitable_sender
-        self.last_flush_task = None
+        self.flush_queue = []
+        self.flush_queue_task = None
+
+    async def execute_flush_queue(self):
+        "execute the flushes in sequence (prevent interleaving)."
+        while self.flush_queue:
+            q = self.flush_queue
+            next_flush = q[0]
+            self.flush_queue = q[1:]
+            await next_flush
+        self.flush_queue = []  # should be redundant
+        self.flush_queue_task = None
+
+    def start_flush_queue_task_if_needed(self):
+        if (self.flush_queue_task is None) and self.flush_queue:
+            self.flush_queue_task = schedule_task(self.execute_flush_queue())
+        return self.flush_queue_task
 
     def flush(self):
         outgoing = self.outgoing_packets
         self.outgoing_packets = []
         if outgoing:
             awaitable = self.awaitable_flush(outgoing)
-            task = schedule_task(awaitable)
+            #task = schedule_task(awaitable)
             ##pr ("flush returns task", task)
-            self.last_flush_task = task
-            return task
+            #self.last_flush_task = task
+            #return task
+            self.flush_queue.append(awaitable)
+            return self.start_flush_queue_task_if_needed()
         else:
             return None
 
