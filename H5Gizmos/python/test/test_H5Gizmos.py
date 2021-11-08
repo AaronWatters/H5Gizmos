@@ -593,7 +593,7 @@ class TestGizmoAsync(unittest.IsolatedAsyncioTestCase):
         G._send(json_msg)
         # wait for the request to go through
         expect_str = FINISHED_UNICODE + json.dumps(json_msg)
-        await P.packer.last_flush_task
+        await P.packer.flush_queue_task
         ws = cnx.ws
         self.assertEqual(ws._sent, [expect_str])
         if auto_clear:
@@ -636,12 +636,12 @@ class TestGizmoAsync(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(P.sender, None)
         #P.send_json(json_msg)
         G._send(json_msg)
-        await P.packer.last_flush_task
+        await P.packer.flush_queue_task
         # attach the web socket to the pipeline, after the send
         await P.handle_websocket_request(req, cnx.get_web_socket)
         # wait for the request to go through
         expect_str = FINISHED_UNICODE + json.dumps(json_msg)
-        #await P.packer.last_flush_task
+        #await P.packer.flush_queue_task
         ws = cnx.ws
         self.assertEqual(ws._sent, [expect_str])
         if auto_clear:
