@@ -274,7 +274,7 @@ class Gizmo:
 
     async def _poll_report_exception(self, delay=1.0, limit=None):
         # test whether a loop is already running.
-        print("DEBUG:: exception polling task is running")
+        #("DEBUG:: exception polling task is running")
         self._exception_loop_test_flag = False
         await asyncio.sleep(delay * 3)
         if self._exception_loop_test_flag:
@@ -282,7 +282,7 @@ class Gizmo:
             raise RuntimeError("Exception loop seems already to be running.")
         count = 0
         while (limit is None) or (count < limit):
-            print("DEBUG:: polling for exceptions", count)
+            #("DEBUG:: polling for exceptions", count)
             count += 1
             self._exception_loop_test_flag = True
             ue = self._unreported_exception_payload
@@ -295,7 +295,7 @@ class Gizmo:
             await asyncio.sleep(delay)
 
     def _start_report_error_task(self, delay=1.0, limit=None):
-        print("DEBUG:: starting polling task")
+        #("DEBUG:: starting error polling task")
         schedule_task(self._poll_report_exception(delay, limit))
 
     def _register_future(self):
