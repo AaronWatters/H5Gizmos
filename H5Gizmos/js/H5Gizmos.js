@@ -278,8 +278,13 @@ var H5Gizmos = {};
         };
         execute(translator) {
             // return result for testing, not transmitted.
-            var pair = this.command.execute(translator);
-            return pair.value;
+            try {
+                var pair = this.command.execute(translator);
+                return pair.value;
+            } catch (err) {
+                translator.send_error("Error in EXEC", err, null);
+                throw err;
+            }
         };
     };
     indicator_to_message_parser[h5.EXEC] = ExecMessageParser;
@@ -302,6 +307,7 @@ var H5Gizmos = {};
                 return value;
             } catch (err) {
                 translator.send_error("Error executing GET", err, this.oid);
+                throw err;
             }
         };
     };
@@ -315,10 +321,15 @@ var H5Gizmos = {};
         };
         execute(translator) {
             // return result for testing, not transmitted.
-            var pair = this.command.execute(translator);
-            var value = pair.value;
-            translator.set_reference(this.id, value);
-            return value;
+            try {
+                var pair = this.command.execute(translator);
+                var value = pair.value;
+                translator.set_reference(this.id, value);
+                return value;
+            } catch (err) {
+                translator.send_error("Error in CONNECT", err, null);
+                throw err;
+            }
         };
     };
     indicator_to_message_parser[h5.CONNECT] = ConnectMessageParser;
@@ -342,8 +353,12 @@ var H5Gizmos = {};
             var [jsonob] = payload;
             this.jsonob = jsonob;
         };
-        execute(translator) {
-            return translator.value_pair(this.jsonob);
+        execute(translator, to_truthy) {
+            var ob = this.jsonob;
+            if ((to_truthy) && (!ob)) {
+                throw new Error("literal is not truthy: " + ob)
+            }
+            return translator.value_pair(ob);
         };
     };
     indicator_to_command_parser[h5.LITERAL] = LiteralCommandParser;
@@ -353,7 +368,8 @@ var H5Gizmos = {};
             var [hexstr] = payload;
             this.hexstr = hexstr;
         };
-        execute(translator) {
+        execute(translator, to_truthy) {
+            // to_truthy is not relevant (?)
             this.binary = translator.from_hex(this.hexstr);
             return translator.value_pair(this.binary);
         };
@@ -371,7 +387,8 @@ var H5Gizmos = {};
             }
             this.map_commands = map_commands;
         };
-        execute(translator) {
+        execute(translator, to_truthy) {
+            // to_truthy is not relevant (?)
             var map_commands = this.map_commands;
             var map_values = {};
             for (var attr in map_commands) {
@@ -390,7 +407,8 @@ var H5Gizmos = {};
             var [sequence] = payload;
             this.commands = translator.parse_commands(sequence);
         };
-        execute(translator) {
+        execute(translator, to_truthy) {
+            // to_truthy is not relevant (?)
             this.value_pairs = translator.execute_commands(this.commands);
             var values = translator.values_from_pairs(this.value_pairs);
             return translator.value_pair(values);
@@ -403,8 +421,12 @@ var H5Gizmos = {};
             var [id_string] = payload;
             this.id_string = id_string;
         };
-        execute(translator) {
-            return translator.get_reference(this.id_string);
+        execute(translator, to_truthy) {
+            var ref = translator.get_reference(this.id_string);
+            if ((to_truthy) && (!ref)) {
+                throw new Error("ref " + this.id_string + " is not truthy " + ref);
+            }
+            return ref;
         };
     };
     indicator_to_command_parser[h5.REFERENCE] = ReferenceCommandParser;
@@ -415,12 +437,16 @@ var H5Gizmos = {};
             this.target_command = translator.parse_command(target_command);
             this.index_command = translator.parse_command(index_command);
         };
-        execute(translator) {
-            this.target_pair = this.target_command.execute(translator);
+        execute(translator, to_truthy) {
+            // target must be truthy
+            this.target_pair = this.target_command.execute(translator, true);
             this.index_pair = this.index_command.execute(translator);
             var target = this.target_pair.value;
             var index = this.index_pair.value;
             var value = target[index];
+            if ((to_truthy) && (!value)) {
+                throw new Error("get " + index + " from " + target + " not truthy: " + value);
+            }
             this.result = translator.this_value_pair(target, value);
             return this.result;
         };
@@ -433,11 +459,15 @@ var H5Gizmos = {};
             this.callable_command = translator.parse_command(callable_command)
             this.args_commands = translator.parse_commands(args_commands);
         };
-        execute(translator) {
-            this.callable = this.callable_command.execute(translator);
+        execute(translator, to_truthy) {
+            // callable must be truthy
+            this.callable = this.callable_command.execute(translator, true);
             this.args = translator.execute_commands(this.args_commands);
             var args_values = translator.values_from_pairs(this.args);
             this.result = this.callable.call_with_this(args_values);
+            if ((to_truthy) && (!this.result)) {
+                throw new Error("call to " + this.callable + " returns falsy " + this.result);
+            }
             return this.result;
         };
     };
@@ -449,7 +479,8 @@ var H5Gizmos = {};
             this.id_string = id_string;
             this.to_depth = to_depth;
         };
-        execute(translator) {
+        execute(translator, to_truthy) {
+            // to_truthy is not relevant (?)
             var to_depth = this.to_depth;
             var id_string = this.id_string;
             var that = this;
@@ -475,13 +506,19 @@ var H5Gizmos = {};
             this.index_command = translator.parse_command(index_command);
             this.value_command = translator.parse_command(value_command);
         };
-        execute(translator) {
-            this.target_pair = this.target_command.execute(translator);
+        execute(translator, to_truthy) {
+            // target must be truthy
+            this.target_pair = this.target_command.execute(translator, true);
             this.index_pair = this.index_command.execute(translator);
             this.value_pair = this.value_command.execute(translator);
             var target = this.target_pair.value;
             var index = this.index_pair.value;
             var value = this.value_pair.value
+            if ((to_truthy) && (!value)) {
+                throw new Error(
+                    "index " + index + " in " + target + " gives falsy " + value
+                );
+            }
             target[index] = value;
             return this.target_pair;  // ???
         };

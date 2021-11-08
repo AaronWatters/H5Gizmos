@@ -267,6 +267,10 @@ class Gizmo:
             del o2f[oid]
             if not get_future.done():
                 get_future.set_exception(exc)
+            else:
+                self._unreported_exception_payload = payload
+        else:
+            self._unreported_exception_payload = payload
         on_exc = self._on_exception
         if on_exc is not None:
             on_exc(payload)
