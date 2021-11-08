@@ -148,7 +148,8 @@ class GzServer:
             title="Gizmo",
             packet_limit=1000000, 
             auto_flush=True,
-            entry_filename="index.html"
+            entry_filename="index.html",
+            poll_for_exceptions=True,
             ):
         result = H5Gizmos.Gizmo()
         handler = GizmoPipelineSocketHandler(result, packet_limit=packet_limit, auto_flush=auto_flush)
@@ -156,6 +157,8 @@ class GzServer:
         mgr = self.get_new_manager(websocket_handler=handler)
         result._set_manager(self, mgr)
         result._configure_entry_page(title=title, filename=entry_filename)
+        if poll_for_exceptions:
+            result._start_report_error_task()
         return result
 
     def get_new_manager(self, websocket_handler=None):

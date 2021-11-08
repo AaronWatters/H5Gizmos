@@ -6,6 +6,7 @@ See js/H5Gizmos.js for protocol JSON formats.
 
 """
 
+from asyncio.tasks import sleep
 import os
 import numpy as np
 import json
@@ -67,6 +68,8 @@ class Gizmo:
         self._html_page = None
         self.print_callback_exception = True
         self._filename = None
+        self._exception_loop_test_flag = False
+        self._unreported_exception_payload = None
 
     def _do(self, link_action, to_depth=None):
         "Run the link in javascript and discard the result."
@@ -268,6 +271,32 @@ class Gizmo:
         if on_exc is not None:
             on_exc(payload)
         return exc
+
+    async def _poll_report_exception(self, delay=1.0, limit=None):
+        # test whether a loop is already running.
+        print("DEBUG:: exception polling task is running")
+        self._exception_loop_test_flag = False
+        await asyncio.sleep(delay * 3)
+        if self._exception_loop_test_flag:
+            print("Aborting redundant exception polling task.")
+            raise RuntimeError("Exception loop seems already to be running.")
+        count = 0
+        while (limit is None) or (count < limit):
+            print("DEBUG:: polling for exceptions", count)
+            count += 1
+            self._exception_loop_test_flag = True
+            ue = self._unreported_exception_payload
+            self._unreported_exception_payload = None
+            if ue is not None:
+                print(count, "=" * 50)
+                print("Unreported exception detected for", self)
+                print(ue)
+                print(count, "=" * 50)
+            await asyncio.sleep(delay)
+
+    def _start_report_error_task(self, delay=1.0, limit=None):
+        print("DEBUG:: starting polling task")
+        schedule_task(self._poll_report_exception(delay, limit))
 
     def _register_future(self):
         self._counter += 1
