@@ -742,3 +742,16 @@ test("makes a function.", () => {
     var r = f(5,4,3);
     expect(r).toEqual((4 + 5) * 3);
 });
+
+test("executes New.", () => {
+    var h5 = H5Gizmos;
+    var args = ["v1", "v2", "v3"];
+    var body = `
+        var x = v1 + v2;
+        return x * v3;
+    `;
+    args.push(body);
+    var f = h5.New(Function, args);
+    var r = f(5,4,3);
+    expect(r).toEqual((4 + 5) * 3);
+});

@@ -717,6 +717,13 @@ var H5Gizmos = {};
         return new Function(...args);
     };
 
+    // "new" keyword emulation
+    // http://stackoverflow.com/questions/17342497/dynamically-control-arguments-while-creating-objects-in-javascript 
+    H5Gizmos.New = function(klass, args) {
+        var obj = Object.create(klass.prototype);
+        return klass.apply(obj, args) || obj;
+    };
+
     H5Gizmos.is_loaded = true;
 
 }) ();  // execute initialization in protected scope.
