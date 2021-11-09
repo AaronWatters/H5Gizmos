@@ -730,3 +730,15 @@ test("doesn't pipeline a bad message.", () => {
     var json_reply = JSON.parse(json_str);
     expect(json_reply[0]).toEqual(h5.EXCEPTION);
 });
+
+test("makes a function.", () => {
+    var h5 = H5Gizmos;
+    var names = ["v1", "v2", "v3"];
+    var body = `
+        var x = v1 + v2;
+        return x * v3;
+    `;
+    var f = h5.Function(names, body);
+    var r = f(5,4,3);
+    expect(r).toEqual((4 + 5) * 3);
+});

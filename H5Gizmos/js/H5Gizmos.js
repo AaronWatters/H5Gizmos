@@ -104,7 +104,7 @@ var H5Gizmos = {};
             delete this.object_cache[id_string];
         };
         send(json_object) {
-            console.log("sending", json_object)
+            //console.log("sending", json_object)
             this.sender(json_object);
         };
         send_error(message, err, oid) {
@@ -186,7 +186,7 @@ var H5Gizmos = {};
             return result;
         };
         parse_message(message_json_ob) {
-            console.log("parsing", message_json_ob);
+            //console.log("parsing", message_json_ob);
             if (!Array.isArray(message_json_ob)) {
                 this.send_error("top level message json should be array: " + (typeof message_json_ob));
             }
@@ -708,6 +708,14 @@ var H5Gizmos = {};
     };
 
     H5Gizmos.pipeline = pipeline;
+
+    // Conveniences
+    H5Gizmos.Function = function (argument_names, body_string) {
+        // https://stackoverflow.com/questions/7650071/is-there-a-way-to-create-a-function-from-a-string-with-javascript
+        var args = [...argument_names];
+        args.push(body_string);
+        return new Function(...args);
+    };
 
     H5Gizmos.is_loaded = true;
 
