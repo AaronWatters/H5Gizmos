@@ -74,17 +74,17 @@ class Gizmo:
     def _do(self, link_action, to_depth=None):
         "Run the link in javascript and discard the result."
         # gizmo object convenience accessor
-        return do(link_action, to_depth)
+        return do(link_action, to_depth=to_depth)
 
     async def _get(self, link_action, to_depth=None):
         "Run the link in javascript and return the result."
         # gizmo object convenience accessor
-        return await get(link_action)
+        return await get(link_action, to_depth=to_depth)
 
     def _name(self, id, link_action, to_depth=None):
         "Run the link in javascript and cache the result using the id."
         # gizmo object convenience accessor
-        return name(id, link_action, to_depth=None)
+        return name(id, link_action, to_depth=to_depth)
 
     async def _awaitable_flush(self):
         await self._pipeline.packer.awaitable_flush()
