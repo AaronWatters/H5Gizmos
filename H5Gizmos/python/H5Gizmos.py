@@ -51,6 +51,7 @@ class Gizmo:
     EXCEPTION = "X"
 
     def __init__(self, sender=None, default_depth=3, pipeline=None):
+        self._identifier = self._new_identifier_string()
         self._pipeline = pipeline
         self._sender = sender
         self._default_depth = default_depth
@@ -70,6 +71,15 @@ class Gizmo:
         self._filename = None
         self._exception_loop_test_flag = False
         self._unreported_exception_payload = None
+
+    COUNTER = 0
+
+    def _new_identifier_string(self):
+        import time
+        Gizmo.COUNTER += 1
+        c = Gizmo.COUNTER
+        t = int(time.time() * 1000)
+        return "Gizmo_%s_%s" % (t, c)
 
     def _do(self, link_action, to_depth=None):
         "Run the link in javascript and discard the result."
