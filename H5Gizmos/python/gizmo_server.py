@@ -117,6 +117,58 @@ def standalone_gizmo(server, gizmo, run_forever=True, delay=0.1, interface=STDIn
         print ("entering run_forever loop -- terminate with control-C")
         asyncio.get_event_loop().run_forever()
 
+async def gizmo_jupyter_tab(server, gizmo, delay=0.1, **args):
+    "Launch a gizmo from jupyter openned in a separate tab or window."
+    assert isnotebook(), "This method only works in a IPython Jupyter kernel process."
+    await run_gizmo_standalone(server, gizmo, delay, **args)
+
+def isnotebook():
+    # https://stackoverflow.com/questions/15411967/how-can-i-check-if-code-is-executed-in-the-ipython-notebook
+    try:
+        shell = get_ipython().__class__.__name__
+        if shell == 'ZMQInteractiveShell':
+            return True   # Jupyter notebook or qtconsole
+        elif shell == 'TerminalInteractiveShell':
+            return False  # Terminal running IPython
+        else:
+            return False  # Other type (?)
+    except NameError:
+        return False      # Probably standard Python interpreter
+
+# https://blog.addpipe.com/camera-and-microphone-access-in-cross-oirigin-iframes-with-feature-policy/
+
+IFRAME_TEMPLATE = """
+<iframe id="{IDENTIFIER}"
+    style="overflow: scroll  !important;"
+    title="{TITLE}"
+    width="100%"
+    height="{HEIGHT}"
+    src="{URL}"
+    {ALLOW_LIST}
+</iframe>"""
+
+async def gizmo_jupyter_iframe(server, gizmo, height, delay=0.1, allow_list='allow="camera;microphone"', **args):
+    identifier = gizmo._identifier
+    url = gizmo._entry_url()
+    D = dict(
+        IDENTIFIER = identifier,
+        TITLE = identifier,
+        HEIGHT = height,
+        URL = url,
+        ALLOW_LIST = allow_list,
+    )
+    iframe_html = IFRAME_TEMPLATE.format(**D)
+    server_task = server.run_in_task(**args)
+    async def start_gizmo():
+        from IPython.display import HTML, display
+        await asyncio.sleep(delay)
+        print("displaying", url)
+        display(HTML(iframe_html))
+    start_task = H5Gizmos.schedule_task(start_gizmo())
+    await start_task
+
+# name aliases (maybe rename later?)
+launch_in_browser = run_gizmo_standalone
 
 class GzServer:
 
