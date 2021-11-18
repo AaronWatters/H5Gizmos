@@ -728,7 +728,7 @@ var H5Gizmos = {};
     H5Gizmos.periodically_send_height_to_parent = function(identifier, delay) {
         delay = delay || 1000;
         if(window.self === window.top) { 
-            console.log("gizmo not running in iframe.")
+            //console.log("gizmo not running in iframe.")
             return;
         }
         var html_element = document.getElementsByTagName("html")[0];
