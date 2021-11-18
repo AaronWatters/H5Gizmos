@@ -136,33 +136,49 @@ def isnotebook():
         return False      # Probably standard Python interpreter
 
 # https://blog.addpipe.com/camera-and-microphone-access-in-cross-oirigin-iframes-with-feature-policy/
+# https://stackoverflow.com/questions/9162933/make-iframe-height-dynamic-based-on-content-inside-jquery-javascript
+# https://stackoverflow.com/questions/22086722/resize-cross-domain-iframe-height
 
 IFRAME_TEMPLATE = """
+<script>
+(function () {{
+    var identifier = "{IDENTIFIER}";
+    window.addEventListener("message", function(e) {{
+        var this_frame = document.getElementById(identifier);
+        if ((this_frame) && (this_frame.contentWindow === e.source)) {{
+            //console.log("processing message", e.data.height);
+            this_frame.height = e.data.height + "px";
+            this_frame.style.height = e.data.height + "px";
+        }}
+    }});
+}}) ();
+</script>
+
 <iframe id="{IDENTIFIER}"
-    style="overflow: scroll  !important;"
     title="{TITLE}"
     width="100%"
-    height="{HEIGHT}"
     src="{URL}"
     {ALLOW_LIST}
 </iframe>"""
 
-async def gizmo_jupyter_iframe(server, gizmo, height, delay=0.1, allow_list='allow="camera;microphone"', **args):
+async def gizmo_jupyter_iframe(server, gizmo, delay=0.1, allow_list='allow="camera;microphone"', **args):
     identifier = gizmo._identifier
     url = gizmo._entry_url()
     D = dict(
         IDENTIFIER = identifier,
         TITLE = identifier,
-        HEIGHT = height,
+        #HEIGHT = height,
         URL = url,
         ALLOW_LIST = allow_list,
+        DELAY = 10000,
     )
     iframe_html = IFRAME_TEMPLATE.format(**D)
     server_task = server.run_in_task(**args)
     async def start_gizmo():
         from IPython.display import HTML, display
         await asyncio.sleep(delay)
-        print("displaying", url)
+        #print("displaying", url)
+        #print(iframe_html)
         display(HTML(iframe_html))
     start_task = H5Gizmos.schedule_task(start_gizmo())
     await start_task

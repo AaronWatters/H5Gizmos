@@ -74,12 +74,12 @@ class Gizmo:
 
     COUNTER = 0
 
-    def _new_identifier_string(self):
+    def _new_identifier_string(self, prefix="Gizmo"):
         import time
         Gizmo.COUNTER += 1
         c = Gizmo.COUNTER
         t = int(time.time() * 1000)
-        return "Gizmo_%s_%s" % (t, c)
+        return "%s_%s_%s" % (prefix, t, c)
 
     def _do(self, link_action, to_depth=None):
         "Run the link in javascript and discard the result."
@@ -107,7 +107,11 @@ class Gizmo:
         if ws_url.startswith("http:"):
             ws_url = "ws:" + ws_url[5:]
         self._ws_url = ws_url
-        handler = self._html_page = gz_resources.HTMLPage(ws_url=self._ws_url, title=title)
+        handler = self._html_page = gz_resources.HTMLPage(
+            ws_url=self._ws_url, 
+            title=title,
+            identifier=self._identifier,
+            )
         mgr.add_http_handler(filename, handler)
         self._js_file("../../H5Gizmos/js/H5Gizmos.js")
         #self._entry_url = mgr.local_url(for_gizmo=self, method="http", filename=filename)
