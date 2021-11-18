@@ -5,6 +5,8 @@ from .python.gizmo_server import (
     GzServer,
     run_gizmo_standalone,
     standalone_gizmo,
+    gizmo_jupyter_tab,
+    gizmo_jupyter_iframe,
 )
 
 from .python.H5Gizmos import (
