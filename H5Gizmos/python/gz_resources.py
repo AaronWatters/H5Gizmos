@@ -52,7 +52,9 @@ class DelegatePOSTtoGETMixin:
 
 class HTMLPage(DelegatePOSTtoGETMixin):
 
-    def __init__(self, ws_url, title="Gizmo", embed_gizmo=True, template=None):
+    def __init__(self, ws_url, title="Gizmo", embed_gizmo=True, template=None, message_delay=1000, identifier=None):
+        self.identifier = identifier or title
+        self.message_delay = message_delay
         self.ws_url = ws_url
         if template is None:
             template = STD_HTML_PAGE_TEMPLATE
@@ -121,6 +123,13 @@ class HTMLPage(DelegatePOSTtoGETMixin):
         else:
             self.add_head_resource(resource)
 
+    def misc_operations(self):
+        "Miscellaneous initialization after references have been created."
+        return MISC_OPERATIONS_TEMPLATE.format(
+            delay=self.message_delay,
+            identifier=self.identifier,
+            )
+
     def standard_embedded_initialization_code(self):
         ref_id_and_js_expression = self.ref_id_and_js_expression
         #L = [PIPELINE_WEBSOCKET_TEMPLATE.format(ws_url=repr(self.ws_url))]
@@ -129,10 +138,14 @@ class HTMLPage(DelegatePOSTtoGETMixin):
             id_repr = repr(identity)
             set_code = SET_REFERENCE_TEMPLATE.format(id_string=id_repr, js_expression=expression)
             L.append(set_code)
+        L.append(self.misc_operations())
         all_set_code = "".join(L).strip()
         result = STD_INIT_TEMPLATE.replace("[SET_REFERENCES_HERE]", all_set_code)
         return result
         
+MISC_OPERATIONS_TEMPLATE = """
+        H5Gizmos.periodically_send_height_to_parent("{identifier}", {delay});
+"""
 
 STD_INIT_TEMPLATE = """
 // This is the container for the web connection and related objects.
@@ -169,9 +182,9 @@ class Resource:
     def html_embedding(self):
         return None
 
-    def configure_in_gizmo_manager(self):
-        "Configure the GizmoManager to serve this resource if needed."
-        return None
+    #def configure_in_gizmo_manager(self):  # xxxx not used ???
+    #    "Configure the GizmoManager to serve this resource if needed."
+    #    return None
 
 class PageTitle(Resource):
 
@@ -192,7 +205,7 @@ class RemoteJavascript(Resource):
 class RemoteCSS(RemoteJavascript):
 
     def html_embedding(self):
-        return '<link rel=stylesheet href="%s"/>' % (self.url,)
+        return '<link rel="stylesheet" href="%s"/>' % (self.url,)
 
 
 HTML_EMBED_SCRIPT_TEMPLATE = """
