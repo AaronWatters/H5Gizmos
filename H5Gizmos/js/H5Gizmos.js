@@ -724,6 +724,26 @@ var H5Gizmos = {};
         return klass.apply(obj, args) || obj;
     };
 
+    // https://stackoverflow.com/questions/22086722/resize-cross-domain-iframe-height
+    H5Gizmos.periodically_send_height_to_parent = function(identifier, delay) {
+        delay = delay || 1000;
+        if(window.self === window.top) { 
+            console.log("gizmo not running in iframe.")
+            return;
+        }
+        var html_element = document.getElementsByTagName("html")[0];
+        if (html_element) {
+            var send_height_to_parent = function () {
+                var height = html_element.offsetHeight;
+                var message = { identifier: identifier, height: height };
+                //console.log("sending to parent", height, message);
+                parent.postMessage(message, "*");
+                setTimeout(send_height_to_parent, delay);
+            }
+            setTimeout(send_height_to_parent, delay);
+        }
+    };
+
     H5Gizmos.is_loaded = true;
 
 }) ();  // execute initialization in protected scope.
