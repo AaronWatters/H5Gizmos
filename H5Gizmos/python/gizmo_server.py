@@ -275,7 +275,7 @@ async def embed(gizmo, allow_list='allow="camera;microphone"', delay=0.1):
         #HEIGHT = height,
         URL = url,
         ALLOW_LIST = allow_list,
-        DELAY = 10000,
+        #DELAY = 10000,
     )
     iframe_html = IFRAME_TEMPLATE.format(**D)
     await asyncio.sleep(delay)  # This should allow the server to start if needed.
