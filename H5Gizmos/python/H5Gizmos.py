@@ -322,6 +322,7 @@ class Gizmo:
     async def _poll_report_exception(self, delay=1.0, limit=None):
         # test whether a loop is already running.
         #("DEBUG:: exception polling task is running")
+        # xxxx should link this to self._err redirect xxxx
         self._exception_loop_test_flag = False
         await asyncio.sleep(delay * 3)
         if self._exception_loop_test_flag:
