@@ -167,10 +167,10 @@ class Gizmo:
         embedded = self._embedded_components
         if key in embedded:
             # the resource has been embedded already.. don't do it twice
-            print("not duplicating", key)
+            #print("not duplicating", key)
             return False
         else:
-            print("permitting first embedding", key)
+            #print("permitting first embedding", key)
             embedded.add(key)
             return True
 
