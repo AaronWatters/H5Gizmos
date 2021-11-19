@@ -11,6 +11,84 @@ import os
 import sys
 import contextlib
 
+PROCESS_SHARED_GIZMO_SERVER = None
+
+def start(capture_output=False, output_context=None, force=False):
+    """
+    Start a gizmo server either in Jupyter or as a standalone runner.
+    """
+    # xxxx eventually support other hosts(?)
+    if (not force) and (PROCESS_SHARED_GIZMO_SERVER is not None):
+        raise ValueError("Shared gizmo server has been created already.")
+    if isnotebook():
+        return _start_in_jupyter(capture_output, output_context)
+    else:
+        return _start_standalone(capture_output, output_context)
+
+
+def _start_in_jupyter(capture_output=False, output_context=None):
+    "Schedule server task in the running jupyter event loop."
+    global PROCESS_SHARED_GIZMO_SERVER
+    import ipywidgets as widgets
+    from IPython.display import display
+    out = err = None
+    if output_context is not None:
+        out = err = output_context
+    elif capture_output:
+        out = widgets.Output()
+        err = out
+        display(out)
+        with out:
+            print("Starting gizmo server.  Embedded output shown below.")
+    S = GzServer(out=out, err=err)
+    PROCESS_SHARED_GIZMO_SERVER = S
+    S.run_in_task()  # xxxx arguments(?)
+    return S
+
+def _start_standalone(capture_output=False, output_context=None):
+    "Schedule a server task -- don't start the event loop (yet)."
+    global PROCESS_SHARED_GIZMO_SERVER
+    out = err = None
+    if output_context is not None:
+        out = err = output_context
+    elif capture_output:
+        # xxxxx
+        raise NotImplementedError("No default output capture for standalone yet implmented.")
+    S = GzServer(out=out, err=err)
+    S.run_in_task()
+    PROCESS_SHARED_GIZMO_SERVER = S
+    return S
+
+def new_gizmo(capture_output=False, output_context=None, server=None):
+    if server is None:
+        server = PROCESS_SHARED_GIZMO_SERVER
+    if server is None:
+        server = start(capture_output, output_context)
+    return server.gizmo()
+
+def in_tab(gizmo, capture_output=False, output_context=None, server=None, delay=0.1):
+    """
+    Run the gizmo.  Create or use the global process server if needed.
+    """
+    if server is None:
+        if PROCESS_SHARED_GIZMO_SERVER is None:
+            server = start(capture_output, output_context)
+        else:
+            server = PROCESS_SHARED_GIZMO_SERVER
+    async def start_gizmo():
+        import webbrowser
+        await asyncio.sleep(delay)
+        url = gizmo._entry_url()
+        print("openning browser", url)
+        webbrowser.open(url)
+    start_task = H5Gizmos.schedule_task(start_gizmo())
+    if isnotebook():
+        return start_task
+    else:
+        # Just run this gizmo forever (???)
+        asyncio.get_event_loop().run_forever()
+
+
 DEFAULT_PORT = 8675 # 309 https://en.wikipedia.org/wiki/867-5309/Jenny
 GET = "GET"
 POST = "POST"
@@ -225,7 +303,7 @@ class GzServer:
     def my_stderr(self):
         if self.err:
             return self.err
-        return contextlib.redirect_stdout(sys.stderr)
+        return contextlib.redirect_stderr(sys.stderr)
 
     def gizmo(
             self, 
