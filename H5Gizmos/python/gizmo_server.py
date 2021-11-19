@@ -8,6 +8,8 @@ import asyncio
 import weakref
 import mimetypes
 import os
+import sys
+import contextlib
 
 DEFAULT_PORT = 8675 # 309 https://en.wikipedia.org/wiki/867-5309/Jenny
 GET = "GET"
@@ -196,6 +198,8 @@ class GzServer:
             server="localhost", 
             port=None,  # Choose an available port.
             interface=STDInterface,
+            out=None,  # context redirect (like widgets.Output) or None
+            err=None,  # context redirect (like widgets.Output) or None
             ):
         if port is None:
             port = choose_port()
@@ -210,6 +214,18 @@ class GzServer:
         self.cancelled = False
         self.identifier_to_manager = {}
         self.counter = 0
+        self.out = out
+        self.err = err
+
+    def my_stdout(self):
+        if self.out:
+            return self.out
+        return contextlib.redirect_stdout(sys.stdout)
+
+    def my_stderr(self):
+        if self.err:
+            return self.err
+        return contextlib.redirect_stdout(sys.stderr)
 
     def gizmo(
             self, 
@@ -265,12 +281,19 @@ class GzServer:
 
     async def on_shutdown(self, app):
         # https://docs.aiohttp.org/en/v0.22.4/web.html#aiohttp-web-graceful-shutdown
-        for mgr in self.identifier_to_manager.values():
-            h = mgr.web_socket_handler
-            if h is not None:
-                ws = h.ws
-                if ws is not None:
-                    await ws.close(code=999, message='Server shutdown')
+        with self.my_stderr():
+            with self.my_stdout():
+                for mgr in self.identifier_to_manager.values():
+                    h = mgr.web_socket_handler
+                    if h is not None:
+                        ws = h.ws
+                        if ws is not None:
+                            await ws.close(code=999, message='Server shutdown')
+
+    def my_print(self, *args, **kwargs):
+        with self.my_stderr():
+            with self.my_stdout():
+                print(*args, **kwargs)
           
     async def make_runner(self, app, async_run=web._run_app, **args):
         self.status = "starting runner"
@@ -284,7 +307,9 @@ class GzServer:
             else:
                 #raise ValueError("didn't choose port???")
                 pass
-            print ("runner using port", port)
+            self.my_print ("runner using port", port)
+            if "print" not in args:
+                args["print"] = self.my_print
             await async_run(app, port=port, **args)
         except asyncio.CancelledError:
             self.status = "app has been cancelled,"
@@ -320,31 +345,39 @@ class GzServer:
 
     def handle_http_get(self, request, interface=None):
         #pr(" ... server get", request.path)
-        if interface is None:
-            interface = self.interface
-        return self.handle(request, method=GET, interface=interface)
+        with self.my_stderr():
+            with self.my_stdout():
+                if interface is None:
+                    interface = self.interface
+                return self.handle(request, method=GET, interface=interface)
 
     def handle_http_post(self, request, interface=None):
-        #pr(" ... server post", request.path)
-        if interface is None:
-            interface = self.interface
-        return self.handle(request, method=POST, interface=interface)
+        with self.my_stderr():
+            with self.my_stdout():
+                #pr(" ... server post", request.path)
+                if interface is None:
+                    interface = self.interface
+                return self.handle(request, method=POST, interface=interface)
 
     def handle_web_socket(self, request, interface=None):
-        #pr(" ... server socket", request.path)
-        if interface is None:
-            interface = self.interface
-        return self.handle(request, method=WS, interface=interface)
+        with self.my_stderr():
+            with self.my_stdout():
+                #pr(" ... server socket", request.path)
+                if interface is None:
+                    interface = self.interface
+                return self.handle(request, method=WS, interface=interface)
 
     async def shutdown(self):
-        app = self.app
-        if self.task is not None:
-            self.task.cancel()
-        if app is not None:
-            # https://stackoverflow.com/questions/55236254/cant-stop-aiohttp-websocket-server
-            await app.shutdown()
-            await app.cleanup()
-            # should also clean up any outstanding web sockets xxxx ????
+        with self.my_stderr():
+            with self.my_stdout():
+                app = self.app
+                if self.task is not None:
+                    self.task.cancel()
+                if app is not None:
+                    # https://stackoverflow.com/questions/55236254/cant-stop-aiohttp-websocket-server
+                    await app.shutdown()
+                    await app.cleanup()
+                    # should also clean up any outstanding web sockets xxxx ????
 
 class RequestUrlInfo:
 
