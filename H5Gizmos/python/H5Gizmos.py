@@ -13,6 +13,7 @@ import json
 import asyncio
 import aiohttp
 import sys, traceback
+import contextlib
 
 from .hex_codec import bytearray_to_hex
 from aiohttp import web
@@ -72,6 +73,8 @@ class Gizmo:
         self._exception_loop_test_flag = False
         self._unreported_exception_payload = None
         self._embedded_components = set()
+        self._out = None
+        self._err = None
 
     COUNTER = 0
 
@@ -229,6 +232,8 @@ class Gizmo:
         self._manager = mgr
         self._server = gz_server.server
         self._port = gz_server.port
+        self._out = self._out or gz_server.out
+        self._err = self._err or gz_server.err
 
     def _set_pipeline(self, pipeline):
         self._pipeline = pipeline
@@ -855,6 +860,20 @@ class GZPipeline:
 
     auto_clear = True  # set false only for debug
 
+    def my_stdout(self):
+        if self.gizmo:
+            out = self.gizmo._out
+            if out:
+                return out
+        return contextlib.redirect_stdout(sys.stdout)
+
+    def my_stderr(self):
+        if self.gizmo:
+            err = self.gizmo._err
+            if err:
+                return err
+        return contextlib.redirect_stderr(sys.stderr)
+
     def clear(self):
         # release debug references
         self.last_unicode_sent = None
@@ -874,12 +893,14 @@ class GZPipeline:
 
     async def _send(self, chunk):
         #pr ("pipeline sending", repr(chunk))
-        if self.sender is not None:
-            await self.sender(chunk)
-        else:
-            self.waiting_chunks.append(chunk)
-        if self.auto_clear:
-            self.clear()
+        with self.my_stderr():
+            with self.my_stdout():
+                if self.sender is not None:
+                    await self.sender(chunk)
+                else:
+                    self.waiting_chunks.append(chunk)
+                if self.auto_clear:
+                    self.clear()
 
     async def handle_websocket_request(self, request, get_websocket=web.WebSocketResponse):
         #pr("pipeline handling request", request)
@@ -931,8 +952,10 @@ class GZPipeline:
 
     def process_packet(self, packet):
         #pr("pipeline process packet", repr(packet))
-        self.last_packet_processed = packet
-        return self.json_codec.receive_unicode(packet)
+        with self.my_stderr():
+            with self.my_stdout():
+                self.last_packet_processed = packet
+                return self.json_codec.receive_unicode(packet)
 
     def process_json(self, json_ob):
         #pr("pipeline process_json", repr(json_ob))
