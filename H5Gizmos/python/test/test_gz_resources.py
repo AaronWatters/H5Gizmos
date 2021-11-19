@@ -32,7 +32,8 @@ class TestHTMLGeneration(unittest.TestCase):
         R = Resource()
         # for coverage
         self.assertIsNone(R.html_embedding())
-        self.assertIsNone(R.configure_in_gizmo_manager())
+        # this method is commented for now
+        #self.assertIsNone(R.configure_in_gizmo_manager())
 
 
 class TestFileNames(unittest.TestCase):
