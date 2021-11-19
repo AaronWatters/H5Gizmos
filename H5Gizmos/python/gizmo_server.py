@@ -68,7 +68,7 @@ def new_gizmo(capture_output=False, output_context=None, server=None):
 
 def in_tab(gizmo, capture_output=False, output_context=None, server=None, delay=0.1):
     """
-    Run the gizmo.  Create or use the global process server if needed.
+    Run the gizmo in a new browser tab or window.  Create or use the global process server if needed.
     """
     if server is None:
         if PROCESS_SHARED_GIZMO_SERVER is None:
@@ -262,6 +262,24 @@ async def gizmo_jupyter_iframe(server, gizmo, delay=0.1, allow_list='allow="came
         display(HTML(iframe_html))
     start_task = H5Gizmos.schedule_task(start_gizmo())
     await start_task
+
+async def embed(gizmo, allow_list='allow="camera;microphone"', delay=0.1):
+    "Embed gizmo in jupyter.  Create or use the global server if needed."
+    from IPython.display import HTML, display
+    assert isnotebook(), "Gizmo embedding is only supported inside jupyter notebooks."
+    identifier = gizmo._identifier
+    url = gizmo._entry_url()
+    D = dict(
+        IDENTIFIER = identifier,
+        TITLE = identifier,
+        #HEIGHT = height,
+        URL = url,
+        ALLOW_LIST = allow_list,
+        DELAY = 10000,
+    )
+    iframe_html = IFRAME_TEMPLATE.format(**D)
+    await asyncio.sleep(delay)  # This should allow the server to start if needed.
+    display(HTML(iframe_html))
 
 # name aliases (maybe rename later?)
 launch_in_browser = run_gizmo_standalone

@@ -7,6 +7,10 @@ from .python.gizmo_server import (
     standalone_gizmo,
     gizmo_jupyter_tab,
     gizmo_jupyter_iframe,
+    start,
+    new_gizmo,
+    in_tab,
+    embed,
 )
 
 from .python.H5Gizmos import (
