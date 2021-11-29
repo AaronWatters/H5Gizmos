@@ -62,6 +62,8 @@ class HTMLPage(DelegatePOSTtoGETMixin):
         self.template = template
         self.head_resources = []
         self.body_resources = []
+        # set this once the HTML page has been sent
+        self.materialized = False
         if title is not None:
             self.add_head_resource(PageTitle(title))
         if embed_gizmo:
@@ -74,6 +76,7 @@ class HTMLPage(DelegatePOSTtoGETMixin):
     def handle_get(self, info, request, interface=None):
         interface = interface or gizmo_server.STDInterface
         bytes = self.as_string().encode("utf-8")
+        self.materialized = True
         return interface.respond(body=bytes, content_type="text/html")
 
     def as_string(self):

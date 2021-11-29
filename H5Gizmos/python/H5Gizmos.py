@@ -161,8 +161,14 @@ class Gizmo:
             "Deref does not apply to non-references.")
         setattr(self, identity, None)
 
+    def _page_is_configurable(self):
+        assert self._html_page is not None, "Cannot configure page until HTML page object is attached."
+        assert not self._html_page.materialized, "Cannot configure HTML after it is materialized."
+        return True
+
     def _embed_no_duplicate(self, key, check=True):
         if not check:
+            assert self._page_is_configurable()
             return True
         embedded = self._embedded_components
         if key in embedded:
@@ -171,11 +177,13 @@ class Gizmo:
             return False
         else:
             #print("permitting first embedding", key)
+            assert self._page_is_configurable()
             embedded.add(key)
             return True
 
     def _insert_html(self, html_text):
         # don't check for duplicates
+        assert self._page_is_configurable()
         self._html_page.insert_html(html_text)
 
     def _embedded_css(self, style_text):
