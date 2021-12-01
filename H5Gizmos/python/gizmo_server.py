@@ -23,6 +23,26 @@ def get_or_create_event_loop():
     return loop
 
 def run(main_awaitable, server=None, run_forever=True):
+    """
+    Get a gizmo and run it in an asynchronous run program.
+    Start a server if no server is provided.
+    """
+    server = _check_server(server)
+    # create and schedule the main task
+    gizmo = server.gizmo()
+    H5Gizmos.schedule_task(main_awaitable(gizmo))
+    if run_forever:
+        get_or_create_event_loop().run_forever()
+
+async def get_gizmo(from_server):
+    """
+    Get a gizmo (the official way).  Set up a server iff needed.
+    """
+    from_server = _check_server(from_server)
+    return from_server.gizmo()
+
+def _check_server(server):
+    "Make sure the gizmo server is set up."
     global PROCESS_SHARED_GIZMO_SERVER
     out = None  # xxxx
     err = None
@@ -33,12 +53,10 @@ def run(main_awaitable, server=None, run_forever=True):
             server = PROCESS_SHARED_GIZMO_SERVER = GzServer(out=out, err=err)
             # schedule the server task
             server.run_in_task()
-    # create and schedule the main task
-    gizmo = server.gizmo()
-    H5Gizmos.schedule_task(main_awaitable(gizmo))
-    if run_forever:
-        get_or_create_event_loop().run_forever()
+    return server
 
+
+''' 
 def start(capture_output=False, output_context=None, force=False):
     """
     Start a gizmo server either in Jupyter or as a standalone runner.
@@ -49,9 +67,9 @@ def start(capture_output=False, output_context=None, force=False):
     if isnotebook():
         return _start_in_jupyter(capture_output, output_context)
     else:
-        return _start_standalone(capture_output, output_context)
+        return _start_standalone(capture_output, output_context)'''
 
-
+'''
 def _start_in_jupyter(capture_output=False, output_context=None):
     "Schedule server task in the running jupyter event loop."
     global PROCESS_SHARED_GIZMO_SERVER
@@ -69,8 +87,9 @@ def _start_in_jupyter(capture_output=False, output_context=None):
     S = GzServer(out=out, err=err)
     PROCESS_SHARED_GIZMO_SERVER = S
     S.run_in_task()  # xxxx arguments(?)
-    return S
+    return S'''
 
+'''
 def _start_standalone(capture_output=False, output_context=None):
     "Schedule a server task -- don't start the event loop (yet)."
     global PROCESS_SHARED_GIZMO_SERVER
@@ -83,15 +102,17 @@ def _start_standalone(capture_output=False, output_context=None):
     S = GzServer(out=out, err=err)
     S.run_in_task()
     PROCESS_SHARED_GIZMO_SERVER = S
-    return S
+    return S'''
 
+'''
 def new_gizmo(capture_output=False, output_context=None, server=None):
     if server is None:
         server = PROCESS_SHARED_GIZMO_SERVER
     if server is None:
         server = start(capture_output, output_context)
-    return server.gizmo()
+    return server.gizmo()'''
 
+'''
 def in_tab(gizmo, capture_output=False, output_context=None, server=None, delay=0.1):
     """
     Run the gizmo in a new browser tab or window.  Create or use the global process server if needed.
@@ -112,7 +133,7 @@ def in_tab(gizmo, capture_output=False, output_context=None, server=None, delay=
         return start_task
     else:
         # Just run this gizmo forever (???)
-        asyncio.get_running_loop().run_forever()
+        asyncio.get_running_loop().run_forever()'''
 
 
 DEFAULT_PORT = 8675 # 309 https://en.wikipedia.org/wiki/867-5309/Jenny
@@ -167,6 +188,7 @@ class WebInterface:
 
 STDInterface = WebInterface()
 
+'''
 def gizmo_task_server(
         prefix="gizmo", 
         server="localhost", 
@@ -181,8 +203,9 @@ def gizmo_task_server(
         interface=interface,
     )
     S.run_in_task(app_factory=interface.app_factory, async_run=interface.async_run, **args)
-    return S
+    return S'''
 
+'''
 def gizmo_standalone_server(
         prefix="gizmo", 
         server="localhost", 
@@ -197,9 +220,10 @@ def gizmo_standalone_server(
         interface=interface,
     )
     S.run_standalone(app_factory=interface.app_factory, async_run=interface.async_run, **args)
-    return S
+    return S'''
 
 
+'''
 async def run_gizmo_standalone(server, gizmo, delay=0.1, interface=STDInterface, **args):
     server_task = server.run_in_task(
         app_factory=interface.app_factory, 
@@ -214,20 +238,22 @@ async def run_gizmo_standalone(server, gizmo, delay=0.1, interface=STDInterface,
     start_task = H5Gizmos.schedule_task(start_gizmo())
     await start_task
     #await server_task
-    # terminate with control-c
+    # terminate with control-c '''
 
+'''
 def standalone_gizmo(server, gizmo, run_forever=True, delay=0.1, interface=STDInterface, **args):
     start_server = run_gizmo_standalone(server, gizmo, delay, interface, **args)
     loop = get_or_create_event_loop()
     loop.run_until_complete(start_server)
     if run_forever:
         print ("entering run_forever loop -- terminate with control-C")
-        loop.run_forever()
+        loop.run_forever()'''
 
+'''
 async def gizmo_jupyter_tab(server, gizmo, delay=0.1, **args):
     "Launch a gizmo from jupyter openned in a separate tab or window."
     assert isnotebook(), "This method only works in a IPython Jupyter kernel process."
-    await run_gizmo_standalone(server, gizmo, delay, **args)
+    await run_gizmo_standalone(server, gizmo, delay, **args)'''
 
 def isnotebook():
     # https://stackoverflow.com/questions/15411967/how-can-i-check-if-code-is-executed-in-the-ipython-notebook
@@ -268,6 +294,7 @@ IFRAME_TEMPLATE = """
     {ALLOW_LIST}
 </iframe>"""
 
+'''
 async def gizmo_jupyter_iframe(server, gizmo, delay=0.1, allow_list='allow="camera;microphone"', **args):
     identifier = gizmo._identifier
     url = gizmo._entry_url()
@@ -288,8 +315,9 @@ async def gizmo_jupyter_iframe(server, gizmo, delay=0.1, allow_list='allow="came
         #print(iframe_html)
         display(HTML(iframe_html))
     start_task = H5Gizmos.schedule_task(start_gizmo())
-    await start_task
+    await start_task'''
 
+'''
 async def embed(gizmo, allow_list='allow="camera;microphone"', delay=0.1):
     "Embed gizmo in jupyter.  Create or use the global server if needed."
     from IPython.display import HTML, display
@@ -306,10 +334,10 @@ async def embed(gizmo, allow_list='allow="camera;microphone"', delay=0.1):
     )
     iframe_html = IFRAME_TEMPLATE.format(**D)
     await asyncio.sleep(delay)  # This should allow the server to start if needed.
-    display(HTML(iframe_html))
+    display(HTML(iframe_html))'''
 
 # name aliases (maybe rename later?)
-launch_in_browser = run_gizmo_standalone
+#launch_in_browser = run_gizmo_standalone
 
 class GzServer:
 
@@ -376,12 +404,12 @@ class GzServer:
         self.identifier_to_manager[identifier] = result
         return result
 
-    def run_standalone(self, app_factory=web.Application, sync_run=web.run_app, **args):
+    '''def run_standalone(self, app_factory=web.Application, sync_run=web.run_app, **args):
         app = self.get_app(app_factory=app_factory)
         self.status = "running standalone"
         result = sync_run(app, port=self.port, **args)
         self.status = "done standalone"
-        return result
+        return result'''
 
     def run_in_task(self, app_factory=web.Application, async_run=web._run_app, **args):
         loop = get_or_create_event_loop()
