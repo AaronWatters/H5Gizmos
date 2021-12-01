@@ -311,12 +311,11 @@ class Gizmo:
             self._remote_css(relative_url, check=False)
 
     def _add_content(self, os_path, content_type, url_path=None, dont_duplicate=True):
-        key = (os_path, content_type, url_path)
-        if self._embed_no_duplicate(key, dont_duplicate):
-            mgr = self._manager
-            full_path = gz_resources.get_file_path(os_path)
-            handler = mgr.add_file(full_path, url_path, content_type=content_type)
-            return handler.filename
+        # don't check for duplicates, etc. content may be modified during processing.
+        mgr = self._manager
+        full_path = gz_resources.get_file_path(os_path)
+        handler = mgr.add_file(full_path, url_path, content_type=content_type)
+        return handler.filename
 
     def relative_url(self, filename):
         return "./" + filename
@@ -377,6 +376,8 @@ class Gizmo:
         else:
             raise NoRequestForOid("No known request matching oid: " + repr(oid))
         return json_value
+
+    _print_callback_exception = True
 
     def _call_back(self, payload):
         [id_string, json_args] = payload
