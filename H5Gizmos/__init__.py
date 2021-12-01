@@ -11,6 +11,7 @@ from .python.gizmo_server import (
     new_gizmo,
     in_tab,
     embed,
+    run,
 )
 
 from .python.H5Gizmos import (
