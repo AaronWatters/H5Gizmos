@@ -189,7 +189,7 @@ class Gizmo:
             await asyncio.sleep(check_seconds)
             if verbose:
                 print("Checking for heartbeat.")
-            if not self._heartbeat_detected:
+            if self._keep_heart_beating and not self._heartbeat_detected:
                 if verbose:
                     print("No heartbeat detected.")
                 # xxxx maybe shoule add a callback here...
