@@ -13,6 +13,32 @@ import contextlib
 
 PROCESS_SHARED_GIZMO_SERVER = None
 
+def get_or_create_event_loop():
+    try:
+        # xxxx this is deprecated in python 3.10 -- need a workaround that gets an unstarted event loop(?) or something
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    return loop
+
+def run(main_awaitable, server=None, run_forever=True):
+    global PROCESS_SHARED_GIZMO_SERVER
+    out = None  # xxxx
+    err = None
+    # set up the server
+    if server is None:
+        server = PROCESS_SHARED_GIZMO_SERVER
+        if server is None:
+            server = PROCESS_SHARED_GIZMO_SERVER = GzServer(out=out, err=err)
+            # schedule the server task
+            server.run_in_task()
+    # create and schedule the main task
+    gizmo = server.gizmo()
+    H5Gizmos.schedule_task(main_awaitable(gizmo))
+    if run_forever:
+        get_or_create_event_loop().run_forever()
+
 def start(capture_output=False, output_context=None, force=False):
     """
     Start a gizmo server either in Jupyter or as a standalone runner.
@@ -86,7 +112,7 @@ def in_tab(gizmo, capture_output=False, output_context=None, server=None, delay=
         return start_task
     else:
         # Just run this gizmo forever (???)
-        asyncio.get_event_loop().run_forever()
+        asyncio.get_running_loop().run_forever()
 
 
 DEFAULT_PORT = 8675 # 309 https://en.wikipedia.org/wiki/867-5309/Jenny
@@ -192,10 +218,11 @@ async def run_gizmo_standalone(server, gizmo, delay=0.1, interface=STDInterface,
 
 def standalone_gizmo(server, gizmo, run_forever=True, delay=0.1, interface=STDInterface, **args):
     start_server = run_gizmo_standalone(server, gizmo, delay, interface, **args)
-    asyncio.get_event_loop().run_until_complete(start_server)
+    loop = get_or_create_event_loop()
+    loop.run_until_complete(start_server)
     if run_forever:
         print ("entering run_forever loop -- terminate with control-C")
-        asyncio.get_event_loop().run_forever()
+        loop.run_forever()
 
 async def gizmo_jupyter_tab(server, gizmo, delay=0.1, **args):
     "Launch a gizmo from jupyter openned in a separate tab or window."
@@ -331,7 +358,7 @@ class GzServer:
             entry_filename="index.html",
             poll_for_exceptions=True,
             ):
-        result = H5Gizmos.Gizmo()
+        result = H5Gizmos.Gizmo(server=self)
         handler = GizmoPipelineSocketHandler(result, packet_limit=packet_limit, auto_flush=auto_flush)
         result._set_pipeline(handler.pipeline)
         mgr = self.get_new_manager(websocket_handler=handler)
@@ -357,7 +384,7 @@ class GzServer:
         return result
 
     def run_in_task(self, app_factory=web.Application, async_run=web._run_app, **args):
-        loop = asyncio.get_event_loop()
+        loop = get_or_create_event_loop()
         app = self.get_app(app_factory=app_factory)
         self.status = "making runner"
         if self.verbose:
