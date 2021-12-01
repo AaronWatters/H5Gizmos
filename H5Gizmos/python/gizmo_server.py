@@ -38,7 +38,7 @@ def run(main_awaitable, server=None, run_forever=True, exit_on_disconnect=None):
     if run_forever:
         get_or_create_event_loop().run_forever()
 
-async def get_gizmo(from_server):
+async def get_gizmo(from_server=None):
     """
     Get a gizmo (the official way).  Set up a server iff needed.
     """
@@ -298,8 +298,8 @@ IFRAME_TEMPLATE = """
     {ALLOW_LIST}
 </iframe>"""
 
-'''
-async def gizmo_jupyter_iframe(server, gizmo, delay=0.1, allow_list='allow="camera;microphone"', **args):
+
+async def display_gizmo_jupyter_iframe(gizmo, delay=0.1, allow_list='allow="camera;microphone"', **args):
     identifier = gizmo._identifier
     url = gizmo._entry_url()
     D = dict(
@@ -311,7 +311,7 @@ async def gizmo_jupyter_iframe(server, gizmo, delay=0.1, allow_list='allow="came
         DELAY = 10000,
     )
     iframe_html = IFRAME_TEMPLATE.format(**D)
-    server_task = server.run_in_task(**args)
+    #server_task = server.run_in_task(**args)
     async def start_gizmo():
         from IPython.display import HTML, display
         await asyncio.sleep(delay)
@@ -319,7 +319,7 @@ async def gizmo_jupyter_iframe(server, gizmo, delay=0.1, allow_list='allow="came
         #print(iframe_html)
         display(HTML(iframe_html))
     start_task = H5Gizmos.schedule_task(start_gizmo())
-    await start_task'''
+    await start_task
 
 '''
 async def embed(gizmo, allow_list='allow="camera;microphone"', delay=0.1):

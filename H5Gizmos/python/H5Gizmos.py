@@ -130,7 +130,16 @@ class Gizmo:
     #    return self.open_in_browser(server, new_page=new_page)
 
     async def start_in_browser(self, new_page=True):
-        self.open_in_browser(new_page=new_page)
+        self._open_in_browser(new_page=new_page)
+        await self._has_started()
+
+
+    async def start_in_iframe(self):
+        assert gizmo_server.isnotebook(), "Iframe interface only runs in a Jupyter IPython notebook."
+        await self._open_in_jupyter_iframe()
+        await self._has_started()
+
+    async def _has_started(self):
         # Await callback confirmation
         self._start_confirm_future = self._make_future()
         callback = GizmoCallback(self._confirm_start, self)
@@ -199,13 +208,16 @@ class Gizmo:
     def _confirm_start(self):
         self._start_confirm_future.set_result(True)
 
-    def open_in_browser(self, new_page=True):
+    def _open_in_browser(self, new_page=True):
         import webbrowser
         url = self._entry_url()
         if new_page:
             webbrowser.open_new(url)
         else:
             webbrowser.open_new_tab(url)
+
+    async def _open_in_jupyter_iframe(self):
+        await gizmo_server.display_gizmo_jupyter_iframe(self)
 
     def _initial_reference(self, identity, js_expression=None):
         assert type(identity) == str, "identity must be str " + repr(identity)
