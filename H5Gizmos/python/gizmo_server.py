@@ -282,10 +282,11 @@ IFRAME_TEMPLATE = """
     var identifier = "{IDENTIFIER}";
     window.addEventListener("message", function(e) {{
         var this_frame = document.getElementById(identifier);
+        var margin = {MARGIN};
         if ((this_frame) && (this_frame.contentWindow === e.source)) {{
             //console.log("processing message", e.data.height);
-            this_frame.height = e.data.height + "px";
-            this_frame.style.height = e.data.height + "px";
+            this_frame.height = (e.data.height + margin) + "px";
+            this_frame.style.height = (e.data.height + margin) + "px";
         }}
     }});
 }}) ();
@@ -306,6 +307,7 @@ async def display_gizmo_jupyter_iframe(gizmo, delay=0.1, allow_list='allow="came
         IDENTIFIER = identifier,
         TITLE = identifier,
         #HEIGHT = height,
+        MARGIN = 10,
         URL = url,
         ALLOW_LIST = allow_list,
         DELAY = 10000,

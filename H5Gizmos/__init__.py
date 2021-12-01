@@ -12,6 +12,7 @@ from .python.gizmo_server import (
     #in_tab,
     #embed,
     run,
+    get_gizmo,
 )
 
 from .python.H5Gizmos import (
