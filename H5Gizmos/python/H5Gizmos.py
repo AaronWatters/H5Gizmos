@@ -51,10 +51,11 @@ class Gizmo:
     SET = "S"
     EXCEPTION = "X"
 
-    def __init__(self, sender=None, default_depth=3, pipeline=None):
+    def __init__(self, sender=None, default_depth=3, pipeline=None, server=None):
         self._identifier = self._new_identifier_string()
         self._pipeline = pipeline
         self._sender = sender
+        self._server = server
         self._default_depth = default_depth
         self._call_backs = {}
         self._callable_to_oid = {}
@@ -75,6 +76,7 @@ class Gizmo:
         self._embedded_components = set()
         self._out = None
         self._err = None
+        self._start_confirm_future = None
 
     COUNTER = 0
 
@@ -125,6 +127,19 @@ class Gizmo:
 
     def __call__(self, new_page=True):
         return self.open_in_browser(server, new_page=new_page)
+
+    async def start_in_browser(self, new_page=True):
+        self.open_in_browser(new_page=new_page)
+        # Await callback confirmation
+        self._start_confirm_future = self._make_future()
+        callback = GizmoCallback(self._confirm_start, self)
+        call_callback = GizmoCall(callback, [], self)
+        do(call_callback)
+        await self._start_confirm_future
+        return self._start_confirm_future.result()
+    
+    def _confirm_start(self):
+        self._start_confirm_future.set_result(True)
 
     def open_in_browser(self, new_page=True):
         import webbrowser
@@ -364,7 +379,7 @@ class Gizmo:
     def _make_future(self):
         "Get a future associated with the global event loop."
         # Convenience
-        loop = asyncio.get_event_loop()
+        loop = gizmo_server.get_or_create_event_loop()
         return loop.create_future()
 
 
@@ -991,6 +1006,6 @@ class TooManyRequests(ValueError):
 def schedule_task(awaitable):
     "Schedule a task in the global event loop."
     # Convenience
-    loop = asyncio.get_event_loop()
+    loop = gizmo_server.get_or_create_event_loop()
     task = loop.create_task(awaitable)
     return task
