@@ -51,7 +51,8 @@ class Gizmo:
     SET = "S"
     EXCEPTION = "X"
 
-    def __init__(self, sender=None, default_depth=3, pipeline=None, server=None):
+    def __init__(self, sender=None, default_depth=3, pipeline=None, server=None, exit_on_disconnect=False):
+        self._exit_on_disconnect = exit_on_disconnect
         self._identifier = self._new_identifier_string()
         self._pipeline = pipeline
         self._sender = sender
@@ -125,8 +126,8 @@ class Gizmo:
     def _entry_url(self):
         return self._manager.local_url(for_gizmo=self, method="http", filename=self._filename)
 
-    def __call__(self, new_page=True):
-        return self.open_in_browser(server, new_page=new_page)
+    #def __call__(self, new_page=True):
+    #    return self.open_in_browser(server, new_page=new_page)
 
     async def start_in_browser(self, new_page=True):
         self.open_in_browser(new_page=new_page)
@@ -136,7 +137,64 @@ class Gizmo:
         call_callback = GizmoCall(callback, [], self)
         do(call_callback)
         await self._start_confirm_future
+        if self._exit_on_disconnect:
+            self._start_heartbeat()
         return self._start_confirm_future.result()
+
+    _heartbeat_interval_seconds = 0.5
+    _heartbeat_check_seconds = 3.0
+
+    def _start_heartbeat(self, interval_seconds=None, check_seconds=None):
+        interval_seconds = interval_seconds or self._heartbeat_interval_seconds
+        check_seconds = check_seconds or self._heartbeat_check_seconds
+        schedule_task(self._trigger_heartbeat(interval_seconds))
+        # https://quantlane.com/blog/ensure-asyncio-task-exceptions-get-logged/
+        check_task = schedule_task(self._check_heartbeat(check_seconds))
+        check_task.add_done_callback(self._handle_heart_stop)
+
+    def _handle_heart_stop(self, check_task, verbose=False):
+        if verbose:
+            print("heart stopped!")
+        try:
+            check_task.result()
+        except asyncio.CancelledError:
+            if verbose:
+                print("gizmo heartbeat task cancelled.")
+        except SystemExit:
+            if verbose:
+                print("gizmo heartbeat task exited.")
+        else:
+            raise
+
+    _heartbeat_detected = True
+    _keep_heart_beating = True
+
+    def _detect_heartbeat(self, verbose=False):
+        if verbose:
+            print("   Heartbeat felt.")
+        self._heartbeat_detected = True
+
+    async def _trigger_heartbeat(self, interval_seconds, verbose=False):
+        callback = GizmoCallback(self._detect_heartbeat, self)
+        call_callback = GizmoCall(callback, [], self)
+        while self._keep_heart_beating:
+            if verbose:
+                print("Triggering heartbeat")
+            do(call_callback)
+            await asyncio.sleep(interval_seconds)
+
+    async def _check_heartbeat(self, check_seconds, verbose=False):
+        while self._keep_heart_beating:
+            self._heartbeat_detected = False
+            await asyncio.sleep(check_seconds)
+            if verbose:
+                print("Checking for heartbeat.")
+            if not self._heartbeat_detected:
+                if verbose:
+                    print("No heartbeat detected.")
+                # xxxx maybe shoule add a callback here...
+                if self._exit_on_disconnect:
+                    sys.exit()
     
     def _confirm_start(self):
         self._start_confirm_future.set_result(True)
