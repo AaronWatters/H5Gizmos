@@ -62,6 +62,7 @@ class Gizmo:
         self._callable_to_oid = {}
         self._counter = 0
         self._oid_to_get_futures = {}
+        self._initial_references = {}
         self._on_exception = None
         self._last_exception_payload = None
         self._manager = None
@@ -223,14 +224,15 @@ class Gizmo:
         assert type(identity) == str, "identity must be str " + repr(identity)
         if js_expression is None:
             js_expression = identity   # like "window"
+        else:
+            assert type(js_expression) == str, "js expression must be string if specified"
         assert self._html_page is not None, "reference requires initialized html page."
-        #if hasattr(self, identity):
-        #    raise NameError(
-        #        "initial reference will not override in-use slot: " + repr(identity))
-        #reference = GizmoReference(identity, self)
-        #setattr(self, identity, reference)
-        self._reference_identity(identity)
+        key = (identity, js_expression)
+        if key in self._initial_references:
+            return  # don't duplicate existing reference
+        ref = self._reference_identity(identity)
         self._html_page.link_reference(identity, js_expression)
+        self._initial_references[key] = ref
 
     def _reference_identity(self, identity):
         if hasattr(self, identity) and getattr(self, identity) is not None:
@@ -238,6 +240,7 @@ class Gizmo:
                 "id reference will not override in-use slot: " + repr(identity))
         reference = GizmoReference(identity, self)
         setattr(self, identity, reference)
+        return reference
 
     def _dereference_identity(self, identity):
         ##pr("deref id", repr(identity))
