@@ -279,7 +279,7 @@ class Gizmo:
             self._html_page.embedded_css(style_text)
 
     def _embedded_script(self, javascript_code, in_body=True, check=True):
-        if self._embed_no_duplicate(javascript_code, check):
+        if not self._embed_no_duplicate(javascript_code, check):
             return  # don't insert the same code twice unless override.
         self._html_page.embedded_script(javascript_code, in_body=in_body)
 
