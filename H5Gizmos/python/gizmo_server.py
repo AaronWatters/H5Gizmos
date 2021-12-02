@@ -11,6 +11,11 @@ import os
 import sys
 import contextlib
 
+
+# xxxx
+# need to implement some sort of reconnect logic:
+# https://stackoverflow.com/questions/48472977/how-to-catch-and-deal-with-websocket-is-already-in-closing-or-closed-state-in
+
 PROCESS_SHARED_GIZMO_SERVER = None
 
 def get_or_create_event_loop():
