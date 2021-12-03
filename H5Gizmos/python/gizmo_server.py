@@ -465,7 +465,7 @@ class GzServer:
             port = self.port
             if port is None:
                 port = choose_port()
-                print("chose port", port)
+                #print("chose port", port)
                 self.port = port
             else:
                 #raise ValueError("didn't choose port???")

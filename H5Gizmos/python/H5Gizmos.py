@@ -351,8 +351,8 @@ class Gizmo:
 
     def _send(self, json_message):
         try:
-            print("gizmo sending json", repr(json_message)[:100])
-            print(self._sender)
+            #print("gizmo sending json", repr(json_message)[:100])
+            #print(self._sender)
             self._sender(json_message)
         finally:
             self._check_last_flush_queue_task()
@@ -526,14 +526,14 @@ class GizmoLink:
             (oid, future) = self._register_get_future()
         self._get_oid = oid
         msg = [GZ.GET, oid, cmd, to_depth]
-        print("now sending get...")
+        #print("now sending get...")
         gz._send(msg)
         if test_result is not None:
             return test_result  # only for code coverage...
         await future
         self._get_oid = None
         self._get_future = None
-        print("now awaiting get result")
+        #print("now awaiting get result")
         return future.result()
 
     def _connect(self, id, to_depth=None):
@@ -858,15 +858,15 @@ class GizmoPacker:
                 q = self.flush_queue
                 next_flush = q[0]
                 self.flush_queue = q[1:]
-                print ("awaiting flush queue", len(self.flush_queue))
+                #print ("awaiting flush queue", len(self.flush_queue))
                 await next_flush
         finally:
-            print("terminating flush queue task.")
+            #print("terminating flush queue task.")
             self.flush_queue = []  # should be redundant
             try:
                 self.check_last_flush_queue_task()
             except Exception:
-                # xxxx this shouldn't happen -- print error?
+                # xxxx this shouldn't happen -- #print error?
                 pass
             self.last_flush_queue_task = self.flush_queue_task
             self.flush_queue_task = None
@@ -919,15 +919,15 @@ class GizmoPacker:
                     data = FINISHED_UNICODE + chunk
                 else:
                     data = CONTINUE_UNICODE + chunk
-                print ("awaiting flush")
+                #print ("awaiting flush")
                 await self.awaitable_sender(data)
 
     def send_unicode(self, string):
         self.outgoing_packets.append(string)
-        print("pipeline send unicode", repr(string)[:10])
+        #print("pipeline send unicode", repr(string)[:10])
         if self.auto_flush:
             task = self.flush()
-            print ("send unicode returns task", task)
+            #print ("send unicode returns task", task)
             return task
         else:
             return None
@@ -975,7 +975,7 @@ class JsonCodec:
             if on_error:
                 on_error("failed to encode json " + repr((repr(json_ob)[:20], e)))
             raise e
-        print ("CODEC sending unicode", repr(unicode_str)[:10])
+        #print ("CODEC sending unicode", repr(unicode_str)[:10])
         self.send_unicode(unicode_str)
         return unicode_str
 
@@ -1042,7 +1042,7 @@ class GZPipeline:
             with self.my_stdout():
                 ws = self.web_socket
                 if (ws is not None) and (ws._closed):
-                    print("cannot send -- closed")
+                    #print("cannot send -- closed")
                     exception = WebSocketIsClosed("cannot send to closed web socket.")
                     self.gizmo._fail_all_gets(exception)
                     raise exception
@@ -1117,7 +1117,7 @@ class GZPipeline:
 
     def send_unicode(self, unicode_str):
         "async send -- do not wait for completion."
-        print("pipeline send unicode", repr(unicode_str)[:10])
+        #print("pipeline send unicode", repr(unicode_str)[:10])
         task_or_none = self.packer.send_unicode(unicode_str)
         self.last_unicode_sent = unicode_str
         return task_or_none

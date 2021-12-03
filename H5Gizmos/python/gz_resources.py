@@ -81,7 +81,6 @@ class HTMLPage(DelegatePOSTtoGETMixin):
 
     def as_string(self):
         template = self.template
-        print("html resources", len(self.head_resources), len(self.body_resources))
         head_string = self.resource_strings(self.head_resources)
         body_string = self.resource_strings(self.body_resources)
         if self.embed_gizmo:
@@ -100,9 +99,6 @@ class HTMLPage(DelegatePOSTtoGETMixin):
 
     def resource_strings(self, resource_list):
         embeddings = [resource.html_embedding() for resource in resource_list]
-        for (i, e) in enumerate(embeddings):
-            print (i)
-            print (e)
         embed_list = [x for x in embeddings if x is not None]
         return "\n".join(embed_list)
 
