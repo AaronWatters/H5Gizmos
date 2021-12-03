@@ -416,12 +416,12 @@ class GzServer:
         self.identifier_to_manager[identifier] = result
         return result
 
-    '''def run_standalone(self, app_factory=web.Application, sync_run=web.run_app, **args):
+    def run_standalone(self, app_factory=web.Application, sync_run=web.run_app, **args):
         app = self.get_app(app_factory=app_factory)
         self.status = "running standalone"
         result = sync_run(app, port=self.port, **args)
         self.status = "done standalone"
-        return result'''
+        return result
 
     def run_in_task(self, app_factory=web.Application, async_run=web._run_app, **args):
         loop = get_or_create_event_loop()

@@ -87,6 +87,7 @@ class FakeWebSocketResponse:
 
     _prepared = False
     _sent = None
+    _closed = False
 
     def __init__(self):
         ##p("init", self)

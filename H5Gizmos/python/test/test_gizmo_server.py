@@ -252,7 +252,7 @@ class TestHTTPdelivery(StartStop):
             def __init__(self):
                 self.delivered = False
             def __call__(self, path):
-                print("Now delivering content.")
+                #print("Now delivering content.")
                 self.delivered = True
                 return self.content
         get_file_bytes = file_bytes_getter()
@@ -270,17 +270,17 @@ class TestHTTPdelivery(StartStop):
         #await S.handle_http_get(req, interface=interface)
         task = None
         try:
-            print("Now starting task")
+            #print("Now starting task")
             task = await self.startup(S, delay)
-            print("Started", task)
-            print("Now getting URL response", url)
+            #print("Started", task)
+            #print("Now getting URL response", url)
             info = await self.get_url_response(url)
-            print("Got response", repr(info.text))
+            #print("Got response", repr(info.text))
         finally:
             if task is not None:
-                print("shutting down task")
+                #print("shutting down task")
                 await self.shutdown(S, task)
-                print("task is shutdown", task)
+                #print("task is shutdown", task)
         self.assertEqual(get_file_bytes.delivered, True)
         self.assertEqual(info.status, 200)
         self.assertEqual(info.text.encode("utf-8"), file_bytes_getter.content)
@@ -304,7 +304,7 @@ class TestHTTP404(StartStop):
         handler = mgr.add_file("/var/index.html", interface=interface)
         #self.assertEqual(handler.url_path, None)
         path = "/no/such/path"
-        url = std_url(path)
+        url = std_url(path, server=S)
         #pr("   ... getting url", repr(url))
         #req = MockFileRequest(handler.url_path)
         #await S.handle_http_get(req, interface=interface)
@@ -338,7 +338,7 @@ class TestNoFileForWebSocket(StartStop):
         handler = mgr.add_file("/var/index.html", interface=interface)
         #self.assertEqual(handler.url_path, None)
         path = handler.method_path("ws")
-        url = std_url(path)
+        url = std_url(path, server=S)
         #pr("   ... getting url", repr(url))
         #req = MockFileRequest(handler.url_path)
         #await S.handle_http_get(req, interface=interface)
@@ -382,13 +382,13 @@ class SillyWebSocketHandler:
         return ws
 
 
-def ws_url(mgr):
+def ws_url(mgr, server=None):
     mprefix = "ws"
     prefix = mgr.prefix
     identifier = mgr.identifier
     components = ["", prefix, mprefix, identifier]
     path = "/".join(components)
-    url = std_url(path)
+    url = std_url(path, server=server)
     return url
 
 
@@ -400,7 +400,7 @@ class TestSillySocketHandler(StartStop):
         S = GzServer()
         handler = SillyWebSocketHandler()
         mgr = S.get_new_manager(websocket_handler=handler)
-        url = ws_url(mgr)
+        url = ws_url(mgr, server=S)
         # https://docs.aiohttp.org/en/v0.18.3/client_websockets.html
         delay = 0.1
         session = aiohttp.ClientSession()
@@ -436,7 +436,7 @@ class TestBasicSocketSendPipeline(StartStop):
         G = H5Gizmos.Gizmo()
         handler = GizmoPipelineSocketHandler(G)
         mgr = S.get_new_manager(websocket_handler=handler)
-        url = ws_url(mgr)
+        url = ws_url(mgr, server=S)
         # Make a message to send to JS
         json_ob = [1, "json", None]
         json_msg = exec_msg(_lit(json_ob))
@@ -478,7 +478,7 @@ class TestBasicSocketCallbackPipeline(StartStop):
         oid = G._register_callback(callback_function)
         handler = GizmoPipelineSocketHandler(G)
         mgr = S.get_new_manager(websocket_handler=handler)
-        url = ws_url(mgr)
+        url = ws_url(mgr, server=S)
         # Make a message to send from JS
         arguments = ["this", "argument", "list"]
         json_msg = [GZ.CALLBACK, oid, arguments]
@@ -542,7 +542,7 @@ class TestBasicSocketGetPipeline(StartStop):
             filename="index.html"
         )
         self.assertEqual(test_url, 'http://x.y.z:9090/test_prefix/ws/id000/index.html')
-        url = ws_url(mgr)
+        url = ws_url(mgr, server=S)
         delay = 0.1
         session = aiohttp.ClientSession()
         task = None
@@ -592,7 +592,7 @@ class TestBasicSocketErrorPipeline(StartStop):
         (oid, future) = lit._register_get_future()
         handler = GizmoPipelineSocketHandler(G)
         mgr = S.get_new_manager(websocket_handler=handler)
-        url = ws_url(mgr)
+        url = ws_url(mgr, server=S)
         delay = 0.1
         session = aiohttp.ClientSession()
         task = None
@@ -629,7 +629,7 @@ class TestNoWebSocketHandler(StartStop):
         identifier = mgr.identifier
         components = ["", prefix, mprefix, identifier]
         path = "/".join(components)
-        url = std_url(path)
+        url = std_url(path, server=S)
         # https://docs.aiohttp.org/en/v0.18.3/client_websockets.html
         delay = 0.1
         session = aiohttp.ClientSession()
