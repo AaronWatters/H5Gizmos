@@ -892,8 +892,8 @@ class GizmoPacker:
         if qt is not None:
             qt.cancel()
         flushes = self.flush_queue
-        for task in flushes:
-            task.cancel()
+        #for task in flushes:
+        #    task.cancel()  -- not tasks -- just discard the awaitables
         self.flush_queue = []
         self.flush_queue_task = None
 
