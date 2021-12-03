@@ -865,7 +865,7 @@ class GizmoPacker:
             self.flush_queue = []  # should be redundant
             try:
                 self.check_last_flush_queue_task()
-            except:
+            except Exception:
                 # xxxx this shouldn't happen -- print error?
                 pass
             self.last_flush_queue_task = self.flush_queue_task
