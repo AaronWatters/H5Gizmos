@@ -353,9 +353,15 @@ class Gizmo:
         try:
             #print("gizmo sending json", repr(json_message)[:100])
             #print(self._sender)
+            self._check_web_socket()
             self._sender(json_message)
         finally:
             self._check_last_flush_queue_task()
+
+    def _check_web_socket(self):
+        p = self._pipeline
+        if p is not None:
+            p.check_web_socket_not_closed()
 
     def _receive(self, json_response):
         try:
