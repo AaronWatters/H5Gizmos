@@ -1052,14 +1052,18 @@ class GZPipeline:
         self.json_codec.send_json(json_ob)
         self.last_json_sent = json_ob
 
-    def check_web_socket_not_closed(self):
+    def check_web_socket_not_closed(self, error_if_closed=True):
         ws = self.web_socket
+        result = True  # ws ok
         if (ws is not None) and (ws._closed):
+            result = False  # ws broken
             #print("cannot send -- closed")
             exception = WebSocketIsClosed("cannot send to closed web socket.")
             self.gizmo._fail_all_gets(exception)
             self.packer.cancel_all_flushes()
-            raise exception
+            if error_if_closed:
+                raise exception
+        return result
 
     async def _send(self, chunk):
         #pr ("pipeline sending", repr(chunk))
