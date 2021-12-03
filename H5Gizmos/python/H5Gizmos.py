@@ -89,6 +89,10 @@ class Gizmo:
         t = int(time.time() * 1000)
         return "%s_%s_%s" % (prefix, t, c)
 
+    def _check_last_flush_queue_task(self):
+        if self._pipeline is not None:
+            self._pipeline.check_last_flush_queue_task()
+
     def _do(self, link_action, to_depth=None):
         "Run the link in javascript and discard the result."
         # gizmo object convenience accessor
@@ -346,9 +350,12 @@ class Gizmo:
         return oid
 
     def _send(self, json_message):
-        print("gizmo sending json", repr(json_message)[:100])
-        print(self._sender)
-        self._sender(json_message)
+        try:
+            print("gizmo sending json", repr(json_message)[:100])
+            print(self._sender)
+            self._sender(json_message)
+        finally:
+            self._check_last_flush_queue_task()
 
     def _receive(self, json_response):
         try:
@@ -842,6 +849,7 @@ class GizmoPacker:
         self.awaitable_sender = awaitable_sender
         self.flush_queue = []
         self.flush_queue_task = None
+        self.last_flush_queue_task = None
 
     async def execute_flush_queue(self):
         "execute the flushes in sequence (prevent interleaving)."
@@ -855,7 +863,23 @@ class GizmoPacker:
         finally:
             print("terminating flush queue task.")
             self.flush_queue = []  # should be redundant
+            try:
+                self.check_last_flush_queue_task()
+            except:
+                # xxxx this shouldn't happen -- print error?
+                pass
+            self.last_flush_queue_task = self.flush_queue_task
             self.flush_queue_task = None
+
+    def check_last_flush_queue_task(self):
+        "Get the result from the last flush queue task in case there was an error."
+        q = self.last_flush_queue_task
+        self.last_flush_queue_task = None
+        result = None
+        if q is not None:
+            assert q.done(), "last task queue was not finished."
+            result = q.result()
+        return result
 
     def start_flush_queue_task_if_needed(self):
         if (self.flush_queue_task is None) and self.flush_queue:
@@ -975,6 +999,9 @@ class GZPipeline:
         self.last_receive_error = None
         self.ws_error_message = None
         self.clear()
+
+    def check_last_flush_queue_task(self):
+        self.packer.check_last_flush_queue_task()
 
     auto_clear = True  # set false only for debug
 
