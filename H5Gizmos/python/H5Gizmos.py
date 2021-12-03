@@ -887,6 +887,16 @@ class GizmoPacker:
             result = q.result()
         return result
 
+    def cancel_all_flushes(self):
+        qt = self.flush_queue_task
+        if qt is not None:
+            qt.cancel()
+        flushes = self.flush_queue
+        for task in flushes:
+            task.cancel()
+        self.flush_queue = []
+        self.flush_queue_task = None
+
     def start_flush_queue_task_if_needed(self):
         if (self.flush_queue_task is None) and self.flush_queue:
             self.flush_queue_task = schedule_task(self.execute_flush_queue())
@@ -1048,6 +1058,7 @@ class GZPipeline:
             #print("cannot send -- closed")
             exception = WebSocketIsClosed("cannot send to closed web socket.")
             self.gizmo._fail_all_gets(exception)
+            self.packer.cancel_all_flushes()
             raise exception
 
     async def _send(self, chunk):
