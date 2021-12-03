@@ -236,10 +236,13 @@ class TestStartStop(StartStop):
         task = await self.startup(server, delay)
         await self.shutdown(server, task)
 
-def std_url(path, protocol="http"):
+def std_url(path, protocol="http", server=None):
     if path.startswith("/"):
         path = path[1:]
-    return "%s://localhost:%s/%s" % (protocol, DEFAULT_PORT, path)
+    port = DEFAULT_PORT
+    if server is not None:
+        port = server.port
+    return "%s://localhost:%s/%s" % (protocol, port, path)
 
 class TestHTTPdelivery(StartStop):
 
@@ -249,6 +252,7 @@ class TestHTTPdelivery(StartStop):
             def __init__(self):
                 self.delivered = False
             def __call__(self, path):
+                print("Now delivering content.")
                 self.delivered = True
                 return self.content
         get_file_bytes = file_bytes_getter()
@@ -260,17 +264,23 @@ class TestHTTPdelivery(StartStop):
         handler = mgr.add_file("/var/index.html", interface=interface)
         #self.assertEqual(handler.url_path, None)
         path = handler.method_path()
-        url = std_url(path)
+        url = std_url(path, server=S)
         #pr("   ... getting url", repr(url))
         #req = MockFileRequest(handler.url_path)
         #await S.handle_http_get(req, interface=interface)
         task = None
         try:
+            print("Now starting task")
             task = await self.startup(S, delay)
+            print("Started", task)
+            print("Now getting URL response", url)
             info = await self.get_url_response(url)
+            print("Got response", repr(info.text))
         finally:
             if task is not None:
+                print("shutting down task")
                 await self.shutdown(S, task)
+                print("task is shutdown", task)
         self.assertEqual(get_file_bytes.delivered, True)
         self.assertEqual(info.status, 200)
         self.assertEqual(info.text.encode("utf-8"), file_bytes_getter.content)

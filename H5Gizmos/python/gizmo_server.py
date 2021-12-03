@@ -197,7 +197,7 @@ class WebInterface:
 
 STDInterface = WebInterface()
 
-'''
+
 def gizmo_task_server(
         prefix="gizmo", 
         server="localhost", 
@@ -212,7 +212,7 @@ def gizmo_task_server(
         interface=interface,
     )
     S.run_in_task(app_factory=interface.app_factory, async_run=interface.async_run, **args)
-    return S'''
+    return S
 
 '''
 def gizmo_standalone_server(
