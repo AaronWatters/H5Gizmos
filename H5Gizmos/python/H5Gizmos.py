@@ -50,6 +50,7 @@ class Gizmo:
     CALLBACK = "CB"
     SET = "S"
     EXCEPTION = "X"
+    RECONNECT_ID = "reconnect_id"
 
     def __init__(self, sender=None, default_depth=3, pipeline=None, server=None, exit_on_disconnect=False):
         self._exit_on_disconnect = exit_on_disconnect
@@ -891,11 +892,13 @@ class GizmoPacker:
         qt = self.flush_queue_task
         if qt is not None:
             qt.cancel()
-        flushes = self.flush_queue
+        #flushes = self.flush_queue
         #for task in flushes:
         #    task.cancel()  -- not tasks -- just discard the awaitables
+        # The web socket is broken.  Assume any flushes and partially collected packets are broken too (???)
         self.flush_queue = []
         self.flush_queue_task = None
+        self.collector = []
 
     def start_flush_queue_task_if_needed(self):
         if (self.flush_queue_task is None) and self.flush_queue:
@@ -1014,6 +1017,7 @@ class GZPipeline:
         self.last_json_error = None
         self.last_receive_error = None
         self.ws_error_message = None
+        self.reconnect_id = None
         self.clear()
 
     def check_last_flush_queue_task(self):
@@ -1079,8 +1083,16 @@ class GZPipeline:
 
     async def handle_websocket_request(self, request, get_websocket=web.WebSocketResponse):
         #pr("pipeline handling request", request)
+        incoming_id = request._rel_url.query.get(Gizmo.RECONNECT_ID)
         if self.request is not None:
-            raise TooManyRequests("A pipeline can only support one request.")
+            old_id = self.reconnect_id
+            if (old_id is not None) and (incoming_id != old_id):
+                raise TooManyRequests("A pipeline can only support one request.")
+            # Otherwise if the child is trying to reconnect -- allow it.
+            # XXXX Ideally we would clean up the task listening to the dead web socket, but it doesn't seem possible.
+            print("reconnecting web socket", request)
+            self.packer.cancel_all_flushes()
+        self.reconnect_id = incoming_id
         ws = get_websocket()
         self.web_socket = ws
         await ws.prepare(request)
@@ -1097,6 +1109,10 @@ class GZPipeline:
     MSG_TYPE_ERROR = aiohttp.WSMsgType.error
 
     async def listen_to_websocket(self, ws):
+        # XXXX if the web socket does not close gracefully this task will never finish.
+        # XXXX https://github.com/aio-libs/aiohttp/issues/4153
+        # Maybe future versions of aiohttp will fix this using the heartbeat feature (which doesn't cut it now).
+        # At the moment I can't figure out how to clean this up without bad side effects (hangs).
         self.web_socket = ws
         got_exception = False
         ##pr("listening to", ws)
