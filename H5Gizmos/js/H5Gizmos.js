@@ -58,6 +58,9 @@ var H5Gizmos = {};
     h5.CALLBACK = "CB";
     h5.SET = "S";
     h5.EXCEPTION = "X"
+    h5.RECONNECT_ID = "reconnect_id"
+
+    const ws_open = 1;
 
     var indicator_to_message_parser = {};
     var indicator_to_command_parser = {};
@@ -69,13 +72,27 @@ var H5Gizmos = {};
             this.object_cache = {};
             this.ws_url = null;
             this.ws = null;
+            this.reconnect_id = "" + Date.now();
         };
-        pipeline_websocket(ws_url) {
-            this.ws_url = ws_url;
+        pipeline_websocket(ws_url, on_open) {
+            var that = this;
+            that.ws_url = ws_url;
             var ws = new WebSocket(ws_url);
-            this.ws = ws;
-            this.pipeline = pipeline(ws, this);
+            that.ws = ws;
+            that.pipeline = pipeline(ws, this);
+            ws.onerror = function(event) {
+                that.web_socket_error(event)
+            };
+            if (on_open) {
+                ws.onopen = function () {
+                    console.log("ws open", ws.readyState, ws_url);
+                    on_open();
+                }
+            }
         };
+        web_socket_error(event) {
+            console.error("Web socket error", event);
+        }
         get_ws_url(location) {
             location = location || window.location;
             var path_split = location.pathname.split("/");
@@ -86,7 +103,8 @@ var H5Gizmos = {};
                 ws_path_split[i] = "ws"
             }
             var ws_path = ws_path_split.join("/");
-            var url = "ws://" + location.host + ws_path;
+            var reconnect_parameter = "?" + h5.RECONNECT_ID + "=" + this.reconnect_id;
+            var url = "ws://" + location.host + ws_path + reconnect_parameter;
             //console.log("ws url", url)
             return url;
         };
@@ -104,9 +122,26 @@ var H5Gizmos = {};
             delete this.object_cache[id_string];
         };
         send(json_object) {
+            var that = this;
+            var on_open = function() {
+                that.sender(json_object);
+            };
+            that.check_web_socket(on_open);
             //console.log("sending", json_object)
-            this.sender(json_object);
+            //this.sender(json_object);
         };
+        check_web_socket(on_open) {
+            var ws = this.ws;
+            if ((!ws) || (!this.ws_url)) {
+                throw new Error("ws connection is not configured.  Cannot reconnect.")
+            }
+            if (ws.readyState != ws_open) {
+                console.log("attempting to reconnect ws:", ws.readyState)
+                this.pipeline_websocket(this.ws_url, on_open);
+            } else {
+                on_open();
+            }
+        }
         send_error(message, err, oid) {
             if (!err) {
                 err = new Error(message);
