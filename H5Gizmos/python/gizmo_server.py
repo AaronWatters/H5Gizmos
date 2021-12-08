@@ -32,9 +32,9 @@ def run(main_awaitable, server=None, run_forever=True, exit_on_disconnect=None):
     Get a gizmo and run it in an asynchronous run program.
     Start a server if no server is provided.
     """
-    if exit_on_disconnect is None:
-        # If not specified exit on disconnect when not in notebook.
-        exit_on_disconnect = not isnotebook()
+    #if exit_on_disconnect is None:
+    #    # If not specified exit on disconnect when not in notebook.
+    #    exit_on_disconnect = not isnotebook()
     print("Running.  Exit on disconnect", exit_on_disconnect)
     server = _check_server(server)
     # create and schedule the main task
