@@ -38,6 +38,14 @@ class TestFails(unittest.TestCase):
         self.assertEqual(1, 0)
 '''
 
+def dummy_request(id="1234"):
+    "fake web socket request interface to make tests work."
+    class url:
+        query = {Gizmo.RECONNECT_ID: id}
+    class request:
+        _rel_url = url
+    return request
+
 class GizmoWrapper:
 
     def __init__(self, default_depth=5):
@@ -587,7 +595,7 @@ class TestGizmoAsync(unittest.IsolatedAsyncioTestCase):
         json_msg = exec_msg(_lit(json_ob))
         # Make a "request" for that message
         cnx = FakeWebSocketUnicodeMessages([])  # no messages from JS side
-        req = None  # the request is not used in the mock pipeline
+        req = dummy_request()
         # attach the web socket to the pipeline
         await P.handle_websocket_request(req, cnx.get_web_socket)
         # Send the request
@@ -613,12 +621,13 @@ class TestGizmoAsync(unittest.IsolatedAsyncioTestCase):
         json_msg = exec_msg(_lit(json_ob))
         # Make a "request" for that message
         cnx = FakeWebSocketUnicodeMessages([])  # no messages from JS side
-        req = 123  # the request is not used in the mock pipeline
+        req = dummy_request()
         # attach the web socket to the pipeline
         await P.handle_websocket_request(req, cnx.get_web_socket)
         self.assertNotEqual(P.request, None)
+        req2 = dummy_request("different_id")
         with self.assertRaises(TooManyRequests):
-            await P.handle_websocket_request(req, cnx.get_web_socket)
+            await P.handle_websocket_request(req2, cnx.get_web_socket)
 
     async def test_pipelines_a_message_sent_early(self, auto_clear=False):
         #p("stargint early test")
@@ -632,7 +641,7 @@ class TestGizmoAsync(unittest.IsolatedAsyncioTestCase):
         json_msg = exec_msg(_lit(json_ob))
         # Make a "request" for that message
         cnx = FakeWebSocketUnicodeMessages([])  # no messages from JS side
-        req = None  # the request is not used in the mock pipeline
+        req = dummy_request()
         # Send the request
         self.assertEqual(P.sender, None)
         #P.send_json(json_msg)
@@ -701,7 +710,7 @@ class TestGizmoAsyncSend(unittest.IsolatedAsyncioTestCase):
         cnx = FakeWebSocketUnicodeMessages([ws_msg])
         #async for x in cnx.ws:
         #    #p("for", x)
-        req = None  # the request is not used in the mock pipeline
+        req = dummy_request()
         # attach the web socket to the pipeline
         await P.handle_websocket_request(req, cnx.get_web_socket)
         # Send the request
@@ -733,7 +742,7 @@ class TestGizmoAsyncSendClear(unittest.IsolatedAsyncioTestCase):
         cnx = FakeWebSocketUnicodeMessages([ws_msg])
         #async for x in cnx.ws:
         #    #p("for", x)
-        req = None  # the request is not used in the mock pipeline
+        req = dummy_request()
         # attach the web socket to the pipeline
         await P.handle_websocket_request(req, cnx.get_web_socket)
         # Send the request
@@ -754,7 +763,7 @@ class TestPipelineJsonErr(unittest.IsolatedAsyncioTestCase):
         P.auto_clear = auto_clear
         # Make a "request" with the callback
         cnx = FakeWebSocketUnicodeMessages([ws_msg])
-        req = None  # the request is not used in the mock pipeline
+        req = dummy_request()
         # attach the web socket to the pipeline
         await P.handle_websocket_request(req, cnx.get_web_socket)
         self.assertNotEqual(P.last_json_error, None)
@@ -771,7 +780,7 @@ class TestPipelineWSErr(unittest.IsolatedAsyncioTestCase):
         P.auto_clear = auto_clear
         # two error packets cause an assertion error
         cnx = FakeWebSocketUnicodeMessages([ws_msg, ws_msg], msg_type=GZPipeline.MSG_TYPE_ERROR)
-        req = None  # the request is not used in the mock pipeline
+        req = dummy_request()
         # attach the web socket to the pipeline
         with self.assertRaises(AssertionError):
             await P.handle_websocket_request(req, cnx.get_web_socket)
