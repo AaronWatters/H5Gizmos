@@ -22,6 +22,7 @@ class Component:
 
     async def run_main(self, gizmo):
         self.prepare_application(gizmo)
+        do(gizmo.window.addEventListener("unload", self.shutdown), to_depth=1)
         await gizmo.start_in_browser()
 
     async def iframe(self):
@@ -54,6 +55,12 @@ class Component:
         Get a reference to the DOM element for this component.
         """
         raise NotImplementedError("this method must be implemented in the subclass")
+        
+    def shutdown(self, *args):
+        "Graceful shutdown"
+        import sys
+        print("shutting down.")
+        sys.exit()
 
 class HelloComponent(Component):
     
