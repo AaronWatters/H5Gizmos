@@ -21,7 +21,8 @@ setup(
     author_email="awatters@flatironinstitute.org",
     url=url,
     install_requires=[
-        "numpy", 
+        "numpy",
+        "aiohttp",
         ],
     package_data={
         "H5Gizmos": [
