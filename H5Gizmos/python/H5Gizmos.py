@@ -278,10 +278,10 @@ class Gizmo:
             embedded.add(key)
             return True
 
-    def _insert_html(self, html_text):
+    def _insert_html(self, html_text, in_body=True):
         # don't check for duplicates
         assert self._page_is_configurable()
-        self._html_page.insert_html(html_text)
+        self._html_page.insert_html(html_text, in_body=in_body)
 
     def _embedded_css(self, style_text):
         if self._embed_no_duplicate(style_text):

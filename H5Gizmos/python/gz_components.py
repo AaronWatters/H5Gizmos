@@ -23,7 +23,13 @@ class Component:
     async def run_main(self, gizmo):
         self.prepare_application(gizmo)
         do(gizmo.window.addEventListener("unload", self.shutdown), to_depth=1)
+        self.add_std_icon(gizmo)
         await gizmo.start_in_browser()
+
+    def add_std_icon(self, gizmo):
+        # https://www.w3.org/2005/10/howto-favicon
+        gizmo._add_content(os_path="../static/icon.png", content_type="image/png")
+        gizmo._insert_html('<link rel="icon" type="image/png" href="./icon.png"/>', in_body=False)
 
     async def iframe(self):
         gizmo = await get_gizmo()

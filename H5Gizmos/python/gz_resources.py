@@ -117,8 +117,8 @@ class HTMLPage(DelegatePOSTtoGETMixin):
     def embedded_script(self, script_text, in_body=True):
         return self.remote_js(script_text, in_body=in_body, init=EmbeddedScript)
 
-    def insert_html(self, text):
-        return self.remote_js(text, in_body=True, init=InsertHTML)
+    def insert_html(self, text, in_body=True):
+        return self.remote_js(text, in_body=in_body, init=InsertHTML)
 
     def add_resource(self, resource, in_body=True):
         if in_body:

@@ -1,11 +1,11 @@
 
 from . import H5Gizmos
-from . import gz_resources
+#from . import gz_resources
 
 from aiohttp import web
-import aiohttp
+#import aiohttp
 import asyncio
-import weakref
+#import weakref
 import mimetypes
 import os
 import sys
