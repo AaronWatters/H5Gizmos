@@ -8,6 +8,7 @@ See js/H5Gizmos.js for protocol JSON formats.
 
 from asyncio.tasks import sleep
 import os
+import time
 import numpy as np
 import json
 import asyncio
@@ -35,6 +36,13 @@ def name(id, link_action, to_depth=None):
     "Run the link in javascript and cache the result using the id."
     # command style convenience convenience accessor
     return link_action._connect(id, to_depth=to_depth)
+
+def new_identifier(prefix="Gizmo"):
+    Gizmo.COUNTER += 1
+    c = Gizmo.COUNTER
+    t = int(time.time() * 1000)
+    return "%s_%s_%s" % (prefix, t, c)
+
 
 class Gizmo:
     EXEC = "E"
@@ -84,11 +92,7 @@ class Gizmo:
     COUNTER = 0
 
     def _new_identifier_string(self, prefix="Gizmo"):
-        import time
-        Gizmo.COUNTER += 1
-        c = Gizmo.COUNTER
-        t = int(time.time() * 1000)
-        return "%s_%s_%s" % (prefix, t, c)
+        return new_identifier(prefix)
 
     def _check_last_flush_queue_task(self):
         if self._pipeline is not None:
