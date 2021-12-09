@@ -35,7 +35,7 @@ def run(main_awaitable, server=None, run_forever=True, exit_on_disconnect=None):
     #if exit_on_disconnect is None:
     #    # If not specified exit on disconnect when not in notebook.
     #    exit_on_disconnect = not isnotebook()
-    print("Running.  Exit on disconnect", exit_on_disconnect)
+    #print("Running.  Exit on disconnect", exit_on_disconnect)
     server = _check_server(server)
     # create and schedule the main task
     gizmo = server.gizmo(exit_on_disconnect=exit_on_disconnect)
@@ -678,5 +678,5 @@ class GizmoPipelineSocketHandler:
         self.ws = None
 
     async def handle(self, info, request, interface):
-        print("**** pipeline handler started")
+        #print("**** pipeline handler started")
         await self.pipeline.handle_websocket_request(request)
