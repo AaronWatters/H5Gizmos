@@ -74,6 +74,7 @@ var H5Gizmos = {};
             this.ws_url = null;
             this.ws = null;
             this.reconnect_id = "" + Date.now();
+            this.ws_error_message_callback = null;
         };
         pipeline_websocket(ws_url, on_open) {
             var that = this;
@@ -93,6 +94,15 @@ var H5Gizmos = {};
         };
         web_socket_error(event) {
             console.error("Web socket error", event);
+            var cb = this.ws_error_message_callback;
+            if (cb) {
+                var message = "Web socket error."
+                var ws = this.ws;
+                if ((ws) && (ws.readyState != ws_open)) {
+                    message = "Web socket connection is not open. " + ws.readyState;
+                }
+                cb(message)
+            }
         }
         get_ws_url(location) {
             location = location || window.location;
