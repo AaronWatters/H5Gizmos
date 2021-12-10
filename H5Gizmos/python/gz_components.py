@@ -2,8 +2,8 @@
 Composable gizmo factories.
 """
 
-#from . import gizmo_server
 from H5Gizmos import do, run, get_gizmo
+from . import gizmo_server
 
 class Component:
 
@@ -38,11 +38,13 @@ class Component:
         gizmo._insert_html('<link rel="icon" type="image/png" href="./icon.png"/>', in_body=False)
 
     async def iframe(self):
+        assert gizmo_server.isnotebook(), "iframe method only runs in IPython kernel."
         gizmo = await get_gizmo()
         self.prepare_application(gizmo)
         await gizmo.start_in_iframe()
 
     async def browse(self):
+        assert gizmo_server.isnotebook(), "iframe method only runs in IPython kernel."
         gizmo = await get_gizmo()
         self.prepare_application(gizmo)
         await gizmo.start_in_browser()

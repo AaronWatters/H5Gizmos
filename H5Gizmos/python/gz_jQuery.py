@@ -10,11 +10,14 @@ MISC_JAVASCRIPT = """
 function add_websocket_error_callback() {
     var tr = H5GIZMO_INTERFACE;
     tr.ws_error_message_callback = function(message) {
-        if (tr.jquery_info) {
-            tr.jquery_info.html(message);
-            tr.jquery_info.css("background-color", "pink")
+        var info = tr.jquery_info;
+        if (!info) {
+            info = $("<div/>").appendTo($("#GIZMO_BODY"));
         }
+        info.html(message);
+        info.css("background-color", "pink")
     };
+    return tr.ws_error_message_callback;
 }
 """
 
@@ -36,7 +39,7 @@ class jQueryComponent(gz_components.Component):
         gizmo._js_file("../static/jquery-ui-1.12.1/jquery-ui.js")
         gizmo._embedded_script(MISC_JAVASCRIPT)
         gizmo._initial_reference("jQuery")
-        gizmo._initial_reference("add_websocket_error_callback")
+        gizmo._initial_reference("websocket_error_callback", "add_websocket_error_callback()")
 
     def dom_element_reference(self, gizmo):
         self.container = name(self.container_name, gizmo.jQuery("<div/>"))
@@ -52,7 +55,7 @@ class jQueryComponent(gz_components.Component):
             self.info_div = H5Gizmos.name(self.info_name, gizmo.jQuery("<div/>"))
             do(self.info_div.appendTo(self.container))
             do(gizmo.H5GIZMO_INTERFACE._set("jquery_info", self.info_div))
-            do(gizmo.add_websocket_error_callback())
+            #do(gizmo.add_websocket_error_callback())
         return self.info_div
 
 # Tests and Demos:
