@@ -23,8 +23,9 @@ function add_websocket_error_callback() {
 
 class jQueryComponent(gz_components.Component):
 
-    def __init__(self, init_text="Uninitialized JQuery Gizmo."):
+    def __init__(self, init_text="Uninitialized JQuery Gizmo.", tag="<div/>"):
         self.init_text = init_text
+        self.tag = tag
         self.element_name = H5Gizmos.new_identifier("JQuery_element")
         self.info_name = H5Gizmos.new_identifier("JQuery_info")
         self.container_name = H5Gizmos.new_identifier("JQuery_container")
@@ -42,9 +43,13 @@ class jQueryComponent(gz_components.Component):
         gizmo._initial_reference("websocket_error_callback", "add_websocket_error_callback()")
 
     def dom_element_reference(self, gizmo):
+        super().dom_element_reference(gizmo)
+        # ??? does it cause harm to always create an extra container around the element ???
         self.container = name(self.container_name, gizmo.jQuery("<div/>"))
-        divtext = "<div>%s</div>" % self.init_text
-        self.element = name(self.element_name, gizmo.jQuery(divtext))
+        #divtext = "<div>%s</div>" % self.init_text
+        self.element = name(self.element_name, gizmo.jQuery(self.tag))
+        if self.init_text:
+            do(self.element.html(self.init_text))
         do(self.element.appendTo(self.container))
         return self.container[0]
 
@@ -57,6 +62,85 @@ class jQueryComponent(gz_components.Component):
             do(gizmo.H5GIZMO_INTERFACE._set("jquery_info", self.info_div))
             #do(gizmo.add_websocket_error_callback())
         return self.info_div
+
+class jQueryButton(jQueryComponent):
+
+    options = None  # default
+    on_click = None
+    
+    def __init__(self, init_text, tag="<button/>", on_click=None, options=None):
+        super().__init__(init_text, tag)
+        self.options = options
+        self.on_click = on_click
+
+    widget_name = "button"
+    on_click_depth = 1
+
+    def initialize_jquery_widget(self):
+        options = self.options
+        initializer = self.element[self.widget_name]
+        if options is not None:
+            do(initializer(options))
+        else:
+            do(initializer())
+        self.set_on_click(self.on_click)
+
+    def set_on_click(self, on_click):
+        if on_click is not None:
+            do(self.element.on("click", on_click), to_depth=self.on_click_depth)
+            do(self.element.prop("disabled", False))
+        else:
+            do(self.element.off("click"))
+            do(self.element.prop("disabled", True))
+
+    def dom_element_reference(self, gizmo):
+        result = super().dom_element_reference(gizmo)
+        self.initialize_jquery_widget()
+        return result
+
+class Stack(jQueryComponent):
+
+    def __init__(self, children, tag="<div/>"):
+        super().__init__(init_text=None, tag=tag)
+        self.children = children
+        self.children_name = H5Gizmos.new_identifier("JQuery_container")
+        self.children_reference = None
+
+    def dom_element_reference(self, gizmo):
+        result = super().dom_element_reference(gizmo)
+        self.attach_children(self.children)
+        return result
+
+    def attach_children(self, children):
+        gizmo = self.gizmo
+        assert gizmo is not None, "gizmo must be attached."
+        do(self.element.empty())
+        self.children = children
+        # xxxx maybe use child.element?
+        jq = gizmo.jQuery
+        references = [jq(child.dom_element_reference(gizmo)) for child in children]
+        seq = H5Gizmos.GizmoSequence(references, self.gizmo)
+        name(self.children_name, seq)
+        row_template = "auto"
+        col_template = " ".join(["auto"] * len(children))
+        css = {
+            "display": "grid",
+            "grid-template-columns": col_template,
+            "grid-template-rows": row_template,
+            "grid-gap": "3px",
+        }
+        do(self.element.css(css))
+        for (rownum, childref) in enumerate(references):
+            css = {
+                "grid-column": "1",
+                "grid-row": str(rownum + 1),  # 1 based indexing
+            }
+            do(childref.appendTo(self.element))
+            do(childref.css(css))
+
+# aliases
+Html = jQueryComponent
+Button = jQueryButton
 
 # Tests and Demos:
 

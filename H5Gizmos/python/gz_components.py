@@ -73,7 +73,8 @@ class Component:
         """
         Get a reference to the DOM element for this component.
         """
-        raise NotImplementedError("this method must be implemented in the subclass")
+        self.gizmo = gizmo
+        return "Undefined gizmo component."
         
     def shutdown(self, *args):
         "Graceful shutdown"
