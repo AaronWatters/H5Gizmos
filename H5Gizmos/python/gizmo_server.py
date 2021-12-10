@@ -27,7 +27,7 @@ def get_or_create_event_loop():
         asyncio.set_event_loop(loop)
     return loop
 
-def run(main_awaitable, server=None, run_forever=True, exit_on_disconnect=None):
+def run(main_awaitable, server=None, run_forever=True, exit_on_disconnect=None, log_messages=False):
     """
     Get a gizmo and run it in an asynchronous run program.
     Start a server if no server is provided.
@@ -38,7 +38,7 @@ def run(main_awaitable, server=None, run_forever=True, exit_on_disconnect=None):
     #print("Running.  Exit on disconnect", exit_on_disconnect)
     server = _check_server(server)
     # create and schedule the main task
-    gizmo = server.gizmo(exit_on_disconnect=exit_on_disconnect)
+    gizmo = server.gizmo(exit_on_disconnect=exit_on_disconnect, log_messages=log_messages)
     H5Gizmos.schedule_task(main_awaitable(gizmo))
     if run_forever:
         get_or_create_event_loop().run_forever()
@@ -397,8 +397,9 @@ class GzServer:
             entry_filename="index.html",
             poll_for_exceptions=True,
             exit_on_disconnect=False,
+            log_messages=False,
             ):
-        result = H5Gizmos.Gizmo(server=self, exit_on_disconnect=exit_on_disconnect)
+        result = H5Gizmos.Gizmo(server=self, exit_on_disconnect=exit_on_disconnect, log_messages=log_messages)
         handler = GizmoPipelineSocketHandler(result, packet_limit=packet_limit, auto_flush=auto_flush)
         result._set_pipeline(handler.pipeline)
         mgr = self.get_new_manager(websocket_handler=handler)

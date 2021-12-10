@@ -52,9 +52,19 @@ class DelegatePOSTtoGETMixin:
 
 class HTMLPage(DelegatePOSTtoGETMixin):
 
-    def __init__(self, ws_url, title="Gizmo", embed_gizmo=True, template=None, message_delay=1000, identifier=None):
+    def __init__(
+        self, 
+        ws_url, 
+        title="Gizmo", 
+        log_messages=False,
+        embed_gizmo=True, 
+        template=None, 
+        message_delay=1000, # milliseconds
+        identifier=None
+        ):
         self.identifier = identifier or title
         self.message_delay = message_delay
+        self.log_messages = log_messages
         self.ws_url = ws_url
         if template is None:
             template = STD_HTML_PAGE_TEMPLATE
@@ -137,6 +147,8 @@ class HTMLPage(DelegatePOSTtoGETMixin):
         ref_id_and_js_expression = self.ref_id_and_js_expression
         #L = [PIPELINE_WEBSOCKET_TEMPLATE.format(ws_url=repr(self.ws_url))]
         L = []
+        if (self.log_messages):
+            L.append("\n\t\t" + "tr.log_messages = true;\n")
         for [identity, expression] in ref_id_and_js_expression:
             id_repr = repr(identity)
             set_code = SET_REFERENCE_TEMPLATE.format(id_string=id_repr, js_expression=expression)

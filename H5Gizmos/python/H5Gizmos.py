@@ -60,7 +60,16 @@ class Gizmo:
     EXCEPTION = "X"
     RECONNECT_ID = "reconnect_id"
 
-    def __init__(self, sender=None, default_depth=3, pipeline=None, server=None, exit_on_disconnect=False):
+    def __init__(
+        self, 
+        sender=None, 
+        default_depth=3, 
+        pipeline=None, 
+        server=None, 
+        exit_on_disconnect=False,
+        log_messages=False,
+        ):
+        self._log_messages = log_messages
         self._exit_on_disconnect = exit_on_disconnect
         self._identifier = self._new_identifier_string()
         self._pipeline = pipeline
@@ -128,6 +137,7 @@ class Gizmo:
             ws_url=self._ws_url, 
             title=title,
             identifier=self._identifier,
+            log_messages=self._log_messages,
             )
         mgr.add_http_handler(filename, handler)
         self._js_file("../../H5Gizmos/js/H5Gizmos.js")
@@ -355,6 +365,8 @@ class Gizmo:
         return oid
 
     def _send(self, json_message):
+        if self._log_messages:
+            print("sending json", repr(json_message)[:100])
         try:
             #print("gizmo sending json", repr(json_message)[:100])
             #print(self._sender)
