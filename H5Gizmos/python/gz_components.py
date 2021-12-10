@@ -8,12 +8,14 @@ from H5Gizmos import do, run, get_gizmo
 class Component:
 
     gizmo = None   # default until gizmo is attached.
+    task = None
 
     def attach_gizmo(self, gizmo):
         self.gizmo = gizmo
         self.add_dependencies(gizmo)
 
-    def run(self):
+    def run(self, task=None):
+        self.task = task
         run(self.run_main)
 
     def prepare_application(self, gizmo):
@@ -25,6 +27,10 @@ class Component:
         do(gizmo.window.addEventListener("unload", self.shutdown), to_depth=1)
         self.add_std_icon(gizmo)
         await gizmo.start_in_browser()
+        #gizmo._start_report_error_task()
+        task = self.task
+        if task is not None:
+            await task()
 
     def add_std_icon(self, gizmo):
         # https://www.w3.org/2005/10/howto-favicon
