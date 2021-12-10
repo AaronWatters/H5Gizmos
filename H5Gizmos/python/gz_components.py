@@ -42,6 +42,11 @@ class Component:
         self.prepare_application(gizmo)
         await gizmo.start_in_iframe()
 
+    async def browse(self):
+        gizmo = await get_gizmo()
+        self.prepare_application(gizmo)
+        await gizmo.start_in_browser()
+
     def configure_page(self, gizmo):
         self.window = gizmo.window
         self.document = gizmo.document
