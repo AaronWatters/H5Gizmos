@@ -1,7 +1,22 @@
 
+from H5Gizmos.python.gz_resources import MISC_OPERATIONS_TEMPLATE
 from . import gz_components
 from . import H5Gizmos
 from .H5Gizmos import do, name
+
+MISC_JAVASCRIPT = """
+// miscellaneous javascript to support jQuery
+
+function add_websocket_error_callback() {
+    var tr = H5GIZMO_INTERFACE;
+    tr.ws_error_message_callback = function(message) {
+        if (tr.jquery_info) {
+            tr.jquery_info.html(message);
+            tr.jquery_info.css("background-color", "pink")
+        }
+    };
+}
+"""
 
 class jQueryComponent(gz_components.Component):
 
@@ -19,7 +34,9 @@ class jQueryComponent(gz_components.Component):
         gizmo._css_file("../static/jquery-ui-1.12.1/jquery-ui.css")
         gizmo._js_file("../static/jquery-ui-1.12.1/jquery.min.js")
         gizmo._js_file("../static/jquery-ui-1.12.1/jquery-ui.js")
+        gizmo._embedded_script(MISC_JAVASCRIPT)
         gizmo._initial_reference("jQuery")
+        gizmo._initial_reference("add_websocket_error_callback")
 
     def dom_element_reference(self, gizmo):
         self.container = name(self.container_name, gizmo.jQuery("<div/>"))
@@ -33,7 +50,9 @@ class jQueryComponent(gz_components.Component):
             gizmo = self.gizmo
             assert gizmo is not None, "no gizmo to attach"
             self.info_div = H5Gizmos.name(self.info_name, gizmo.jQuery("<div/>"))
-            H5Gizmos.do(self.info_div.appendTo(self.container))
+            do(self.info_div.appendTo(self.container))
+            do(gizmo.H5GIZMO_INTERFACE._set("jquery_info", self.info_div))
+            do(gizmo.add_websocket_error_callback())
         return self.info_div
 
 # Tests and Demos:
