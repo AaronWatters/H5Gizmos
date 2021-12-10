@@ -66,9 +66,10 @@ var H5Gizmos = {};
     var indicator_to_command_parser = {};
 
     class Translator {
-        constructor(default_this, sender) {
+        constructor(default_this, sender, log_messages) {
             this.default_this = default_this;
             this.sender = sender;
+            this.log_messages = log_messages;
             this.object_cache = {};
             this.ws_url = null;
             this.ws = null;
@@ -126,8 +127,10 @@ var H5Gizmos = {};
             var on_open = function() {
                 that.sender(json_object);
             };
+            if (this.log_messages) {
+                console.log("sending json", json_object);
+            }
             that.check_web_socket(on_open);
-            //console.log("sending", json_object)
             //this.sender(json_object);
         };
         check_web_socket(on_open) {
@@ -136,6 +139,7 @@ var H5Gizmos = {};
                 throw new Error("ws connection is not configured.  Cannot reconnect.")
             }
             if (ws.readyState != ws_open) {
+                // always log reconnect attempts?
                 console.log("attempting to reconnect ws:", ws.readyState)
                 this.pipeline_websocket(this.ws_url, on_open);
             } else {
@@ -221,7 +225,9 @@ var H5Gizmos = {};
             return result;
         };
         parse_message(message_json_ob) {
-            //console.log("parsing", message_json_ob);
+            if (this.log_messages) {
+                console.log("parsing json message", message_json_ob);
+            }
             if (!Array.isArray(message_json_ob)) {
                 this.send_error("top level message json should be array: " + (typeof message_json_ob));
             }
