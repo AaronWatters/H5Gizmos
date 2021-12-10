@@ -7,13 +7,22 @@ test('module is loaded', () => {
     expect(H5Gizmos.is_loaded).toBe(true);
 });
 
+function FakedTranslator(dthis, sender) {
+    var result = new H5Gizmos.Translator(dthis, sender);
+    result.ws = {readyState: 1};  // open
+    result.ws_url = "http://www.example.com/test.html"
+    return result;
+}
+
 test("sends a message", () => {
     var dthis = {};
     var save_message = null;
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
+    expect(tr.ws).toBeTruthy();
+    expect(tr.ws_url).toBeTruthy()
     tr.send(["hello", "world"]);
     expect(save_message).toEqual(["hello", "world"]);
 });
@@ -24,7 +33,7 @@ test("caches objects", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     expect(() => { tr.get_reference("thing"); }).toThrow();
     var object = ["hello", "world"];
     tr.set_reference("thing", object);
@@ -55,7 +64,8 @@ test("truncates json", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new H5Gizmos.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     var value = {
         0: 1,
         1: ["a string", 123, true, null],
@@ -82,7 +92,8 @@ test("converts binary to hex", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new H5Gizmos.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     var value = {
         0: new Uint8Array([1,2,3]),
     };
@@ -99,7 +110,8 @@ test("converts hex to binary", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new H5Gizmos.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     var hex = "010203";
     var binary = new Uint8Array([1,2,3])
     var converted = tr.from_hex(hex);
@@ -113,7 +125,8 @@ test("rejects bad messages", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new H5Gizmos.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     expect(() => { tr.parse_message("01020"); }).toThrow();
     expect(() => { tr.parse_message(["bad", "message"]); }).toThrow();
 });
@@ -134,7 +147,8 @@ test("rejects bad commands", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new H5Gizmos.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     expect(() => { tr.parse_command("01020"); }).toThrow();
     expect(() => { tr.parse_command(["bad", "message"]); }).toThrow();
 });
@@ -145,7 +159,8 @@ test("doesn't double wrap", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new H5Gizmos.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     var pair = tr.value_pair("test value");
     expect(pair.value).toEqual("test value");
     expect(() => { tr.value_pair(pair); }).toThrow();
@@ -158,7 +173,8 @@ test("parses a literal", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new h5.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     var val = ["some", "value"];
     var json_cmd = lit(val); //[h5.LITERAL, val];
     var cmd = tr.parse_command(json_cmd);
@@ -173,7 +189,8 @@ test("executes a literal", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new h5.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     var val = ["some", "value"];
     var json_cmd = lit(val); //[h5.LITERAL, val];
     var json_msg = exec_(json_cmd); //[h5.EXEC, json_cmd];
@@ -194,7 +211,8 @@ test("gets a literal", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new h5.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     var val = ["some", "value"];
     var oid = "oid123";
     var to_depth = 5;
@@ -227,7 +245,8 @@ test("sets and gets references", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new h5.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     var val = ["some", "value"];
     // store the value
     var json_cmd = lit(val); //[h5.LITERAL, val];
@@ -265,7 +284,8 @@ test("converts bytes", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new h5.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     var hexstring = "0123456789abcdef";
     var bytes_cmd = _bytes(hexstring);
     var exec_msg = exec_(bytes_cmd); //[h5.EXEC, json_cmd];
@@ -287,7 +307,8 @@ test("parses maps", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new h5.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     var dictionary = {
         "first": lit(1),
         "second": lit("two"),
@@ -313,7 +334,8 @@ test("sends parse errors", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new h5.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     var map_cmd = ['no such indicator'];  // invalid message
     var map_msg = exec_(map_cmd); //[h5.EXEC, json_cmd];
     expect(function() { tr.parse_message(map_msg); }).toThrow();
@@ -332,7 +354,8 @@ test("parses lists", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new h5.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     var list = [
         lit(1),
         lit("two"),
@@ -362,7 +385,8 @@ test("gets attributes", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new h5.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     var target = {"attr": 42};
     var index = "attr";
     var target_cmd = lit(target);
@@ -387,7 +411,8 @@ test("calls a function", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new h5.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     // connect a function reference
     function increment(x) { return x + 1; };
     var id_string = "xxx"
@@ -410,7 +435,8 @@ test("calls a method", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new h5.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     // connect an object instance
     class TestObject {
         constructor(step) {
@@ -447,7 +473,8 @@ test("sends an exception for a bad get", () => {
             oiderr = message[2]
         }
     };
-    var tr = new h5.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     var val = ["some", "value"];
     var oid = "oid123";
     var to_depth = 5;
@@ -473,7 +500,8 @@ test("sets an attribute", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new h5.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     // connect an object instance
     var attr_name = "attr";
     var my_instance = {};
@@ -505,7 +533,8 @@ test("creates a callback which calls back.", () => {
     var sender = function(message) {
         save_message = message;
     };
-    var tr = new h5.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     var id_string = "callback0";
     var to_depth = 5;
     var json_args = [lit(44), lit("arg2")];
@@ -690,7 +719,8 @@ test('pipelines a received message', () => {
     var ws = new MockSocketMaker(url);
     var sender = null;  // overridden by pipeline
     var dthis = {};
-    var tr = new h5.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     var pipeline = h5.pipeline(ws, tr);
     // encapsulate a command
     var val = ["some", "value"];
@@ -712,7 +742,8 @@ test("doesn't pipeline a bad message.", () => {
     var ws = new MockSocketMaker(url);
     var sender = null;  // overridden by pipeline
     var dthis = {};
-    var tr = new h5.Translator(dthis, sender);
+    //var tr = new H5Gizmos.Translator(dthis, sender);
+    var tr = FakedTranslator(dthis, sender);
     var pipeline = h5.pipeline(ws, tr);
     // encapsulate a command
     var val = ["some", "value"];
