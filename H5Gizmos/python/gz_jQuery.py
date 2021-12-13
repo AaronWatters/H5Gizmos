@@ -137,6 +137,18 @@ class Stack(jQueryComponent):
         references = [jq(child.dom_element_reference(gizmo)) for child in children]
         #seq = H5Gizmos.GizmoSequence(references, self.gizmo)  # not needed?
         #name(self.children_name, seq)
+        css = self.main_css(children)
+        css.update(self.element_css_defaults)
+        css.update(self.css)
+        do(self.element.css(css))
+        for (index, childref) in enumerate(references):
+            child_css = self.element_css(index)
+            child_css.update(self.child_css_defaults)
+            child_css.update(self.child_css)
+            child_container = gizmo.jQuery("<div/>").css(child_css).appendTo(self.element)
+            do(childref.appendTo(child_container))
+
+    def main_css(self, children):
         row_template = "auto"
         col_template = " ".join(["auto"] * len(children))
         # https://stackoverflow.com/questions/47882924/preventing-double-borders-in-css-grid
@@ -144,22 +156,18 @@ class Stack(jQueryComponent):
             "grid-template-columns": col_template,
             "grid-template-rows": row_template,
         }
-        css.update(self.element_css_defaults)
-        css.update(self.css)
-        do(self.element.css(css))
-        for (rownum, childref) in enumerate(references):
-            child_css = {
-                "grid-column": "1",
-                "grid-row": str(rownum + 1),  # 1 based indexing
-                #"width": "100%",
-                #"width": "100%",
-                #"overflow": "auto",
-                #"padding": "15px",
-            }
-            child_css.update(self.child_css_defaults)
-            child_css.update(self.child_css)
-            child_container = gizmo.jQuery("<div/>").css(child_css).appendTo(self.element)
-            do(childref.appendTo(child_container))
+        return css
+
+    def element_css(self, index):
+        child_css = {
+            "grid-column": "1",
+            "grid-row": str(index + 1),  # 1 based indexing
+            #"width": "100%",
+            #"width": "100%",
+            #"overflow": "auto",
+            #"padding": "15px",
+        }
+        return child_css
 
 # aliases
 Html = jQueryComponent
