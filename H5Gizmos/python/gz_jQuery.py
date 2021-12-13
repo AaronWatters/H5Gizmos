@@ -133,8 +133,9 @@ class Stack(jQueryComponent):
         do(self.element.empty())
         self.children = children
         # xxxx maybe use child.element?
-        jq = gizmo.jQuery
-        references = [jq(child.dom_element_reference(gizmo)) for child in children]
+        references = [self.child_reference(child, gizmo) for child in children]
+        #jq = gizmo.jQuery
+        #references = [jq(child.dom_element_reference(gizmo)) for child in children]
         #seq = H5Gizmos.GizmoSequence(references, self.gizmo)  # not needed?
         #name(self.children_name, seq)
         css = self.main_css(children)
@@ -146,7 +147,17 @@ class Stack(jQueryComponent):
             child_css.update(self.child_css_defaults)
             child_css.update(self.child_css)
             child_container = gizmo.jQuery("<div/>").css(child_css).appendTo(self.element)
-            do(childref.appendTo(child_container))
+            if childref is not None:
+                do(childref.appendTo(child_container))
+            else:
+                #do(child_container)  # ???? is this needed?
+                pass
+
+    def child_reference(self, child, gizmo):
+        if child is None:
+            return None
+        else:
+            return gizmo.jQuery(child.dom_element_reference(gizmo))
 
     def main_css(self, children):
         row_template = "auto"
