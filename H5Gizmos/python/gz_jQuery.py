@@ -169,6 +169,29 @@ class Stack(jQueryComponent):
         }
         return child_css
 
+class Shelf(Stack):
+   
+    def main_css(self, children):
+        col_template = "auto"
+        row_template = " ".join(["auto"] * len(children))
+        # https://stackoverflow.com/questions/47882924/preventing-double-borders-in-css-grid
+        css = {
+            "grid-template-columns": col_template,
+            "grid-template-rows": row_template,
+        }
+        return css
+
+    def element_css(self, index):
+        child_css = {
+            "grid-row": "1",
+            "grid-column": str(index + 1),  # 1 based indexing
+            #"width": "100%",
+            #"width": "100%",
+            #"overflow": "auto",
+            #"padding": "15px",
+        }
+        return child_css 
+
 # aliases
 Html = jQueryComponent
 Button = jQueryButton
