@@ -47,6 +47,7 @@ class Component:
         assert gizmo_server.isnotebook(), "iframe method only runs in IPython kernel."
         gizmo = await get_gizmo()
         self.prepare_application(gizmo)
+        self.add_std_icon(gizmo)
         await gizmo.start_in_browser()
 
     def configure_page(self, gizmo):
