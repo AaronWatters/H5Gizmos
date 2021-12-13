@@ -98,6 +98,48 @@ class jQueryButton(jQueryComponent):
         self.initialize_jquery_widget()
         return result
 
+class Slider(jQueryComponent):
+
+    def __init__(self, minimum, maximum, on_change=None, value=None, step=None, orientation="horizontal"):
+        assert maximum > minimum, "Bad slider range: " + repr((minimum, maximum))
+        if value is None:
+            value = minimum
+        else:
+            if value > maximum:
+                value = maximum
+            if value < minimum:
+                value = minimum
+        if step is None:
+            step = (maximum - minimum) * 0.01
+        super().__init__("")
+        self.on_change = on_change
+        self.minimum = minimum
+        self.maximum = maximum
+        self.value = value
+        self.step = step
+
+    def dom_element_reference(self, gizmo):
+        result = super().dom_element_reference(gizmo)
+        options = dict(
+            min=self.minimum,
+            max=self.maximum,
+            value=self.value,
+            step=self.step,
+            slide=self.change_value,
+            change=self.change_value,
+        )
+        do(self.element.slider(options), to_depth=1)
+        return result
+
+    def change_value(self, event, ui):
+        self.last_event = event
+        self.last_ui = ui
+        v = self.value = ui["value"]
+        c = self.on_change
+        if c is not None:
+            c(v)
+
+
 class Stack(jQueryComponent):
 
     element_css_defaults = {
