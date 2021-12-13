@@ -100,9 +100,11 @@ class jQueryButton(jQueryComponent):
 
 class Stack(jQueryComponent):
 
-    def __init__(self, children, tag="<div/>"):
+    def __init__(self, children, tag="<div/>", background="#999", child_background="white"):
         super().__init__(init_text=None, tag=tag)
         self.children = children
+        self.background = background
+        self.child_background = child_background
         self.children_name = H5Gizmos.new_identifier("JQuery_container")
         self.children_reference = None
 
@@ -123,20 +125,38 @@ class Stack(jQueryComponent):
         name(self.children_name, seq)
         row_template = "auto"
         col_template = " ".join(["auto"] * len(children))
+        # https://stackoverflow.com/questions/47882924/preventing-double-borders-in-css-grid
         css = {
             "display": "grid",
             "grid-template-columns": col_template,
             "grid-template-rows": row_template,
-            "grid-gap": "3px",
+            #"grid-gap": "3px",
+            "padding": "3px",
+            "border-radius": "3px",
+            #"width": "100vw"
         }
+        bg = self.background
+        if bg is not None:
+            css["background-color"] = bg
         do(self.element.css(css))
+        cb = self.child_background
         for (rownum, childref) in enumerate(references):
             css = {
                 "grid-column": "1",
                 "grid-row": str(rownum + 1),  # 1 based indexing
+                #"width": "100%",
+                #"width": "100%",
+                #"overflow": "auto",
+                "padding": "15px",
             }
-            do(childref.appendTo(self.element))
-            do(childref.css(css))
+            if cb is not None:
+                css["background-color"] = cb
+            if bg is not None:
+                css["border"] = "1px solid " + str(bg)
+            child_container = gizmo.jQuery("<div/>").css(css).appendTo(self.element)
+            do(childref.appendTo(child_container))
+            #do(childref.appendTo(self.element))
+            #do(childref.css(css))
 
 # aliases
 Html = jQueryComponent
