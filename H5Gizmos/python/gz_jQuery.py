@@ -100,11 +100,25 @@ class jQueryButton(jQueryComponent):
 
 class Stack(jQueryComponent):
 
-    def __init__(self, children, tag="<div/>", background="#999", child_background="white"):
+    element_css_defaults = {
+        "display": "grid",
+        "grid-gap": "3px",
+        "padding": "3px",
+        "border-radius": "3px",
+        "background-color": "#ddd",
+        #"width": "100vw"
+    }
+
+    child_css_defaults = {
+        "background-color": "white",
+        "padding": "3px",
+    }
+
+    def __init__(self, children, tag="<div/>", css=None, child_css=None):
         super().__init__(init_text=None, tag=tag)
         self.children = children
-        self.background = background
-        self.child_background = child_background
+        self.css = css or {}
+        self.child_css = child_css or {}
         self.children_name = H5Gizmos.new_identifier("JQuery_container")
         self.children_reference = None
 
@@ -121,42 +135,31 @@ class Stack(jQueryComponent):
         # xxxx maybe use child.element?
         jq = gizmo.jQuery
         references = [jq(child.dom_element_reference(gizmo)) for child in children]
-        seq = H5Gizmos.GizmoSequence(references, self.gizmo)
-        name(self.children_name, seq)
+        #seq = H5Gizmos.GizmoSequence(references, self.gizmo)  # not needed?
+        #name(self.children_name, seq)
         row_template = "auto"
         col_template = " ".join(["auto"] * len(children))
         # https://stackoverflow.com/questions/47882924/preventing-double-borders-in-css-grid
         css = {
-            "display": "grid",
             "grid-template-columns": col_template,
             "grid-template-rows": row_template,
-            #"grid-gap": "3px",
-            "padding": "3px",
-            "border-radius": "3px",
-            #"width": "100vw"
         }
-        bg = self.background
-        if bg is not None:
-            css["background-color"] = bg
+        css.update(self.element_css_defaults)
+        css.update(self.css)
         do(self.element.css(css))
-        cb = self.child_background
         for (rownum, childref) in enumerate(references):
-            css = {
+            child_css = {
                 "grid-column": "1",
                 "grid-row": str(rownum + 1),  # 1 based indexing
                 #"width": "100%",
                 #"width": "100%",
                 #"overflow": "auto",
-                "padding": "15px",
+                #"padding": "15px",
             }
-            if cb is not None:
-                css["background-color"] = cb
-            if bg is not None:
-                css["border"] = "1px solid " + str(bg)
-            child_container = gizmo.jQuery("<div/>").css(css).appendTo(self.element)
+            child_css.update(self.child_css_defaults)
+            child_css.update(self.child_css)
+            child_container = gizmo.jQuery("<div/>").css(child_css).appendTo(self.element)
             do(childref.appendTo(child_container))
-            #do(childref.appendTo(self.element))
-            #do(childref.css(css))
 
 # aliases
 Html = jQueryComponent
