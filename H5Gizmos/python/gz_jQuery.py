@@ -89,9 +89,11 @@ class jQueryButton(jQueryComponent):
         if on_click is not None:
             do(self.element.on("click", on_click), to_depth=self.on_click_depth)
             do(self.element.prop("disabled", False))
+            do(self.element.css("opacity", 1.0))
         else:
             do(self.element.off("click"))
             do(self.element.prop("disabled", True))
+            do(self.element.css("opacity", 0.5))
 
     def dom_element_reference(self, gizmo):
         result = super().dom_element_reference(gizmo)
@@ -117,6 +119,7 @@ class Slider(jQueryComponent):
         self.maximum = maximum
         self.value = value
         self.step = step
+        self.orientation = orientation
 
     def dom_element_reference(self, gizmo):
         result = super().dom_element_reference(gizmo)
@@ -127,6 +130,7 @@ class Slider(jQueryComponent):
             step=self.step,
             slide=self.change_value,
             change=self.change_value,
+            orientation = self.orientation,
         )
         do(self.element.slider(options), to_depth=1)
         return result
