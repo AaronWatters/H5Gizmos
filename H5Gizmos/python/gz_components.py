@@ -9,14 +9,15 @@ class Component:
 
     gizmo = None   # default until gizmo is attached.
     task = None
+    verbose = False
 
     def attach_gizmo(self, gizmo):
         self.gizmo = gizmo
         self.add_dependencies(gizmo)
 
-    def run(self, task=None):
+    def run(self, task=None, verbose=True, log_messages=False):
         self.task = task
-        run(self.run_main)
+        run(self.run_main, verbose=verbose, log_messages=log_messages)
 
     def prepare_application(self, gizmo):
         self.attach_gizmo(gizmo)
@@ -37,15 +38,17 @@ class Component:
         gizmo._add_content(os_path="../static/icon.png", content_type="image/png")
         gizmo._insert_html('<link rel="icon" type="image/png" href="./icon.png"/>', in_body=False)
 
-    async def iframe(self):
+    async def iframe(self, verbose=False, log_messages=False):
         assert gizmo_server.isnotebook(), "iframe method only runs in IPython kernel."
-        gizmo = await get_gizmo()
+        gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages)
         self.prepare_application(gizmo)
         await gizmo.start_in_iframe()
 
-    async def browse(self):
-        assert gizmo_server.isnotebook(), "iframe method only runs in IPython kernel."
-        gizmo = await get_gizmo()
+    async def browse(self, verbose=True, log_messages=False):
+        assert gizmo_server.isnotebook(), "browse method only runs in IPython kernel."
+        if verbose:
+            print("Displaying gizmo component in new browser window.")
+        gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages)
         self.prepare_application(gizmo)
         self.add_std_icon(gizmo)
         await gizmo.start_in_browser()
@@ -93,4 +96,4 @@ class HelloComponent(Component):
 
 def test_standalone():
     hello = HelloComponent()
-    hello.run()
+    hello.run(verbose=False)

@@ -26,7 +26,7 @@ def get_or_create_event_loop():
         asyncio.set_event_loop(loop)
     return loop
 
-def run(main_awaitable, server=None, run_forever=True, exit_on_disconnect=None, log_messages=False):
+def run(main_awaitable, server=None, run_forever=True, exit_on_disconnect=None, log_messages=False, verbose=True):
     """
     Get a gizmo and run it in an asynchronous run program.
     Start a server if no server is provided.
@@ -35,21 +35,21 @@ def run(main_awaitable, server=None, run_forever=True, exit_on_disconnect=None, 
     #    # If not specified exit on disconnect when not in notebook.
     #    exit_on_disconnect = not isnotebook()
     #print("Running.  Exit on disconnect", exit_on_disconnect)
-    server = _check_server(server)
+    server = _check_server(server, verbose=verbose)
     # create and schedule the main task
     gizmo = server.gizmo(exit_on_disconnect=exit_on_disconnect, log_messages=log_messages)
     H5Gizmos.schedule_task(main_awaitable(gizmo))
     if run_forever:
         get_or_create_event_loop().run_forever()
 
-async def get_gizmo(from_server=None):
+async def get_gizmo(from_server=None, verbose=False, log_messages=False):
     """
     Get a gizmo (the official way).  Set up a server iff needed.
     """
-    from_server = _check_server(from_server)
-    return from_server.gizmo()
+    from_server = _check_server(from_server, verbose=verbose)
+    return from_server.gizmo(log_messages=log_messages)
 
-def _check_server(server):
+def _check_server(server, verbose=False):
     "Make sure the gizmo server is set up."
     global PROCESS_SHARED_GIZMO_SERVER
     out = None  # xxxx
@@ -59,6 +59,8 @@ def _check_server(server):
         server = PROCESS_SHARED_GIZMO_SERVER
         if server is None:
             server = PROCESS_SHARED_GIZMO_SERVER = GzServer(out=out, err=err)
+            if not verbose:
+                server.capture_stdout()
             # schedule the server task
             server.run_in_task()
     return server
@@ -377,6 +379,13 @@ class GzServer:
         self.counter = 0
         self.out = out
         self.err = err
+        self.captured_stdout = None
+
+    def capture_stdout(self):
+        import contextlib
+        import io
+        self.captured_stdout = io.StringIO()
+        self.out = contextlib.redirect_stdout(self.captured_stdout)
 
     def my_stdout(self):
         if self.out:
