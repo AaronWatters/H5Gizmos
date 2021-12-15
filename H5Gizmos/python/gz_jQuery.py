@@ -1,4 +1,5 @@
 
+from H5Gizmos.python import gizmo_server
 from H5Gizmos.python.gz_resources import MISC_OPERATIONS_TEMPLATE
 from . import gz_components
 from . import H5Gizmos
@@ -22,6 +23,8 @@ function add_websocket_error_callback() {
 """
 
 class jQueryComponent(gz_components.Component):
+
+    init_text = "" # default for subclasses
 
     def __init__(self, init_text="Uninitialized JQuery Gizmo.", tag="<div/>"):
         self.init_text = init_text
@@ -248,6 +251,48 @@ class Shelf(Stack):
             #"padding": "15px",
         }
         return child_css 
+
+
+class jQueryImage(jQueryComponent):
+
+    # quick and dirty for now
+    version = 0
+
+    def __init__(self, filename, bytes_content, height=None, width=None, mime_type=None, alt="image"):
+        self.filename = filename
+        self.bytes_content = bytes_content
+        self.height = height
+        self.width = width
+        self.content_type = mime_type
+        self.alt = alt
+        self.tag = '<img src="%s" alt="%s"/>' % (self.versioned_link(), self.alt)
+        super().__init__(None, self.tag)
+
+    def resize(self, height=None, width=None):
+        print("resizing", height, width)
+        if height is not None:
+            self.height = height
+            do(self.element.height(height))
+        if width is not None:
+            self.width = width
+            do(self.element.width(width))
+
+    def change_content(self, bytes_content):
+        self.bytes_content = bytes(bytes_content)
+        self.getter.set_content(bytes_content)
+        do(self.element.attr("src", self.versioned_link()))
+
+    def versioned_link(self):
+        self.version += 1
+        return "%s?v=%s" % (self.filename, self.version)
+
+    def dom_element_reference(self, gizmo):
+        result = super().dom_element_reference(gizmo)
+        mgr = gizmo._manager
+        self.getter = gizmo_server.BytesGetter(self.filename, self.bytes_content, mgr, self.content_type)
+        mgr.add_http_handler(self.filename, self.getter)
+        self.resize(self.height, self.width)
+        return result
 
 # aliases
 Html = jQueryComponent
