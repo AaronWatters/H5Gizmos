@@ -425,12 +425,13 @@ class GzServer:
         self.identifier_to_manager[identifier] = result
         return result
 
-    """def run_standalone(self, app_factory=web.Application, sync_run=web.run_app, **args):
+    def run_standalone(self, app_factory=web.Application, sync_run=web.run_app, **args):
+        # used in test case only
         app = self.get_app(app_factory=app_factory)
         self.status = "running standalone"
         result = sync_run(app, port=self.port, **args)
         self.status = "done standalone"
-        return result"""
+        return result
 
     def run_in_task(self, app_factory=web.Application, async_run=web._run_app, **args):
         loop = get_or_create_event_loop()
@@ -643,6 +644,8 @@ class GizmoManager:
 
 class FileGetter:
 
+    "Serve tht contents of a file from the file system."
+
     def __init__(self, fs_path, filename, mgr, content_type=None, interface=STDInterface):
         assert interface.file_exists(fs_path)
         #self.url_path = "%s/%s" % (mgr.url_path, filename)
@@ -657,6 +660,7 @@ class FileGetter:
         self.content_type = content_type
 
     def method_path(self, method=GET):
+        # only used in testing...
         # xxxx duplicated code with local_url above
         mprefix = None
         if method == GET:
