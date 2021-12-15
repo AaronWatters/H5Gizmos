@@ -269,7 +269,7 @@ class jQueryImage(jQueryComponent):
         super().__init__(None, self.tag)
 
     def resize(self, height=None, width=None):
-        print("resizing", height, width)
+        #print("resizing", height, width)
         if height is not None:
             self.height = height
             do(self.element.height(height))
@@ -297,6 +297,7 @@ class jQueryImage(jQueryComponent):
 # aliases
 Html = jQueryComponent
 Button = jQueryButton
+Image = jQueryImage
 
 # Tests and Demos:
 
