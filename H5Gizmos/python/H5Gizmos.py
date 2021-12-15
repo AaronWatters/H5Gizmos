@@ -615,6 +615,9 @@ class GizmoGet(GizmoLink):
         self._target_cmd = target_cmd
         self._index_cmd = index_cmd
 
+    def __repr__(self):
+        return "%s[%s]" % (self._target_cmd, self._index_cmd)
+
     def _command(self, to_depth):
         return [
             GZ.GET, 
@@ -633,6 +636,9 @@ class GizmoSet(GizmoLink):
         self._target_cmd = target_cmd
         self._value_cmd = value_cmd
         self._index_cmd = index_cmd
+
+    def __repr__(self):
+        return "%s._set(%s, %s)" % (self._target_cmd, self._index_cmd, self._value_cmd)
 
     def _command(self, to_depth):
         return [
@@ -653,6 +659,9 @@ class GizmoCall(GizmoLink):
         self._callable_cmd = callable_cmd
         self._args_cmds = args_cmds
 
+    def __repr__(self):
+        return "%s%s" % (self._callable_cmd, tuple(self._args_cmds))
+
     def _command(self, to_depth):
         args_json = [x._command(to_depth) for x in self._args_cmds]
         return [GZ.CALL, self._callable_cmd._command(to_depth), args_json]
@@ -666,6 +675,9 @@ class GizmoReference(GizmoLink):
     def __init__(self, id, owner):
         self._owner_gizmo = owner
         self._id = id
+
+    def __repr__(self):
+        return "_CACHE_[%s]" % repr(self._id)
 
     def _command(self, to_depth):
         return [GZ.REFERENCE, self._id]
@@ -699,6 +711,9 @@ class GizmoLiteral(GizmoLink):
         self._owner_gizmo = owner
         self._value = value
 
+    def __repr__(self):
+        return "L(%s)" % repr(self._value)
+
     def _command(self, to_depth):
         return [GZ.LITERAL, self._value]
 
@@ -712,6 +727,9 @@ class GizmoSequence(GizmoLink):
     def __init__(self, commands, owner):
         self._owner_gizmo = owner
         self._commands = commands
+
+    def __repr__(self):
+        return "S%s" % repr(self._commands)
 
     def _command(self, to_depth):
         cmds_json = [x._command(to_depth) for x in self._commands]
@@ -727,6 +745,9 @@ class GizmoMapping(GizmoLink):
     def __init__(self, command_dictionary, owner):
         self._owner_gizmo = owner
         self._command_dictionary = command_dictionary
+
+    def __repr__(self):
+        return "D%s" % repr(self._command_dictionary)
 
     def _command(self, to_depth):
         cmds_json = {
@@ -745,6 +766,9 @@ class GizmoBytes(GizmoLink):
         self._owner_gizmo = owner
         self._byte_array = byte_array
 
+    def __repr__(self):
+        return "B" + repr(self._byte_array)
+
     def _command(self, to_depth):
         hex = bytearray_to_hex(self._byte_array)
         return [GZ.BYTES, hex]
@@ -759,6 +783,9 @@ class GizmoCallback(GizmoLink):
         self._owner_gizmo = owner
         self._callable_object = callable_object
         self._oid = owner._register_callback(callable_object)
+
+    def __repr__(self):
+        return "CB[%s]" % (self._callable_object,)
 
     def _command(self, to_depth):
         return [GZ.CALLBACK, self._oid, to_depth]
@@ -832,6 +859,9 @@ class ValueConverter:
 
     def _command(self, to_depth):
         return self.command._command(to_depth)
+
+    def __repr__(self):
+        return "V(%s)" % self.command
 
     scalar_types = set([int, float, str,  bool, type(None)])
 
