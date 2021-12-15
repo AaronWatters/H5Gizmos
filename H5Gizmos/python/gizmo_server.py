@@ -644,18 +644,20 @@ class GizmoManager:
 
 class FileGetter:
 
-    "Serve tht contents of a file from the file system."
+    "Serve the contents of a file from the file system."
 
     def __init__(self, fs_path, filename, mgr, content_type=None, interface=STDInterface):
         assert interface.file_exists(fs_path)
-        #self.url_path = "%s/%s" % (mgr.url_path, filename)
+        self.fs_path = fs_path
+        self.get_url_info(filename, mgr, content_type)
+
+    def get_url_info(self, filename, mgr, content_type):
         self.prefix = mgr.prefix
         self.identifier = mgr.identifier
-        self.fs_path = fs_path
         self.filename = filename
         self.encoding = None
         if content_type is None:
-            (content_type, encoding) = mimetypes.guess_type(fs_path)
+            (content_type, encoding) = mimetypes.guess_type(filename)
             self.encoding = encoding # not used... xxx
         self.content_type = content_type
 
@@ -682,6 +684,18 @@ class FileGetter:
 
     def handle_post(self, info, request, interface=STDInterface):
         return self.handle_get(info, request, interface=interface)
+
+class BytesGetter(FileGetter):
+
+    def __init__(self, filename, byte_content, mgr, content_type):
+        self.get_url_info(filename, mgr, content_type)
+        self.set_content(byte_content)
+
+    def set_content(self, byte_content):
+        self.bytes = bytes(byte_content)
+
+    def handle_get(self, info, request, interface=STDInterface):
+        return interface.respond(body=self.bytes, content_type=self.content_type)
 
 class GizmoPipelineSocketHandler:
 
