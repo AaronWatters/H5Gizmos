@@ -58,6 +58,7 @@ class Gizmo:
     CALLBACK = "CB"
     SET = "S"
     EXCEPTION = "X"
+    KEEPALIVE = "K"
     RECONNECT_ID = "reconnect_id"
 
     def __init__(
@@ -394,6 +395,8 @@ class Gizmo:
             return self._call_back(payload)
         elif indicator == Gizmo.EXCEPTION:
             return self._receive_exception(payload)
+        elif indicator == Gizmo.KEEPALIVE:
+            return   # ignore keepalive messages
         else:
             truncated_payload = repr(json_response)[:50]
             info = "Unknown indicator: %s; payload=%s" % (indicator, truncated_payload)

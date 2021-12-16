@@ -58,6 +58,7 @@ var H5Gizmos = {};
     h5.CALLBACK = "CB";
     h5.SET = "S";
     h5.EXCEPTION = "X"
+    h5.KEEPALIVE = "K"
     h5.RECONNECT_ID = "reconnect_id"
 
     const ws_open = 1;
@@ -75,6 +76,7 @@ var H5Gizmos = {};
             this.ws = null;
             this.reconnect_id = "" + Date.now();
             this.ws_error_message_callback = null;
+            this.sending_keepalives = false;
         };
         pipeline_websocket(ws_url, on_open) {
             var that = this;
@@ -167,6 +169,27 @@ var H5Gizmos = {};
             var json = [h5.EXCEPTION, "" + err, oid];
             this.send(json);
             throw err;
+        };
+        send_keepalive() {
+            // Send a keepalive message to force a reconnect if the connection drops.
+            // The message should be ignored by the parent.
+            this.send([h5.KEEPALIVE]);
+        };
+        send_keepalive_periodically (delay) {
+            delay = delay || 1000;
+            var that = this;
+            if (that.sending_keepalives) {
+                console.log("Not restarting keepalive send loop.  Already sending.");
+                return;
+            }
+            var keep_sending = function () {
+                console.log("DEBUG: sending keepalive.")
+                that.sending_keepalives = true;
+                that.send_keepalive();
+                setTimeout(keep_sending, delay);
+            };
+            that.sending_keepalives = true;
+            setTimeout(keep_sending, delay);
         };
         json_safe(val, depth) {
             // convert value to acceptible JSON  value truncated at depth

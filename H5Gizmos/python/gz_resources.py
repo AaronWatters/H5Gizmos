@@ -160,6 +160,7 @@ class HTMLPage(DelegatePOSTtoGETMixin):
         
 MISC_OPERATIONS_TEMPLATE = """
         H5Gizmos.periodically_send_height_to_parent("{identifier}", {delay});
+        tr.send_keepalive_periodically();
 """
 
 STD_INIT_TEMPLATE = """
