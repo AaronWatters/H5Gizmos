@@ -100,8 +100,10 @@ class Component:
     def cache(self, name, js_reference):
         """
         Evaluate the js_reference and store the value in the object cache on the JS side.
-        Return a reference to the cached value.
+        Return a reference to the cached value.  Name of None will generate an arbitrary fresh name.
         """
+        if name is None:
+            name = self.get_cache_name()
         do(self.js_object_cache._set(name, js_reference))
         return self.js_object_cache[name]
 

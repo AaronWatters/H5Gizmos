@@ -196,8 +196,8 @@ class Stack(jQueryComponent):
         self.children = children
         self.css = css or {}
         self.child_css = child_css or {}
-        self.children_name = H5Gizmos.new_identifier("JQuery_container")
-        self.children_reference = None
+        #self.children_name = H5Gizmos.new_identifier("JQuery_container")
+        #self.children_reference = None
 
     def dom_element_reference(self, gizmo):
         result = super().dom_element_reference(gizmo)
@@ -311,7 +311,7 @@ class jQueryImage(jQueryComponent):
         do(self.element.attr("src", self.versioned_link()))
 
     def versioned_link(self):
-        self.version += 1
+        self.version += 1   # use versioning to foil browser caching.
         return "%s?v=%s" % (self.filename, self.version)
 
     def dom_element_reference(self, gizmo):
