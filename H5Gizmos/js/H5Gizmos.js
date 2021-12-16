@@ -183,7 +183,7 @@ var H5Gizmos = {};
                 return;
             }
             var keep_sending = function () {
-                console.log("DEBUG: sending keepalive.")
+                //console.log("DEBUG: sending keepalive.")
                 that.sending_keepalives = true;
                 that.send_keepalive();
                 setTimeout(keep_sending, delay);
