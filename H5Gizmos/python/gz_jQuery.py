@@ -67,6 +67,27 @@ class jQueryComponent(gz_components.Component):
             #do(gizmo.add_websocket_error_callback())
         return self.info_div
 
+    def html(self, html_text):
+        """
+        Set the innerHTML for the element (not appropriate for all subclasses)
+        """
+        do(self.element.html(html_text))
+
+    def css(self, **name_to_style):
+        """
+        Set CSS properties of the element.
+        """
+        do(self.element.css(name_to_style))
+
+    def resize(self, width=None, height=None):
+        """
+        Set width and/or height of element.
+        """
+        if width is not None:
+            do(self.element.width(width))
+        if height is not None:
+            do(self.element.height(height))
+
 class jQueryButton(jQueryComponent):
 
     options = None  # default
@@ -90,6 +111,7 @@ class jQueryButton(jQueryComponent):
         self.set_on_click(self.on_click)
 
     def set_on_click(self, on_click):
+        self.on_click = on_click
         if on_click is not None:
             do(self.element.on("click", on_click), to_depth=self.on_click_depth)
             do(self.element.prop("disabled", False))
