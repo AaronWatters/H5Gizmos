@@ -79,6 +79,13 @@ class Component:
         """
         self.gizmo = gizmo
         return "Undefined gizmo component."
+
+    def new(self, javascript_class_link, *javascript_argument_links):
+        """
+        Make a link which when executed will create and return  
+             new javascript_class(javascript_arguments);
+        """
+        return self.element.H5Gizmos.New(javascript_class_link, javascript_argument_links)
         
     def shutdown(self, *args):
         "Graceful shutdown"
