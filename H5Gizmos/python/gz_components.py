@@ -2,14 +2,17 @@
 Composable gizmo factories.
 """
 
-from H5Gizmos import do, run, get_gizmo
+from H5Gizmos import do, name, run, get_gizmo
 from . import gizmo_server
+from . import H5Gizmos
 
 class Component:
 
     gizmo = None   # default until gizmo is attached.
     task = None
     verbose = False
+    js_object_cache = None
+    cache_name = None
 
     def attach_gizmo(self, gizmo):
         self.gizmo = gizmo
@@ -75,10 +78,36 @@ class Component:
 
     def dom_element_reference(self, gizmo):
         """
-        Get a reference to the DOM element for this component.
+        initialize and return a reference to the DOM element for this component.
         """
         self.gizmo = gizmo
-        return "Undefined gizmo component."
+        self.initialize_object_cache()
+        return "Undefined gizmo component."  # override return value in subclass.
+
+    def initialize_object_cache(self):
+        gizmo = self.gizmo
+        cache_name = self.cache_name = (self.cache_name or self.get_cache_name())
+        self.js_object_cache = name(cache_name, H5Gizmos.GizmoLiteral({}, gizmo))
+
+    def get_cache_name(self):
+        prefix = "cache"
+        try:
+            prefix = type(self).__name__
+        except Exception:
+            pass
+        return H5Gizmos.new_identifier(prefix)
+
+    def cache(self, name, js_reference):
+        """
+        Evaluate the js_reference and store the value in the object cache on the JS side.
+        Return a reference to the cached value.
+        """
+        do(self.js_object_cache._set(name, js_reference))
+        return self.js_object_cache[name]
+
+    def my(self, name):
+        "Get reference to a previously cached object on the JS side"
+        return self.js_object_cache[name]
 
     def new(self, javascript_class_link, *javascript_argument_links):
         """
@@ -100,6 +129,7 @@ class HelloComponent(Component):
         self.text = text
 
     def dom_element_reference(self, gizmo):
+        super().dom_element_reference(gizmo)
         return self.text
 
 def test_standalone():
