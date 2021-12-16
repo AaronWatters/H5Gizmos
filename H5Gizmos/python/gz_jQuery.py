@@ -29,9 +29,9 @@ class jQueryComponent(gz_components.Component):
     def __init__(self, init_text="Uninitialized JQuery Gizmo.", tag="<div/>"):
         self.init_text = init_text
         self.tag = tag
-        self.element_name = H5Gizmos.new_identifier("JQuery_element")
-        self.info_name = H5Gizmos.new_identifier("JQuery_info")
-        self.container_name = H5Gizmos.new_identifier("JQuery_container")
+        #self.element_name = H5Gizmos.new_identifier("JQuery_element")
+        #self.info_name = H5Gizmos.new_identifier("JQuery_info")
+        #self.container_name = H5Gizmos.new_identifier("JQuery_container")
         self.container = None
         self.element = None
         self.info_div = None
@@ -48,9 +48,10 @@ class jQueryComponent(gz_components.Component):
     def dom_element_reference(self, gizmo):
         super().dom_element_reference(gizmo)
         # ??? does it cause harm to always create an extra container around the element ???
-        self.container = name(self.container_name, gizmo.jQuery("<div/>"))
+        #self.container = name(self.container_name, gizmo.jQuery("<div/>"))
+        self.container = self.cache("container", gizmo.jQuery("<div/>"))
         #divtext = "<div>%s</div>" % self.init_text
-        self.element = name(self.element_name, gizmo.jQuery(self.tag))
+        self.element = self.cache("element", gizmo.jQuery(self.tag))
         if self.init_text:
             do(self.element.html(self.init_text))
         do(self.element.appendTo(self.container))
@@ -60,7 +61,7 @@ class jQueryComponent(gz_components.Component):
         if self.info_div is None:
             gizmo = self.gizmo
             assert gizmo is not None, "no gizmo to attach"
-            self.info_div = H5Gizmos.name(self.info_name, gizmo.jQuery("<div/>"))
+            self.info_div = self.cache("info", gizmo.jQuery("<div/>"))
             do(self.info_div.appendTo(self.container))
             do(gizmo.H5GIZMO_INTERFACE._set("jquery_info", self.info_div))
             #do(gizmo.add_websocket_error_callback())
