@@ -161,6 +161,11 @@ class Slider(jQueryComponent):
         do(self.element.slider(options), to_depth=1)
         return result
 
+    def set_value(self, value):
+        "Set the value of the slider, triggering any attached callback."
+        self.value = value
+        do(self.element.slider("value", value))
+
     def change_value(self, event, ui):
         self.last_event = event
         self.last_ui = ui
