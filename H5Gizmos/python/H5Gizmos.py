@@ -340,6 +340,11 @@ class Gizmo:
         handler = mgr.add_file(full_path, url_path, content_type=content_type)
         return handler.filename
 
+    def _add_getter(self, url_path, getter):
+        """Add a customer getter to serve a resource (like gizmo_server.BytesGetter())."""
+        mgr = self._manager
+        mgr.add_http_handler(url_path, getter)
+
     def relative_url(self, filename):
         return "./" + filename
 
