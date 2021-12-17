@@ -688,7 +688,7 @@ class FileGetter:
 class BytesGetter(FileGetter):
 
     def __init__(self, filename, byte_content, mgr, content_type):
-        self.get_url_info(filename, mgr, content_type)
+        self.get_url_info(filename, mgr, content_type)  # xxxx remove mgr someday (only for testing?)
         self.set_content(byte_content)
 
     def set_content(self, byte_content):

@@ -318,7 +318,8 @@ class jQueryImage(jQueryComponent):
         result = super().dom_element_reference(gizmo)
         mgr = gizmo._manager
         self.getter = gizmo_server.BytesGetter(self.filename, self.bytes_content, mgr, self.content_type)
-        mgr.add_http_handler(self.filename, self.getter)
+        #mgr.add_http_handler(self.filename, self.getter)
+        gizmo._add_getter(self.filename, self.getter)
         self.resize(self.height, self.width)
         return result
 
