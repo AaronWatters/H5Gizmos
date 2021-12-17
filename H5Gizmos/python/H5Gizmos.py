@@ -345,6 +345,9 @@ class Gizmo:
         mgr = self._manager
         mgr.add_http_handler(url_path, getter)
 
+    def _remove_getter(self, url_path):
+        self._manager.remove_http_handler(url_path)
+
     def relative_url(self, filename):
         return "./" + filename
 
@@ -557,7 +560,7 @@ class GizmoLink:
             (oid, future) = self._register_get_future()
         self._get_oid = oid
         msg = [GZ.GET, oid, cmd, to_depth]
-        #print("now sending get...")
+        #print("now sending")
         gz._send(msg)
         if test_result is not None:
             return test_result  # only for code coverage...
