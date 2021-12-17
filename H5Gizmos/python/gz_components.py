@@ -2,9 +2,28 @@
 Composable gizmo factories.
 """
 
-from H5Gizmos import do, name, run, get_gizmo
+from H5Gizmos import do, get, name, run, get_gizmo
 from . import gizmo_server
 from . import H5Gizmos
+import numpy as np
+
+JS_COLLECTION_NAME_MAP = {
+    # numpy dtype : name of analogous collection
+    np.int8: "Int8Array",
+    np.uint8: "Uint8Array",
+    np.int16: "Int16Array",
+    np.int16: "Uint16Array",
+    np.int32: "Int32Array",
+    np.uint32: "Uint32Array",
+    np.float32: "Float32Array",
+    np.float64: "Float64Array",
+    np.int64: "BigInt64Array",
+    np.uint64: "BigUint64Array",
+}
+
+# xxx what is the diff np.dtype(np.uint8) vs np.uint8???
+for (ty, n) in list(JS_COLLECTION_NAME_MAP.items()):
+    JS_COLLECTION_NAME_MAP[np.dtype(ty)] = n
 
 class Component:
 
@@ -118,6 +137,33 @@ class Component:
             new javascript_class(javascript_arguments);
         """
         return self.element.H5Gizmos.New(javascript_class_link, javascript_argument_links)
+
+    async def store_array(self, array, cache_name, dtype=None):
+        """
+        Transfer a numpy array to Javascript and store it in the local cache.
+        The array is flattened and converted to an appropriate Javascript indexed collection.
+        Return a reference to the cached index collection.
+        """
+        element = self.element
+        gizmo = self.gizmo
+        if dtype is None:
+            dtype = array.dtype
+        rarray = array.ravel().astype(dtype)
+        object = self.js_object_cache
+        converter_name = JS_COLLECTION_NAME_MAP.get(dtype)
+        assert converter_name is not None, "No JS converter for numpy dtype: " + repr(dtype)
+        converter = gizmo.window[converter_name]
+        # Set up the blob resource
+        url = H5Gizmos.new_identifier("blob")
+        array_bytes = rarray.tobytes()
+        content_type = "application/x-binary"
+        getter = gizmo_server.BytesGetter(url, array_bytes, gizmo._manager, content_type )
+        gizmo._add_getter(url, getter)
+        # Pull the resource on the JS side.
+        length = await get(gizmo.H5Gizmos.store_blob(url, object, cache_name, converter))
+        # Remove the resource
+        gizmo._remove_getter(url)
+        return self.my(cache_name)
         
     def shutdown(self, *args):
         "Graceful shutdown"
