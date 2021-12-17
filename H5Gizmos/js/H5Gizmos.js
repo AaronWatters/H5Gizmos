@@ -342,9 +342,12 @@ var H5Gizmos = {};
     // Messages
     class ExecMessageParser {
         constructor(translator, payload) {
+            this.op = "EXEC";
             this.translator = translator;
             this.json_payload = payload;
+            this.oid = null;  // default
             this.parse(translator, payload);
+            this.value = null;
         }
         parse(translator, payload) {
             var [command] = payload;
@@ -354,22 +357,56 @@ var H5Gizmos = {};
             // return result for testing, not transmitted.
             try {
                 var pair = this.command.execute(translator);
-                return pair.value;
+                var value = pair.value;
+                if (value instanceof DeferredValue) {
+                    this.bind_deferred_value(value, translator);
+                } else {
+                    this.resolve(value, translator);
+                }
+                return value;
             } catch (err) {
-                translator.send_error("Error in EXEC", err, null);
+                this.reject(err, translator);
                 throw err;
             }
+        };
+        resolve(value, translator) {
+            this.value = value;
+        };
+        reject(err, translator) {
+            translator.send_error("Error in " + this.op, err, this.oid)
+        };
+        bind_deferred_value(deferred, translator) {
+            var that = this;
+            deferred.bind_actions(
+                (function (value) { that.resolve(value, translator); }), // resolve
+                (function (err) { that.reject(err, translator); }),  // reject
+            );
         };
     };
     indicator_to_message_parser[h5.EXEC] = ExecMessageParser;
 
     class GetMessageParser extends ExecMessageParser {
         parse(translator, payload) {
+            this.op = "GET";
             var [oid, command, to_depth] = payload;
             this.oid = oid;
+            //console.log("GET", this.oid, command, to_depth)
             this.command = translator.parse_command(command);
             this.to_depth = to_depth;
         };
+        resolve(value, translator) {
+            try {
+                this.json_value = translator.json_safe(value, this.to_depth);
+                this.payload = [h5.GET, this.oid, this.json_value];
+                console.log("GET resolves", this.payload)
+                translator.send(this.payload);
+                return value;
+            } catch (err) {
+                this.reject(err, translator);
+                throw err;
+            }
+        };
+        /*
         execute(translator) {
             // execute command and resolve, or resolve with an exception.
             try {
@@ -383,16 +420,27 @@ var H5Gizmos = {};
                 translator.send_error("Error executing GET", err, this.oid);
                 throw err;
             }
-        };
+        };*/
     };
     indicator_to_message_parser[h5.GET] = GetMessageParser;
 
     class ConnectMessageParser extends ExecMessageParser {
         parse(translator, payload) {
+            this.op = "CONNECT"
             var [id, command] = payload;
             this.id = id;
             this.command = translator.parse_command(command);
         };
+        resolve(value, translator) {
+            try {
+                translator.set_reference(this.id, value);
+                return value;
+            } catch (err) {
+                this.reject(err, translator);
+                throw err;
+            }
+        };
+        /*
         execute(translator) {
             // return result for testing, not transmitted.
             try {
@@ -404,12 +452,13 @@ var H5Gizmos = {};
                 translator.send_error("Error in CONNECT", err, null);
                 throw err;
             }
-        };
+        }; */
     };
     indicator_to_message_parser[h5.CONNECT] = ConnectMessageParser;
 
     class DisconnectMessageParser extends ExecMessageParser {
         parse(translator, payload) {
+            this.op = "DISCONNECT";
             var [id] = payload;
             this.id = id;
         };
@@ -698,6 +747,27 @@ var H5Gizmos = {};
     H5Gizmos.Packer = Packer;
     H5Gizmos.FINISHED_UNICODE = FINISHED_UNICODE;
     H5Gizmos.CONTINUE_UNICODE = CONTINUE_UNICODE;
+
+    // Deferred GET -- return the result of an async operation when it arrives.
+    // Return this as a value for a function to resolve the GET request later.
+    //
+    class DeferredValue {
+        // should/could this be implemented using a Promise ???
+        constructor () {
+            this.translator = null;
+            this.oid = null;
+        };
+        bind_actions(resolve_action, reject_action) {
+            this.resolve_action = resolve_action;
+            this.reject_action = reject_action;
+        };
+        resolve(value) {
+            this.resolve_action(value)
+        };
+        reject(info) {
+            this.reject_action(info)
+        };
+    };
 
     // JSON_Codec -- coder decoder
     class JSON_Codec {
