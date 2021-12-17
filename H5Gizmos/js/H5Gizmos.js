@@ -753,10 +753,6 @@ var H5Gizmos = {};
     //
     class DeferredValue {
         // should/could this be implemented using a Promise ???
-        constructor () {
-            this.translator = null;
-            this.oid = null;
-        };
         bind_actions(resolve_action, reject_action) {
             this.resolve_action = resolve_action;
             this.reject_action = reject_action;
@@ -767,6 +763,55 @@ var H5Gizmos = {};
         reject(info) {
             this.reject_action(info)
         };
+    };
+
+    H5Gizmos.DeferredValue = DeferredValue;
+
+    class StoreBlob extends DeferredValue {
+        constructor(url, to_object, property_name, converter) {
+            super();  // call the silly super constructor!
+            //debugger;
+            var that = this;
+            that.url = url
+            that.to_object = to_object;
+            that.property_name = property_name;
+            that.converter = converter;
+            that.binary_data = null;
+            var request = new XMLHttpRequest();
+            // async get
+            request.open('GET', url, true);
+            request.responseType = 'blob';
+            request.onload = (function () { that.on_request_load(request); })
+            request.send();
+        };
+        on_request_load(request) {
+            try {
+                var that = this;
+                var reader = new FileReader();
+                reader.readAsArrayBuffer(request.response);
+                reader.onload = (function () { that.on_reader_load(reader); });
+            } catch (err) {
+                this.reject(err);
+            }
+        };
+        on_reader_load(reader) {
+            try {
+                var binary_data = reader.result;
+                var converter = this.converter;
+                if (converter) {
+                    binary_data = new converter(binary_data);
+                }
+                this.binary_data = binary_data;
+                this.to_object[this.property_name] = binary_data;
+                this.resolve(this.binary_data.length);
+            } catch (err) {
+                this.reject(err);
+            }
+        };
+    };
+
+    H5Gizmos.store_blob = function (url, to_object, property_name, converter) {
+        return new StoreBlob(url, to_object, property_name, converter);
     };
 
     // JSON_Codec -- coder decoder
