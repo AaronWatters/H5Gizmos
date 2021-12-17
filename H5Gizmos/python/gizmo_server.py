@@ -594,6 +594,10 @@ class GizmoManager:
         self.filename_to_http_handler[filename] = handler
         return handler
 
+    def remove_http_handler(self, filename):
+        if filename in self.filename_to_http_handler:
+            del self.filename_to_http_handler[filename]
+
     async def handle(self, method, info, request, interface=STDInterface):
         #pr("... mgr handling", request.path, "method", method)
         filename = info.filename
