@@ -22,15 +22,19 @@ from . import gz_resources
 from . import gizmo_server
 
 
+# Default wait time for JS future values.
+DEFAULT_TIMEOUT = 10
+
+
 def do(link_action, to_depth=None):
     "Run the link in javascript and discard the result."
     # command style convenience convenience accessor
     return link_action._exec(to_depth=to_depth)
 
-async def get(link_action, to_depth=None):
+async def get(link_action, to_depth=None, timeout=DEFAULT_TIMEOUT):
     "Run the link in javascript and return the result."
     # command style convenience convenience accessor
-    return await link_action._get(to_depth=to_depth)
+    return await link_action._get(to_depth=to_depth, timeout=timeout)
 
 def name(id, link_action, to_depth=None):
     "Run the link in javascript and cache the result using the id."
@@ -491,11 +495,21 @@ class Gizmo:
         #("DEBUG:: starting error polling task")
         schedule_task(self._poll_report_exception(delay, limit))
 
-    def _register_future(self):
+    def _register_future(self, timeout=None):
         self._counter += 1
         oid = "GZget_" + repr(self._counter)
         future = self._make_future()
-        self._oid_to_get_futures[oid] = future
+        o2f = self._oid_to_get_futures
+        o2f[oid] = future
+        if timeout is not None:
+            async def timeout_check():
+                await asyncio.sleep(timeout)
+                if not future.done():
+                    exc = FutureTimeout("Timeout expired: "+ repr(timeout))
+                    future.set_exception(exc)
+                if o2f.get(oid) is not None:
+                    del o2f[oid]
+
         return (oid, future)
 
     def _make_future(self):
@@ -509,6 +523,9 @@ GZ = Gizmo
 
 class BadResponseFormat(ValueError):
     "Javascript sent a message which was not understood."
+
+class FutureTimeout(ValueError):
+    "Timeout waiting for value."
 
 class JavascriptEvalException(ValueError):
     "Javascript reports error during command interpretation."
@@ -533,10 +550,10 @@ class GizmoLink:
     _get_oid = None
     _get_future = None
 
-    def _register_get_future(self):
+    def _register_get_future(self, timeout=None):
         if self._get_oid is not None:
             return (self._get_oid, self._get_future)
-        result = (self._get_oid, self._get_future) = self._owner_gizmo._register_future()
+        result = (self._get_oid, self._get_future) = self._owner_gizmo._register_future(timeout=timeout)
         return result
 
     def _exec(self, to_depth=None, detail=False):
@@ -551,13 +568,13 @@ class GizmoLink:
         else:
             return None
 
-    async def _get(self, to_depth=None, oid=None, future=None, test_result=None):
+    async def _get(self, to_depth=None, timeout=DEFAULT_TIMEOUT, oid=None, future=None, test_result=None):
         gz = self._owner_gizmo
         to_depth = to_depth or gz._default_depth
         cmd = self._command(to_depth)
         if oid is None:
             # allow the test suite to pass in the future for testing only...
-            (oid, future) = self._register_get_future()
+            (oid, future) = self._register_get_future(timeout=timeout)
         self._get_oid = oid
         msg = [GZ.GET, oid, cmd, to_depth]
         #print("now sending")

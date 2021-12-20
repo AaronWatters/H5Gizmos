@@ -510,7 +510,7 @@ class TestGizmoAsync(unittest.IsolatedAsyncioTestCase):
         to_depth = 5
         # pass in the future so we can resolve it in the test case...
         (oid, future) = G._register_future()
-        awaitable = lit._get(to_depth, oid, future)
+        awaitable = lit._get(to_depth, oid=oid, future=future)
         # emulate a resolving send from JS side
         get_response = [GZ.GET, oid, json_ob]
         G._receive(get_response)
@@ -531,7 +531,7 @@ class TestGizmoAsync(unittest.IsolatedAsyncioTestCase):
         to_depth = 5
         # pass in the future so we can resolve it in the test case...
         (oid, future) = G._register_future()
-        awaitable = lit._get(to_depth, oid, future)
+        awaitable = lit._get(to_depth, oid=oid, future=future)
         # emulate an exception from JS side
         get_response = [GZ.EXCEPTION, "Fake exception", oid]
         G._receive(get_response)
