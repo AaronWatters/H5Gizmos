@@ -57,6 +57,13 @@ class jQueryComponent(gz_components.Component):
         do(self.element.appendTo(self.container))
         return self.container[0]
 
+    def js_init(self, js_function_body, to_depth=3, **argument_names_to_values):
+        argument_names = ["element"] + list(argument_names_to_values.keys())
+        argument_values = [self.element] + [argument_names_to_values[n] for n in argument_names[1:]]
+        function = self.function(argument_names, js_function_body)
+        function_call = function(*argument_values)
+        do(function_call, to_depth=to_depth)
+        
     def get_info_div(self):
         if self.info_div is None:
             gizmo = self.gizmo
