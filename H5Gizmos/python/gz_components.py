@@ -136,7 +136,16 @@ class Component:
 
             new javascript_class(javascript_arguments);
         """
-        return self.element.H5Gizmos.New(javascript_class_link, javascript_argument_links)
+        return self.gizmo.H5Gizmos.New(javascript_class_link, javascript_argument_links)
+
+    def function(self, argument_names, body_string):
+        """
+        Make a link which when executed will return the equivalent of the Javascript function value:
+
+            (function (argument_names) body_string)
+        """
+        return self.gizmo.H5Gizmos.Function(list(argument_names), body_string)
+
 
     async def store_array(self, array, cache_name, dtype=None):
         """
@@ -144,7 +153,7 @@ class Component:
         The array is flattened and converted to an appropriate Javascript indexed collection.
         Return a reference to the cached index collection.
         """
-        element = self.element
+        #element = self.element
         gizmo = self.gizmo
         if dtype is None:
             dtype = array.dtype
@@ -160,9 +169,11 @@ class Component:
         getter = gizmo_server.BytesGetter(url, array_bytes, gizmo._manager, content_type )
         gizmo._add_getter(url, getter)
         # Pull the resource on the JS side.
-        length = await get(gizmo.H5Gizmos.store_blob(url, object, cache_name, converter))
-        # Remove the resource
-        gizmo._remove_getter(url)
+        try:
+            length = await get(gizmo.H5Gizmos.store_blob(url, object, cache_name, converter))
+        finally:
+            # Remove the resource
+            gizmo._remove_getter(url)
         return self.my(cache_name)
         
     def shutdown(self, *args):
