@@ -509,7 +509,7 @@ class Gizmo:
                     future.set_exception(exc)
                 if o2f.get(oid) is not None:
                     del o2f[oid]
-
+            schedule_task(timeout_check())
         return (oid, future)
 
     def _make_future(self):
