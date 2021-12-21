@@ -3,7 +3,7 @@ from H5Gizmos.python import gizmo_server
 from H5Gizmos.python.gz_resources import MISC_OPERATIONS_TEMPLATE
 from . import gz_components
 from . import H5Gizmos
-from .H5Gizmos import do, name
+from .H5Gizmos import do, get
 
 MISC_JAVASCRIPT = """
 // miscellaneous javascript to support jQuery
@@ -63,7 +63,7 @@ class jQueryComponent(gz_components.Component):
         function = self.function(argument_names, js_function_body)
         function_call = function(*argument_values)
         do(function_call, to_depth=to_depth)
-        
+
     def get_info_div(self):
         if self.info_div is None:
             gizmo = self.gizmo
@@ -133,6 +133,20 @@ class jQueryButton(jQueryComponent):
         self.initialize_jquery_widget()
         return result
 
+class jQueryInput(jQueryComponent):
+
+    def __init__(self, initial_value="", input_type="text"):
+        tag = '<input type="%s" value="%s"/>' % (input_type, initial_value)
+        super().__init__("", tag=tag)
+
+    def set_value(self, value):
+        # https://stackoverflow.com/questions/4088467/get-the-value-in-an-input-text-box?rq=1
+        do(self.element.val(value))
+
+    async def get_value(self):
+        return await get(self.element.val())
+
+
 class Slider(jQueryComponent):
 
     def __init__(self, minimum, maximum, on_change=None, value=None, step=None, orientation="horizontal"):
@@ -172,6 +186,9 @@ class Slider(jQueryComponent):
         "Set the value of the slider, triggering any attached callback."
         self.value = value
         do(self.element.slider("value", value))
+
+    async def get_value(self):
+        return await get(self.element.slider("value"), to_depth=1)
 
     def change_value(self, event, ui):
         self.last_event = event
@@ -334,6 +351,7 @@ class jQueryImage(jQueryComponent):
 Html = jQueryComponent
 Button = jQueryButton
 Image = jQueryImage
+Input = jQueryInput
 
 # Tests and Demos:
 
