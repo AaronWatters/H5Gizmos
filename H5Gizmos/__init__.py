@@ -29,4 +29,11 @@ from .python.hex_codec import (
 
 from .python.gz_jQuery import (
     jQueryComponent,
+    Shelf,
+    Slider,
+    Html,
+    Stack,
+    Button,
+    Image,
+    Input,
 )
