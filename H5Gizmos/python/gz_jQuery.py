@@ -49,6 +49,16 @@ class jQueryComponent(gz_components.Component):
         gizmo._initial_reference("jQuery")
         gizmo._initial_reference("websocket_error_callback", "add_websocket_error_callback()")
 
+    def prepare_application(self, gizmo):
+        super().prepare_application(gizmo)
+        gizmo._on_callback_exception = self.on_callback_exception
+
+    def on_callback_exception(self, error_text):
+        error_text = "JQUERY GIZMO CALLBACK ERROR\n" + error_text
+        error_text = error_text.replace("\n", "<br/>\n")
+        html = "<pre>%s</pre>" % error_text
+        do(self.gizmo.websocket_error_callback(error_text))
+
     def dom_element_reference(self, gizmo):
         super().dom_element_reference(gizmo)
         # ??? does it cause harm to always create an extra container around the element ???
