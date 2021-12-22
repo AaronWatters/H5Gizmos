@@ -1169,7 +1169,7 @@ class GZPipeline:
                 raise TooManyRequests("A pipeline can only support one request.")
             # Otherwise if the child is trying to reconnect -- allow it.
             # XXXX Ideally we would clean up the task listening to the dead web socket, but it doesn't seem possible.
-            print("reconnecting web socket", request)
+            #print("reconnecting web socket", request)
             self.packer.cancel_all_flushes()
         self.reconnect_id = incoming_id
         ws = get_websocket()
