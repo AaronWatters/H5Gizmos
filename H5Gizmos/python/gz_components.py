@@ -2,6 +2,7 @@
 Composable gizmo factories.
 """
 
+from numpy.lib.function_base import _ARGUMENT
 from H5Gizmos import do, get, name, run, get_gizmo
 from . import gizmo_server
 from . import H5Gizmos
@@ -36,6 +37,8 @@ class Component:
     def attach_gizmo(self, gizmo):
         self.gizmo = gizmo
         self.add_dependencies(gizmo)
+        # add deferred dependencies after standard dependencies (for example so jQuery is available in deferred code)
+        self.add_deferred_dependencies(gizmo)
 
     def run(self, task=None, verbose=True, log_messages=False):
         self.task = task
@@ -94,6 +97,62 @@ class Component:
         gizmo._initial_reference("H5GIZMO_INTERFACE")
         gizmo._initial_reference("H5Gizmos")
         gizmo._initial_reference("GIZMO_BODY", 'document.getElementById("GIZMO_BODY")')
+
+    def add_deferred_dependencies(self, gizmo):
+        "Add deferred dependencies after standard dependencies."
+        dependency_list = self.dependency_list
+        if dependency_list:
+            for (method_name, arguments) in dependency_list:
+                method = getattr(gizmo, method_name)
+                method(*arguments)
+
+    dependency_list = None
+
+    def dependency(self, method_name, arguments):
+        "deferred dependency -- must be evaluated after gizmo is bound."
+        assert self.gizmo is None, "cannot load this dependency after initialization."
+        list = self.dependency_list or []
+        list.append([method_name, arguments])
+        self.dependency_list = list
+
+    def initial_reference(self, identity, js_expression=None):
+        "Reference to a Javascript value, bound at initialization."
+        return self.dependency("_initial_reference", (identity, js_expression))
+
+    def insert_html(self, html_text, in_body=True):
+        "Insert HTML at initialization time."
+        return self.dependency("_insert_html", (html_text, in_body))
+
+    def embedded_css(self, style_text):
+        "Embedded style at initialization."
+        return self.dependency("_embedded_css", (style_text,))
+
+    def embedded_script(self, javascript_code, in_body=False, check=True):
+        "Embedded javascript code at initialization."
+        return self.dependency("_embedded_script", (javascript_code, in_body, check))
+
+    def remote_css(self, css_url, check=True):
+        "Load a remote CSS resource by URL at initialization."
+        return self.dependency("_remote_css", (css_url, check))
+
+    def remote_js(self, js_url, in_body=True, check=True):
+        "Load a remote JS library by URL at initialization."
+        return self.dependency("_remote_js", (js_url, in_body, check))
+
+    def js_file(self, os_path, url_path=None, in_body=False):
+        "Load a Javascript library from a file at initialization."
+        return self.dependency("_js_file", (os_path, url_path, in_body))
+
+    def css_file(self, os_path, url_path=None):
+        "Load a CSS style sheet from a file at initialization."
+        return self.dependency("_js_file", (os_path, url_path))
+
+    def add_content(self, os_path, content_type, url_path=None, dont_duplicate=True):
+        "Configure a content resource from a file."
+        if self.gizmo is None:
+            return self.dependency("_add_content", (os_path, content_type, url_path, dont_duplicate))
+        else:
+            return self.gizmo._add_content(os_path, content_type, url_path, dont_duplicate)
 
     def dom_element_reference(self, gizmo):
         """
