@@ -433,6 +433,7 @@ class Gizmo:
         return json_value
 
     _print_callback_exception = True
+    _on_callback_exception = None
 
     def _call_back(self, payload):
         [id_string, json_args] = payload
@@ -447,6 +448,10 @@ class Gizmo:
                 print("-"*60)
                 traceback.print_exc(file=sys.stdout)
                 print("-"*60)
+            on_exc = self._on_callback_exception
+            if on_exc is not None:
+                fmt = traceback.format_exc()
+                on_exc(fmt)
             raise e
 
     def _receive_exception(self, payload):
