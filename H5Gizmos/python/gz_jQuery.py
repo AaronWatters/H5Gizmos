@@ -57,6 +57,9 @@ class jQueryComponent(gz_components.Component):
         error_text = "JQUERY GIZMO CALLBACK ERROR\n" + error_text
         error_text = error_text.replace("\n", "<br/>\n")
         html = "<pre>%s</pre>" % error_text
+        self.error_message(error_text)
+
+    def error_message(self, error_text):
         do(self.gizmo.websocket_error_callback(error_text))
 
     def dom_element_reference(self, gizmo):
@@ -125,6 +128,18 @@ class jQueryComponent(gz_components.Component):
             if height is not None:
                 do(self.element.height(height))
 
+    def on(self, event_name, callback, to_depth=1):
+        "When an event of this type happens to this object, invoke the callback."
+        do(self.element.on(event_name, callback), to_depth=to_depth)
+
+    def off(self, event_name):
+        "Cancel event callbacks of this type for this object."
+        do(self.element.off(event_name))
+
+    def empty(self):
+        "Remove all content from this element."
+        do(self.element.empty())
+
 class jQueryButton(jQueryComponent):
 
     options = None  # default
@@ -149,6 +164,8 @@ class jQueryButton(jQueryComponent):
 
     def set_on_click(self, on_click):
         self.on_click = on_click
+        if self.element is None:
+            return  # not yet configured.
         if on_click is not None:
             do(self.element.on("click", on_click), to_depth=self.on_click_depth)
             do(self.element.prop("disabled", False))
