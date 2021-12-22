@@ -189,6 +189,10 @@ class Component:
         "Get reference to a previously cached object on the JS side"
         return self.js_object_cache[name]
 
+    def reference(self, name):
+        assert self.gizmo is not None, "gizmo is not configured."
+        return getattr(self.gizmo, name)
+
     def new(self, javascript_class_link, *javascript_argument_links):
         """
         Make a link which when executed will create and return the equivalent of
