@@ -17,6 +17,7 @@ function add_websocket_error_callback() {
         }
         info.html(message);
         info.css("background-color", "pink")
+        tr.jquery_info = info;
     };
     return tr.ws_error_message_callback;
 }
@@ -35,6 +36,9 @@ class jQueryComponent(gz_components.Component):
         self.container = None
         self.element = None
         self.info_div = None
+        self.initial_css = {}
+        self.height = None
+        self.width = None
 
     def add_dependencies(self, gizmo):
         super().add_dependencies(gizmo)
@@ -52,12 +56,17 @@ class jQueryComponent(gz_components.Component):
         self.container = self.cache("container", gizmo.jQuery("<div/>"))
         #divtext = "<div>%s</div>" % self.init_text
         self.element = self.cache("element", gizmo.jQuery(self.tag))
+        self.resize(width=self.width, height=self.height)
+        css = self.initial_css
+        if css:
+            do(self.element.css(css))
         if self.init_text:
             do(self.element.html(self.init_text))
         do(self.element.appendTo(self.container))
         return self.container[0]
 
     def js_init(self, js_function_body, to_depth=3, **argument_names_to_values):
+        assert self.element is not None, "Gizmo must be displayed for js_init evaluation."
         argument_names = ["element"] + list(argument_names_to_values.keys())
         argument_values = [self.element] + [argument_names_to_values[n] for n in argument_names[1:]]
         function = self.function(argument_names, js_function_body)
@@ -78,22 +87,33 @@ class jQueryComponent(gz_components.Component):
         """
         Set the innerHTML for the element (not appropriate for all subclasses)
         """
-        do(self.element.html(html_text))
+        if self.element is None:
+            self.init_text = html_text
+        else:
+            do(self.element.html(html_text))
 
     def css(self, **name_to_style):
         """
-        Set CSS properties of the element.
+        Set CSS properties of the element before or after the Gizmo is displayed.
         """
-        do(self.element.css(name_to_style))
+        if self.element is not None:
+            do(self.element.css(name_to_style))
+        else:
+            self.initial_css.update(name_to_style)
 
     def resize(self, width=None, height=None):
         """
         Set width and/or height of element.
         """
         if width is not None:
-            do(self.element.width(width))
+            self.width = width
         if height is not None:
-            do(self.element.height(height))
+            self.height = height
+        if self.element is not None:
+            if width is not None:
+                do(self.element.width(width))
+            if height is not None:
+                do(self.element.height(height))
 
 class jQueryButton(jQueryComponent):
 
@@ -223,6 +243,12 @@ class Stack(jQueryComponent):
         #self.children_name = H5Gizmos.new_identifier("JQuery_container")
         #self.children_reference = None
 
+    def add_dependencies(self, gizmo):
+        super().add_dependencies(gizmo)
+        # also add child dependencies
+        for child in self.children:
+            child.add_dependencies(gizmo)
+
     def dom_element_reference(self, gizmo):
         result = super().dom_element_reference(gizmo)
         self.attach_children(self.children)
@@ -312,22 +338,22 @@ class jQueryImage(jQueryComponent):
 
     def __init__(self, filename, bytes_content, height=None, width=None, mime_type=None, alt="image"):
         self.filename = filename
+        self.alt = alt
+        self.tag = '<img src="%s" alt="%s"/>' % (self.versioned_link(), self.alt)
+        super().__init__(None, self.tag)
         self.bytes_content = bytes_content
         self.height = height
         self.width = width
         self.content_type = mime_type
-        self.alt = alt
-        self.tag = '<img src="%s" alt="%s"/>' % (self.versioned_link(), self.alt)
-        super().__init__(None, self.tag)
 
-    def resize(self, height=None, width=None):
+    '''def resize(self, height=None, width=None):
         #print("resizing", height, width)
         if height is not None:
             self.height = height
             do(self.element.height(height))
         if width is not None:
             self.width = width
-            do(self.element.width(width))
+            do(self.element.width(width))'''  # duplicate?
 
     def change_content(self, bytes_content):
         self.bytes_content = bytes(bytes_content)
@@ -344,7 +370,7 @@ class jQueryImage(jQueryComponent):
         self.getter = gizmo_server.BytesGetter(self.filename, self.bytes_content, mgr, self.content_type)
         #mgr.add_http_handler(self.filename, self.getter)
         gizmo._add_getter(self.filename, self.getter)
-        self.resize(self.height, self.width)
+        self.resize(height=self.height, width=self.width)
         return result
 
 # aliases
