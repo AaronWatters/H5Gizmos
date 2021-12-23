@@ -305,8 +305,9 @@ IFRAME_TEMPLATE = """
     {ALLOW_LIST}
 </iframe>"""
 
+STD_ALLOW_LIST = 'allow="camera;microphone;display-capture"'
 
-async def display_gizmo_jupyter_iframe(gizmo, delay=0.1, allow_list='allow="camera;microphone"', **args):
+async def display_gizmo_jupyter_iframe(gizmo, delay=0.1, allow_list=STD_ALLOW_LIST, **args):
     identifier = gizmo._identifier
     url = gizmo._entry_url()
     D = dict(
