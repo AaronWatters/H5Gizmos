@@ -401,7 +401,13 @@ class jQueryImage(jQueryComponent):
         return result
 
 # aliases
-Html = jQueryComponent
+#Html = jQueryComponent
+
+def Html(tag, init_text=None):
+    tag = str(tag).strip()
+    assert tag.startswith("<"), "The tag should be in a tag form like '<h1>this</h1>': " + repr(tag[:20])
+    return jQueryComponent(tag=tag, init_text=init_text)
+
 Button = jQueryButton
 Image = jQueryImage
 Input = jQueryInput
