@@ -2,6 +2,8 @@
 Composable gizmo factories.
 """
 
+# run should work in jupyter -- delegate to browse when jupyter env detected.
+
 from numpy.lib.function_base import _ARGUMENT
 from H5Gizmos import do, get, name, run, get_gizmo
 from . import gizmo_server
@@ -33,6 +35,7 @@ class Component:
     verbose = False
     js_object_cache = None
     cache_name = None
+    auto_start = True  # start browser page automatically.
 
     def attach_gizmo(self, gizmo):
         self.gizmo = gizmo
@@ -40,8 +43,9 @@ class Component:
         # add deferred dependencies after standard dependencies (for example so jQuery is available in deferred code)
         self.add_deferred_dependencies(gizmo)
 
-    def run(self, task=None, verbose=True, log_messages=False):
+    def run(self, task=None, auto_start=True, verbose=True, log_messages=False):
         self.task = task
+        self.auto_start = auto_start
         run(self.run_main, verbose=verbose, log_messages=log_messages)
 
     def prepare_application(self, gizmo):
@@ -52,7 +56,10 @@ class Component:
         self.prepare_application(gizmo)
         do(gizmo.window.addEventListener("unload", self.shutdown), to_depth=1)
         self.add_std_icon(gizmo)
-        await gizmo.start_in_browser()
+        if self.auto_start:
+            await gizmo.start_in_browser()
+        else:
+            gizmo._show_start_link()
         #gizmo._start_report_error_task()
         task = self.task
         if task is not None:
