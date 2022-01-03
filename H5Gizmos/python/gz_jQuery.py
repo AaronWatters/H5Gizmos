@@ -5,6 +5,10 @@ from . import gz_components
 from . import H5Gizmos
 from .H5Gizmos import do, get
 
+# add Markdown(...)
+# new method jqc.append(other_jqc)
+# maybe prints default to appending...
+
 MISC_JAVASCRIPT = """
 // miscellaneous javascript to support jQuery
 
@@ -235,7 +239,9 @@ class Slider(jQueryComponent):
         do(self.element.slider("value", value))
 
     async def get_value(self):
-        return await get(self.element.slider("value"), to_depth=1)
+        value = await get(self.element.slider("value"), to_depth=1)
+        self.value = value
+        return value
 
     def change_value(self, event, ui):
         self.last_event = event
@@ -244,6 +250,67 @@ class Slider(jQueryComponent):
         c = self.on_change
         if c is not None:
             c(v)
+
+class RangeSlider(jQueryComponent):
+
+    # xxx cut/paste from Slider -- too hard to refactor for now
+
+    def __init__(self, minimum, maximum, on_change=None, low_value=None, high_value=None, step=None, orientation="horizontal"):
+        assert maximum > minimum, "Bad slider range: " + repr((minimum, maximum))
+        if low_value is None:
+            low_value = minimum
+        if high_value is None:
+            high_value = maximum
+        lw = min(low_value, high_value, maximum)
+        hg = max(high_value, low_value, minimum)
+        low_value = min(lw, hg)
+        high_value = max(lw, hg)
+        if step is None:
+            step = (maximum - minimum) * 0.01
+        super().__init__("")
+        self.on_change = on_change
+        self.minimum = minimum
+        self.maximum = maximum
+        self.low_value = low_value
+        self.high_value = high_value
+        self.step = step
+        self.orientation = orientation
+
+    def dom_element_reference(self, gizmo):
+        result = super().dom_element_reference(gizmo)
+        options = dict(
+            min=self.minimum,
+            max=self.maximum,
+            values=[self.low_value, self.high_value],
+            step=self.step,
+            slide=self.change_value,
+            change=self.change_value,
+            orientation = self.orientation,
+        )
+        do(self.element.slider(options), to_depth=1)
+        return result
+
+    def set_values(self, low_value=None, high_value=None):
+        "Set the value of the slider, triggering any attached callback."
+        if low_value is not None:
+            self.low_value = low_value
+        if high_value is not None:
+            self.high_value = high_value
+        values = [self.low_value, self.high_value]
+        do(self.element.slider("values", values))
+
+    async def get_values(self):
+        values = await get(self.element.slider("values"), to_depth=1)
+        [self.low_value, self.high_value] = values
+        return values
+
+    def change_value(self, event, ui):
+        self.last_event = event
+        self.last_ui = ui
+        values = ui["values"]
+        c = self.on_change
+        if c is not None:
+            c(values)
 
 
 class Stack(jQueryComponent):
@@ -414,7 +481,7 @@ Input = jQueryInput
 
 # Tests and Demos:
 
-def hello_jquery(message="<h2>Hello world: click me.</h2>"):
+def hello_jquery(message="<h2>Hello world: click me.</h2>", auto_start=False):
     from .H5Gizmos import do
     E = jQueryComponent("initializing jquery component.")
     E.counter = 0
@@ -432,4 +499,4 @@ def hello_jquery(message="<h2>Hello world: click me.</h2>"):
         do(E.element.html("<h1><em>That tickles!</em></h1>"))
         do(E.get_info_div().html("click " + repr(E.counter)))
 
-    E.run(task)
+    E.run(task, auto_start=auto_start)
