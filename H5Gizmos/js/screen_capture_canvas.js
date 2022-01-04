@@ -55,6 +55,13 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
         get_size() {
             return [this.canvas.width, this.canvas.height];
         };
+        snapshot() {
+            //  Get pixels under the currently highlighted region
+            var ctx = this.context;
+            var p = this.rectangle_parameters();
+            var imgData = ctx.getImageData(p.x, p.y, p.w, p.h);
+            return {height: imgData.height, width: imgData.width, data: imgData.data};
+        };
         load_stream() {
             debugger;
             var that = this;
@@ -62,11 +69,27 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
             this.canvas.height = this.video.videoHeight;
             var ctx = this.context;
             ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
-            ctx.fillStyle = "rgba(255, 0, 0, 0.4)";
+            ctx.fillStyle = "rgba(255, 0, 0, 0.2)";
             //ctx.fillStyle = "red";
-            ctx.fillRect(this.xmin, this.ymin, this.xmax - this.xmin, this.ymax - this.ymin);
+            var p = this.rectangle_parameters();
+            ctx.fillRect(0, 0, p.x, p.max_h);
+            ctx.fillRect(0, 0, p.max_w, p.y);
+            ctx.fillRect(p.x + p.w, 0, p.max_w, p.max_h);
+            ctx.fillRect(0, p.y + p.h, p.max_w, p.max_h);
+            ctx.strokeStyle = "#999"
+            ctx.strokeRect(p.x-1, p.y-1, p.w+2, p.h+2);
             requestAnimationFrame(function () { that.load_stream(); })
         };
+        rectangle_parameters() {
+            return {
+                x: this.xmin, 
+                y: this.ymin, 
+                w: this.xmax - this.xmin, 
+                h: this.ymax - this.ymin,
+                max_w: this.canvas.width,
+                max_h: this.canvas.height,
+            }
+        }
     };
 
     H5Gizmos.screen_capture = function(element) {
