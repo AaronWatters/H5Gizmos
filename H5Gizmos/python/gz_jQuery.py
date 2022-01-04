@@ -275,6 +275,7 @@ class RangeSlider(jQueryComponent):
         self.high_value = high_value
         self.step = step
         self.orientation = orientation
+        self.values = None
 
     def dom_element_reference(self, gizmo):
         result = super().dom_element_reference(gizmo)
@@ -287,8 +288,19 @@ class RangeSlider(jQueryComponent):
             change=self.change_value,
             orientation = self.orientation,
         )
-        do(self.element.slider(options), to_depth=1)
+        do(self.element.slider(options), to_depth=2)
         return result
+
+    def set_range(self, minimum=None, maximum=None, step=None):
+        if minimum is not None:
+            self.minimum = minimum
+        if maximum is not None:
+            self.maximum = maximum
+        if step is not None:
+            self.step = step
+        do(self.element.slider("option", "min", self.minimum))
+        do(self.element.slider("option", "max", self.maximum))
+        #do(self.element.slider("step", self.step))
 
     def set_values(self, low_value=None, high_value=None):
         "Set the value of the slider, triggering any attached callback."
@@ -302,12 +314,15 @@ class RangeSlider(jQueryComponent):
     async def get_values(self):
         values = await get(self.element.slider("values"), to_depth=1)
         [self.low_value, self.high_value] = values
+        self.values = values
         return values
 
     def change_value(self, event, ui):
         self.last_event = event
         self.last_ui = ui
         values = ui["values"]
+        self.values = values
+        [self.low_value, self.high_value] = values
         c = self.on_change
         if c is not None:
             c(values)
@@ -342,6 +357,12 @@ class Stack(jQueryComponent):
         # also add child dependencies
         for child in self.children:
             child.add_dependencies(gizmo)
+
+    def add_deferred_dependencies(self, gizmo):
+        super().add_deferred_dependencies(gizmo)
+        # also add child dependencies
+        for child in self.children:
+            child.add_deferred_dependencies(gizmo)
 
     def dom_element_reference(self, gizmo):
         result = super().dom_element_reference(gizmo)
