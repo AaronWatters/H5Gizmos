@@ -236,7 +236,7 @@ class Gizmo:
     async def _show_start_link(self):
         from IPython.display import HTML, display
         url = self._entry_url()
-        link = '<a href="%s">gizmo link.</a> \n (%s)' % (url, url)
+        link = '<a href="%s" target="_blank">gizmo link.</a> \n (%s)' % (url, url)
         if gizmo_server.isnotebook():
             msg = "<h4>Open gizmo using link</h4>\n" + link
             display(HTML(msg))
