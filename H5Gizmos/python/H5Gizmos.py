@@ -233,7 +233,7 @@ class Gizmo:
     def _confirm_start(self):
         self._start_confirm_future.set_result(True)
 
-    def _show_start_link(self):
+    async def _show_start_link(self):
         from IPython.display import HTML, display
         url = self._entry_url()
         link = '<a href="%s">gizmo link.</a> \n (%s)' % (url, url)
@@ -243,6 +243,7 @@ class Gizmo:
         else:
             msg = "Open gizmo using link (control-click / open link)\n\n" + link + "\n\n"
             print (msg)
+        await self._has_started()
 
     def _open_in_browser(self, new_page=True):
         import webbrowser
