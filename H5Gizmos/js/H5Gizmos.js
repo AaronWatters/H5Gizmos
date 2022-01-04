@@ -767,6 +767,19 @@ var H5Gizmos = {};
 
     H5Gizmos.DeferredValue = DeferredValue;
 
+    class PromisedValue extends DeferredValue {
+        // Link a JS promise to a Gizmo get request.
+        constructor(promise) {
+            super();
+            var that = this;
+            var success = function(value) { that.resolve(value); };
+            var failure = function(error) { that.reject(error); };
+            promise.then(success).catch(failure);
+        };
+    };
+
+    H5Gizmos.PromisedValue = PromisedValue;
+
     class StoreBlob extends DeferredValue {
         constructor(url, to_object, property_name, converter) {
             super();  // call the silly super constructor!
