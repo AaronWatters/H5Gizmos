@@ -59,7 +59,7 @@ class Component:
         if self.auto_start:
             await gizmo.start_in_browser()
         else:
-            gizmo._show_start_link()
+            await gizmo._show_start_link()
         #gizmo._start_report_error_task()
         task = self.task
         if task is not None:
@@ -76,14 +76,17 @@ class Component:
         self.prepare_application(gizmo)
         await gizmo.start_in_iframe()
 
-    async def browse(self, verbose=True, log_messages=False):
+    async def browse(self, auto_start=True, verbose=True, log_messages=False):
         assert gizmo_server.isnotebook(), "browse method only runs in IPython kernel."
         if verbose:
             print("Displaying gizmo component in new browser window.")
         gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages)
         self.prepare_application(gizmo)
         self.add_std_icon(gizmo)
-        await gizmo.start_in_browser()
+        if auto_start:
+            await gizmo.start_in_browser()
+        else:
+            await gizmo._show_start_link()
 
     def configure_page(self, gizmo):
         self.window = gizmo.window
