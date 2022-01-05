@@ -28,7 +28,7 @@ class ScreenCapCanvas(gz_jQuery.jQueryComponent):
     def dom_element_reference(self, gizmo):
         result = super().dom_element_reference(gizmo)
         # initialize the screen capture
-        print("initializing size callback", self.size_callback)
+        #print("initializing size callback", self.size_callback)
         do(gizmo.H5Gizmos.screen_capture(self.element, self.size_callback, self.snap_callback))
         return result
 
