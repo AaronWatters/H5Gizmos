@@ -80,7 +80,12 @@ class jQueryComponent(gz_components.Component):
         if self.init_text:
             do(self.element.html(self.init_text))
         do(self.element.appendTo(self.container))
+        self.configure_jQuery_element(self.element)
         return self.container[0]
+
+    def configure_jQuery_element(self, element):
+        "For subclasses: configure the jQuery element by adding children or callbacks, etc."
+        pass  # do nothing herre.
 
     def js_init(self, js_function_body, to_depth=3, **argument_names_to_values):
         assert self.element is not None, "Gizmo must be displayed for js_init evaluation."
@@ -157,9 +162,9 @@ class jQueryButton(jQueryComponent):
     widget_name = "button"
     on_click_depth = 1
 
-    def initialize_jquery_widget(self):
+    def configure_jQuery_element(self, element):
         options = self.options
-        initializer = self.element[self.widget_name]
+        initializer = element[self.widget_name]
         if options is not None:
             do(initializer(options))
         else:
@@ -179,23 +184,40 @@ class jQueryButton(jQueryComponent):
             do(self.element.prop("disabled", True))
             do(self.element.css("opacity", 0.5))
 
-    def dom_element_reference(self, gizmo):
-        result = super().dom_element_reference(gizmo)
-        self.initialize_jquery_widget()
-        return result
 
 class jQueryInput(jQueryComponent):
 
-    def __init__(self, initial_value="", input_type="text"):
-        tag = '<input type="%s" value="%s"/>' % (input_type, initial_value)
+    def __init__(self, initial_value="", input_type="text", size=None, change_callback=None):
+        sizetext = ""
+        if size is not None:
+            sizetext = ' size="%s"' % size
+        tag = '<input type="%s" value="%s" %s/>' % (input_type, initial_value, sizetext)
         super().__init__("", tag=tag)
+        self.value = initial_value
+        self.last_event = None # for debug
+        self.change_callback = change_callback
+
+    def configure_jQuery_element(self, element):
+        do(element.on("input", self.on_change), to_depth=2)
+
+    def on_change(self, event):
+        self.last_event = event   # for debugging
+        target = event.get("target")
+        if target is not None:
+            value = target.get("value")
+            if value is not None:
+                self.value = value
+                if self.change_callback is not None:
+                    self.change_callback(value)
 
     def set_value(self, value):
         # https://stackoverflow.com/questions/4088467/get-the-value-in-an-input-text-box?rq=1
         do(self.element.val(value))
+        self.value = value
 
     async def get_value(self):
-        return await get(self.element.val())
+        value = await get(self.element.val())
+        self.value = value
 
 
 class Slider(jQueryComponent):
@@ -219,8 +241,7 @@ class Slider(jQueryComponent):
         self.step = step
         self.orientation = orientation
 
-    def dom_element_reference(self, gizmo):
-        result = super().dom_element_reference(gizmo)
+    def configure_jQuery_element(self, element):
         options = dict(
             min=self.minimum,
             max=self.maximum,
@@ -230,8 +251,7 @@ class Slider(jQueryComponent):
             change=self.change_value,
             orientation = self.orientation,
         )
-        do(self.element.slider(options), to_depth=1)
-        return result
+        do(element.slider(options), to_depth=1)
 
     def set_value(self, value):
         "Set the value of the slider, triggering any attached callback."
@@ -277,8 +297,7 @@ class RangeSlider(jQueryComponent):
         self.orientation = orientation
         self.values = None
 
-    def dom_element_reference(self, gizmo):
-        result = super().dom_element_reference(gizmo)
+    def configure_jQuery_element(self, element):
         options = dict(
             min=self.minimum,
             max=self.maximum,
@@ -288,8 +307,7 @@ class RangeSlider(jQueryComponent):
             change=self.change_value,
             orientation = self.orientation,
         )
-        do(self.element.slider(options), to_depth=2)
-        return result
+        do(element.slider(options), to_depth=2)
 
     def set_range(self, minimum=None, maximum=None, step=None):
         if minimum is not None:
@@ -364,10 +382,8 @@ class Stack(jQueryComponent):
         for child in self.children:
             child.add_deferred_dependencies(gizmo)
 
-    def dom_element_reference(self, gizmo):
-        result = super().dom_element_reference(gizmo)
+    def configure_jQuery_element(self, element):
         self.attach_children(self.children)
-        return result
 
     def attach_children(self, children):
         gizmo = self.gizmo
@@ -479,14 +495,13 @@ class jQueryImage(jQueryComponent):
         self.version += 1   # use versioning to foil browser caching.
         return "%s?v=%s" % (self.filename, self.version)
 
-    def dom_element_reference(self, gizmo):
-        result = super().dom_element_reference(gizmo)
+    def configure_jQuery_element(self, element):
+        gizmo = self.gizmo
         mgr = gizmo._manager
         self.getter = gizmo_server.BytesGetter(self.filename, self.bytes_content, mgr, self.content_type)
         #mgr.add_http_handler(self.filename, self.getter)
         gizmo._add_getter(self.filename, self.getter)
         self.resize(height=self.height, width=self.width)
-        return result
 
 # aliases
 #Html = jQueryComponent
@@ -495,6 +510,10 @@ def Html(tag, init_text=None):
     tag = str(tag).strip()
     assert tag.startswith("<"), "The tag should be in a tag form like '<h1>this</h1>': " + repr(tag[:20])
     return jQueryComponent(tag=tag, init_text=init_text)
+
+def Text(content):
+    "Simple text."
+    return Html("<div>%s</div>"  % str(content))
 
 Button = jQueryButton
 Image = jQueryImage
