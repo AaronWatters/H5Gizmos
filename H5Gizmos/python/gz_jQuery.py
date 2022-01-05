@@ -24,7 +24,7 @@ function add_websocket_error_callback() {
         tr.jquery_info = info;
     };
     return tr.ws_error_message_callback;
-}
+};
 """
 
 class jQueryComponent(gz_components.Component):

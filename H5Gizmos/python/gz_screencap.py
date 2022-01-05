@@ -7,6 +7,9 @@ from .. import do, get
 from .gz_tools import get_snapshot_array
 import numpy as np
 from imageio import imsave
+import pyperclip
+import os
+import html
 
 from H5Gizmos.python import gz_tools
 
@@ -44,6 +47,8 @@ class ScreenSnapShotAssembly(gz_jQuery.Stack):
         self.x_slider = gz_jQuery.RangeSlider(-10, 100, step=1.0, on_change=self.on_change)
         self.y_slider = gz_jQuery.RangeSlider(-10, 100, step=1.0, orientation="vertical", on_change=self.on_change)
         self.snap_button = gz_jQuery.Button("Snap!", on_click=self.snap_click)
+        self.copy_tag_button = gz_jQuery.Button("Copy tag")
+        self.copy_path_button = gz_jQuery.Button("Copy path")
         title = gz_jQuery.Text("filename:")
         self.info_text = gz_jQuery.Text("Select a window to snapshot.")
         self.file_input = gz_jQuery.Input(filename, size=100)
@@ -56,8 +61,8 @@ class ScreenSnapShotAssembly(gz_jQuery.Stack):
             css={"grid-template-rows": "auto min-content"},
             )
         bottom = gz_jQuery.Shelf(
-            [title, self.file_input],
-            css={"grid-template-rows": "min-content auto"},
+            [title, self.file_input, self.copy_tag_button, self.copy_path_button],
+            #css={"grid-template-rows": "min-content auto"},
             child_css={"width": "min-content"},
             )
         children = [
@@ -66,6 +71,8 @@ class ScreenSnapShotAssembly(gz_jQuery.Stack):
             bottom,
             self.info_text,
         ]
+        self.filename = None  # no filename until image is saved.
+        self.path = None
         super().__init__(children)
 
     def info(self, text):
@@ -74,8 +81,28 @@ class ScreenSnapShotAssembly(gz_jQuery.Stack):
     def snap_callback(self, pixel_info):
         image_array = get_snapshot_array(pixel_info)
         filename = self.file_input.value
-        self.info("Saving %s to %s." % (image_array.shape, repr(filename)))
-        imsave(filename, image_array)
+        path = os.path.expanduser(filename)
+        path = os.path.abspath(path)
+        self.info("Saving %s to %s." % (image_array.shape, repr(path)))
+        imsave(path, image_array)
+        self.filename = filename
+        self.path = path
+        self.copy_path_button.set_on_click(self.copy_path)
+        self.copy_tag_button.set_on_click(self.copy_tag)
+
+    def copy_tag(self, *ignored):
+        "copy tag button callback."
+        filename = self.filename
+        tag = '<img src="%s"/>' % filename
+        pyperclip.copy(tag)
+        qtag = html.escape(tag)
+        self.info(repr(qtag) + " copied to clipboard.")
+
+    def copy_path(self, *ignored):
+        "copy path button callback."
+        path = self.path
+        pyperclip.copy(path)
+        self.info(repr(path) + " copied to clipboard.")
 
     def size_callback(self, width, height):
         self.width = width
