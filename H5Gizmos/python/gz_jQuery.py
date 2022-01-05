@@ -506,6 +506,28 @@ class jQueryImage(jQueryComponent):
 # aliases
 #Html = jQueryComponent
 
+class jQueryLabel(jQueryComponent):
+
+    def __init__(self, label_text, label_for_component):
+        self.label_text = label_text
+        self.label_for_component = label_for_component
+        super().__init__(init_text=label_text, tag="<label/>")
+
+    def add_dependencies(self, gizmo):
+        super().add_dependencies(gizmo)
+        # also add child dependencies
+        self.label_for_component.add_dependencies(gizmo)
+
+    def add_deferred_dependencies(self, gizmo):
+        super().add_deferred_dependencies(gizmo)
+        # also add child dependencies
+        self.label_for_component.add_deferred_dependencies(gizmo)
+
+    def configure_jQuery_element(self, element):
+        gizmo = self.gizmo
+        label_for_ref = gizmo.jQuery(self.label_for_component.dom_element_reference(self.gizmo))
+        do(label_for_ref.appendTo(element))
+
 def Html(tag, init_text=None):
     tag = str(tag).strip()
     assert tag.startswith("<"), "The tag should be in a tag form like '<h1>this</h1>': " + repr(tag[:20])
