@@ -88,6 +88,9 @@ class Component:
         else:
             await gizmo._show_start_link()
 
+    async def link(self, verbose=False, log_messages=False):
+        await self.browse(auto_start=False, verbose=verbose, log_messages=log_messages)
+
     def configure_page(self, gizmo):
         self.window = gizmo.window
         self.document = gizmo.document
