@@ -23,7 +23,13 @@ setup(
     install_requires=[
         "numpy",
         "aiohttp",
+        "imageio",
+        "pyperclip",
+        #"ipython",  # You should only need this if you have it installed already???
         ],
+    scripts = [
+        "bin/snap_gizmo",
+    ],
     package_data={
         "H5Gizmos": [
             'js/*.js'
