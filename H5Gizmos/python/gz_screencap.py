@@ -3,13 +3,14 @@ Gizmo implementations for extracting images and animations from the screen.
 """
 
 from ..python import gz_jQuery
-from .. import do, get
+from .. import do, get, schedule_task
 from .gz_tools import get_snapshot_array
 import numpy as np
 from imageio import imsave
 import pyperclip
 import os
 import html
+import asyncio
 
 from H5Gizmos.python import gz_tools
 
@@ -49,9 +50,12 @@ class ScreenSnapShotAssembly(gz_jQuery.Stack):
         self.snap_button = gz_jQuery.Button("Snap!", on_click=self.snap_click)
         self.copy_tag_button = gz_jQuery.Button("Copy tag")
         self.copy_path_button = gz_jQuery.Button("Copy path")
-        title = gz_jQuery.Text("filename:")
+        #title = gz_jQuery.Text("filename:")
         self.info_text = gz_jQuery.Text("Select a window to snapshot.")
         self.file_input = gz_jQuery.Input(filename, size=100)
+        label = gz_jQuery.jQueryLabel("file path", self.file_input)
+        self.delay_input = gz_jQuery.Input("0", size=4)
+        delay_label = gz_jQuery.jQueryLabel("delay seconds", self.delay_input)
         top = gz_jQuery.Shelf(
             [self.capture, self.y_slider],
             css={"grid-template-rows": "auto min-content"},
@@ -61,7 +65,8 @@ class ScreenSnapShotAssembly(gz_jQuery.Stack):
             css={"grid-template-rows": "auto min-content"},
             )
         bottom = gz_jQuery.Shelf(
-            [title, self.file_input, self.copy_tag_button, self.copy_path_button],
+            #[title, self.file_input, self.copy_tag_button, self.copy_path_button],
+            [label, self.copy_tag_button, self.copy_path_button, delay_label],
             #css={"grid-template-rows": "min-content auto"},
             child_css={"width": "min-content"},
             )
@@ -129,6 +134,28 @@ class ScreenSnapShotAssembly(gz_jQuery.Stack):
         do(C.element.screen_capture.set_rectangle(x1, y1, x2, y2))
 
     def snap_click(self, *ignored):
+        delay_str = self.delay_input.value
+        try:
+            delay = float(delay_str)
+        except ValueError:
+            self.info("INVALID DELAY -- PLEASE TRY AGAIN.")
+            self.delay_input.set_value("0")
+            return
+        if delay <= 1:
+            self.do_snapshot()
+        else:
+            schedule_task(self.delay_snapshot(delay))
+
+    async def delay_snapshot(self, delay):
+        import math
+        counter = math.ceil(delay)
+        while counter > 0:
+            self.info("Delay Countdown: " + str(counter))
+            counter -= 1
+            await asyncio.sleep(1)
+        self.do_snapshot()
+
+    def do_snapshot(self):
         C = self.capture
         self.info("Taking snapshot.")
         do(C.element.screen_capture.snapshot())
