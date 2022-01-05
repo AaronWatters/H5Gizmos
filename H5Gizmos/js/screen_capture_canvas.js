@@ -11,11 +11,16 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
 (function () {
 
     class ScreenCapture extends H5Gizmos.DeferredValue {
-        constructor(element) {
+        constructor(element, size_callback, snap_callback) {
+            console.log("size callback", size_callback)
             super();
             debugger;
             var that = this;
             this.element = element;
+            this.size_callback = size_callback;
+            this.snap_callback = snap_callback;
+            this.width = 0;
+            this.height = 0;
             element.empty();
             this.$canvas = $("<canvas/>").appendTo(element);
             this.$video = $("<video autoplay/>");
@@ -30,7 +35,8 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
             this.xmin = this.xmax = this.ymin = this.ymax = 0;
             var err = (function (error) { that.reject(error); });
             var success = (function (stream) {that.handle_success(stream); });
-            this.stream = null;var displayMediaOptions = {
+            this.stream = null;
+            var displayMediaOptions = {
                 video: {
                   cursor: "always"
                 },
@@ -51,22 +57,37 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
             this.stream = stream;
             this.video.srcObject = stream;  
             this.load_stream();
+            //this.get_size();
         };
         get_size() {
-            return [this.canvas.width, this.canvas.height];
+            var [width, height] = [this.canvas.width, this.canvas.height]
+            this.width = width;
+            this.height = height;
+            if (this.size_callback) {
+                console.log("calling size callback", width, height)
+                this.size_callback(width, height)
+            }
+            return [width, height];
         };
         snapshot() {
             //  Get pixels under the currently highlighted region
             var ctx = this.context;
             var p = this.rectangle_parameters();
             var imgData = ctx.getImageData(p.x, p.y, p.w, p.h);
-            return {height: imgData.height, width: imgData.width, data: imgData.data};
+            var info = {height: imgData.height, width: imgData.width, data: imgData.data};
+            if (this.snap_callback) {
+                this.snap_callback(info)
+            }
+            return info;
         };
         load_stream() {
             debugger;
             var that = this;
-            this.canvas.width = this.video.videoWidth;
-            this.canvas.height = this.video.videoHeight;
+            var width = this.canvas.width = this.video.videoWidth;
+            var height = this.canvas.height = this.video.videoHeight;
+            if ((this.width != width) || (this.height != height)) {
+                this.get_size();
+            }
             var ctx = this.context;
             ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
             ctx.fillStyle = "rgba(255, 0, 0, 0.2)";
@@ -92,8 +113,8 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
         }
     };
 
-    H5Gizmos.screen_capture = function(element) {
-        return new ScreenCapture(element);
+    H5Gizmos.screen_capture = function(element, size_callback, snap_callback) {
+        return new ScreenCapture(element, size_callback, snap_callback);
     }
 
 })();
