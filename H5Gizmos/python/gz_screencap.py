@@ -6,11 +6,13 @@ from ..python import gz_jQuery
 from .. import do, get, schedule_task
 from .gz_tools import get_snapshot_array
 import numpy as np
-from imageio import imsave
+from imageio import imsave, mimsave
 import pyperclip
 import os
 import html
 import asyncio
+import math
+import time
 
 from H5Gizmos.python import gz_tools
 
@@ -87,6 +89,27 @@ class ScreenAssemblyMixin:
         SV.set_range(0, height)
         SV.set_values(0, height)
         self.info("Adjust sliders for snapshot: " + repr((width, height)))
+        self.enable_capture()
+
+    def enable_capture(self):
+        raise NotImplementedError("implement in subclass.")
+
+    def check_labelled_input(self, input, low_value, high_value, default):
+        assert default >= low_value and default <= high_value, "bad range " +repr((low_value, high_value, default))
+        value_str = input.value
+        label = repr(input.label_text)
+        bounds_complaint = "%s should be between %s and %s -- please try again" % (label, low_value, high_value)
+        try:
+            value = float(value_str)
+        except ValueError:
+            self.info(bounds_complaint)
+            input.set_value(str(default))
+            return None
+        if value < low_value or value > high_value:
+            self.info(bounds_complaint)
+            input.set_value(str(default))
+            return None
+        return value
 
     def on_change(self, *ignored):
         SH = self.x_slider
@@ -108,15 +131,16 @@ class ScreenSnapShotAssembly(gz_jQuery.Stack, ScreenAssemblyMixin):
         self.capture = ScreenCapCanvas(self.size_callback, self.snap_callback)
         self.x_slider = gz_jQuery.RangeSlider(-10, 100, step=1.0, on_change=self.on_change)
         self.y_slider = gz_jQuery.RangeSlider(-10, 100, step=1.0, orientation="vertical", on_change=self.on_change)
-        self.snap_button = gz_jQuery.Button("Snap!", on_click=self.snap_click)
+        #self.snap_button = gz_jQuery.Button("Snap!", on_click=self.snap_click)
+        self.snap_button = gz_jQuery.Button("Snap!")
         self.copy_tag_button = gz_jQuery.Button("Copy tag")
         self.copy_path_button = gz_jQuery.Button("Copy path")
         #title = gz_jQuery.Text("filename:")
         self.info_text = gz_jQuery.Text("Select a window to snapshot.")
         self.file_input = gz_jQuery.Input(filename, size=100)
         label = gz_jQuery.jQueryLabel("file path", self.file_input)
-        self.delay_input = gz_jQuery.Input("0", size=4)
-        delay_label = gz_jQuery.jQueryLabel("delay seconds", self.delay_input)
+        self.delay_input = gz_jQuery.LabelledInput("delay seconds", "0", size=4)
+        #delay_label = gz_jQuery.jQueryLabel("delay seconds", self.delay_input)
         top = gz_jQuery.Shelf(
             [self.capture, self.y_slider],
             css={"grid-template-rows": "auto min-content"},
@@ -127,7 +151,7 @@ class ScreenSnapShotAssembly(gz_jQuery.Stack, ScreenAssemblyMixin):
             )
         bottom = gz_jQuery.Shelf(
             #[title, self.file_input, self.copy_tag_button, self.copy_path_button],
-            [label, self.copy_tag_button, self.copy_path_button, delay_label],
+            [label, self.copy_tag_button, self.copy_path_button, self.delay_input.label_container],
             #css={"grid-template-rows": "min-content auto"},
             child_css={"width": "min-content"},
             )
@@ -154,13 +178,12 @@ class ScreenSnapShotAssembly(gz_jQuery.Stack, ScreenAssemblyMixin):
         #self.copy_path_button.set_on_click(self.copy_path)
         #self.copy_tag_button.set_on_click(self.copy_tag)
 
+    def enable_capture(self):
+        self.snap_button.set_on_click(self.snap_click)
+
     def snap_click(self, *ignored):
-        delay_str = self.delay_input.value
-        try:
-            delay = float(delay_str)
-        except ValueError:
-            self.info("INVALID DELAY -- PLEASE TRY AGAIN.")
-            self.delay_input.set_value("0")
+        delay = self.check_labelled_input(self.delay_input, 0, 100, 0)
+        if delay is None:
             return
         if delay <= 1:
             self.do_snapshot()
@@ -168,7 +191,6 @@ class ScreenSnapShotAssembly(gz_jQuery.Stack, ScreenAssemblyMixin):
             schedule_task(self.delay_snapshot(delay))
 
     async def delay_snapshot(self, delay):
-        import math
         counter = math.ceil(delay)
         while counter > 0:
             self.info("Delay Countdown: " + str(counter))
@@ -189,26 +211,36 @@ class ScreenAnimationAssembly(gz_jQuery.Stack, ScreenAssemblyMixin):
         self.capture = ScreenCapCanvas(self.size_callback, self.snap_callback)
         self.x_slider = gz_jQuery.RangeSlider(-10, 100, step=1.0, on_change=self.on_change)
         self.y_slider = gz_jQuery.RangeSlider(-10, 100, step=1.0, orientation="vertical", on_change=self.on_change)
-        self.snap_button = gz_jQuery.Button("Snap!", on_click=self.snap_click)
+        self.record_button = gz_jQuery.Button("Record")
         self.copy_tag_button = gz_jQuery.Button("Copy tag")
+        self.stop_button = gz_jQuery.Button("Stop")
         self.copy_path_button = gz_jQuery.Button("Copy path")
         #title = gz_jQuery.Text("filename:")
         self.info_text = gz_jQuery.Text("Select a window to snapshot.")
-        self.file_input = gz_jQuery.Input(filename, size=100)
-        label = gz_jQuery.jQueryLabel("file path", self.file_input)
-        self.delay_input = gz_jQuery.Input("0", size=4)
-        delay_label = gz_jQuery.jQueryLabel("delay seconds", self.delay_input)
+        self.file_input = gz_jQuery.LabelledInput("file path", filename, size=100)
+        #label = gz_jQuery.jQueryLabel("file path", self.file_input)
+        self.delay_input = gz_jQuery.LabelledInput("delay seconds", "0", size=4)
+        #delay_label = gz_jQuery.jQueryLabel("delay seconds", self.delay_input)
+        self.fps_input = gz_jQuery.LabelledInput("FPS", "30", size=4)
+        self.limit_input = gz_jQuery.LabelledInput("limit seconds", "60", size=4)
         top = gz_jQuery.Shelf(
             [self.capture, self.y_slider],
             css={"grid-template-rows": "auto min-content"},
             )
         middle = gz_jQuery.Shelf(
-            [self.x_slider, self.snap_button],
-            css={"grid-template-rows": "auto min-content"},
+            [self.x_slider, self.record_button, self.stop_button],
+            css={"grid-template-rows": "auto min-content min-content"},
             )
         bottom = gz_jQuery.Shelf(
             #[title, self.file_input, self.copy_tag_button, self.copy_path_button],
-            [label, self.copy_tag_button, self.copy_path_button, delay_label],
+            [
+                self.file_input.label_container,
+                self.copy_tag_button,
+                self.copy_path_button,
+                self.delay_input.label_container,
+                self.limit_input.label_container,
+                self.fps_input.label_container,
+            ],
             #css={"grid-template-rows": "min-content auto"},
             child_css={"width": "min-content"},
             )
@@ -220,4 +252,61 @@ class ScreenAnimationAssembly(gz_jQuery.Stack, ScreenAssemblyMixin):
         ]
         self.filename = None  # no filename until image is saved.
         self.path = None
+        self.stopped = True
+        self.image_arrays = None
         super().__init__(children)
+
+    def enable_capture(self):
+        self.record_button.set_on_click(self.record_click)
+
+    def record_click(self, *ignored):
+        delay = self.check_labelled_input(self.delay_input, 0, 100, 0)
+        limit = self.check_labelled_input(self.limit_input, 1, 999, 100)
+        fps = self.check_labelled_input(self.fps_input, 1, 60, 30)
+        if None in [delay, limit, fps]:
+            return  # bad parameter -- message in info.
+        self.info("(delay, limit, fps): " + repr((delay, limit, fps)))
+        #return # debugging...
+        time_interval_seconds = 1.0 / fps
+        schedule_task(self.get_frames(time_interval_seconds, delay, limit))
+
+    async def get_frames(self, time_interval_seconds, delay, limit):
+        self.stopped = False
+        C = self.capture
+        try:
+            self.record_button.set_on_click(None)
+            self.image_arrays = []
+            counter = math.ceil(delay)
+            self.stop_button.set_on_click(self.stop_click)
+            self.stopped = False
+            while counter > 0:
+                self.info("Delay Countdown: " + str(counter))
+                counter -= 1
+                await asyncio.sleep(1)
+                if self.stopped:
+                    break
+            elapsed = 0
+            started = time.time()
+            count = 0
+            while not self.stopped and (elapsed < limit):
+                self.info("Captured %s. Elapsed %s." % (len(self.image_arrays), (count, elapsed)))
+                do(C.element.screen_capture.snapshot())
+                await asyncio.sleep(time_interval_seconds)
+                elapsed = time.time() - started
+                count += 1
+        finally:
+            self.stop_click()
+            self.enable_capture()
+        path = self.prepare_path()
+        self.info("Storing %s to %s. Elapsed %s." % (len(self.image_arrays), repr(path), (elapsed, limit, count)))
+        #return # DEBUGGING
+        mimsave(path, self.image_arrays, format='GIF', duration=time_interval_seconds)
+        self.info("Saved %s to %s. Elapsed %s." % (len(self.image_arrays), repr(path), elapsed))
+
+    def stop_click(self, *ignored):
+        self.stopped = True
+        self.stop_button.set_on_click(None)
+
+    def snap_callback(self, pixel_info):
+        image_array = get_snapshot_array(pixel_info)
+        self.image_arrays.append(image_array)
