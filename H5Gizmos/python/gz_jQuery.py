@@ -528,6 +528,21 @@ class jQueryLabel(jQueryComponent):
         label_for_ref = gizmo.jQuery(self.label_for_component.dom_element_reference(self.gizmo))
         do(label_for_ref.appendTo(element))
 
+def contain_in_label(label_text, component):
+    """
+    Add a container surrounding the component.  Access the container using `component.label_container`
+    """
+    component.label_container = jQueryLabel(label_text, component)
+    component.label_text = label_text
+    return component
+
+class LabelledjQueryInput(jQueryInput):
+
+    def __init__(self, label_text, initial_value="", input_type="text", size=None, change_callback=None):
+        super().__init__(initial_value, input_type, size, change_callback)
+        contain_in_label(label_text, self)
+
+
 def Html(tag, init_text=None):
     tag = str(tag).strip()
     assert tag.startswith("<"), "The tag should be in a tag form like '<h1>this</h1>': " + repr(tag[:20])
@@ -540,6 +555,7 @@ def Text(content):
 Button = jQueryButton
 Image = jQueryImage
 Input = jQueryInput
+LabelledInput = LabelledjQueryInput
 
 # Tests and Demos:
 
