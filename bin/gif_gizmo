@@ -1,0 +1,33 @@
+#!/usr/bin/env python
+
+usage = """
+
+USAGE:
+======
+
+% gif_gizmo OUTPUT_FILENAME.gif
+
+Take a screenshot with an optional delay and save it to OUTPUT_FILENAME.gif
+
+"""
+
+import sys
+from H5Gizmos.python.gz_screencap import ScreenAnimationAssembly
+
+try:
+    assert len(sys.argv) == 2, "Please provide only one filename"
+    gif_path = sys.argv[1]
+    assert gif_path.upper().endswith(".GIF"), "Output file must be *.gif " + repr(gif_path)
+    print()
+    print("Creating screen capture gizmo interface for", gif_path)
+    S = ScreenAnimationAssembly(filename=gif_path)
+    S.run(auto_start=False)
+    if S.path is not None:
+        print ("Saved path: " + repr(S.path))
+    else:
+        print ("No path saved.")
+except Exception as e:
+    print ("Exception: ", e)
+    print (usage)
+    raise
+
