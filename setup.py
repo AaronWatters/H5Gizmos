@@ -29,6 +29,7 @@ setup(
         ],
     scripts = [
         "bin/snap_gizmo",
+        "bin/gif_gizmo",
     ],
     package_data={
         "H5Gizmos": [
