@@ -10,10 +10,10 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
 
 (function () {
 
-    class ScreenCapture extends H5Gizmos.DeferredValue {
+    class ScreenCapture {
         constructor(element, size_callback, snap_callback) {
             console.log("size callback", size_callback)
-            super();
+            //super();
             debugger;
             var that = this;
             this.element = element;
