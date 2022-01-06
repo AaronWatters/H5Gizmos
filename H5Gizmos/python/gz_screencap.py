@@ -43,8 +43,23 @@ class ScreenAssemblyMixin:
 
     "Common operations for screen shot and animation."
 
+    width = height = None
+
     def info(self, text):
         self.info_text.html(text)
+
+    def prepare_path(self):
+        #image_array = get_snapshot_array(pixel_info)
+        filename = self.file_input.value
+        path = os.path.expanduser(filename)
+        path = os.path.abspath(path)
+        #self.info("Saving %s to %s." % (image_array.shape, repr(path)))
+        #imsave(path, image_array)
+        self.filename = filename
+        self.path = path
+        self.copy_path_button.set_on_click(self.copy_path)
+        self.copy_tag_button.set_on_click(self.copy_tag)
+        return path
 
     def copy_tag(self, *ignored):
         "copy tag button callback."
@@ -89,8 +104,6 @@ class ScreenSnapShotAssembly(gz_jQuery.Stack, ScreenAssemblyMixin):
 
     "Gizmo interface for capturing a PNG from the screen."
 
-    width = height = None
-
     def __init__(self, filename="snapshot.png"):
         self.capture = ScreenCapCanvas(self.size_callback, self.snap_callback)
         self.x_slider = gz_jQuery.RangeSlider(-10, 100, step=1.0, on_change=self.on_change)
@@ -129,16 +142,17 @@ class ScreenSnapShotAssembly(gz_jQuery.Stack, ScreenAssemblyMixin):
         super().__init__(children)
 
     def snap_callback(self, pixel_info):
+        path = self.prepare_path()
         image_array = get_snapshot_array(pixel_info)
-        filename = self.file_input.value
-        path = os.path.expanduser(filename)
-        path = os.path.abspath(path)
+        #filename = self.file_input.value
+        #path = os.path.expanduser(filename)
+        #path = os.path.abspath(path)
         self.info("Saving %s to %s." % (image_array.shape, repr(path)))
         imsave(path, image_array)
-        self.filename = filename
-        self.path = path
-        self.copy_path_button.set_on_click(self.copy_path)
-        self.copy_tag_button.set_on_click(self.copy_tag)
+        #self.filename = filename
+        #self.path = path
+        #self.copy_path_button.set_on_click(self.copy_path)
+        #self.copy_tag_button.set_on_click(self.copy_tag)
 
     def snap_click(self, *ignored):
         delay_str = self.delay_input.value
@@ -167,6 +181,43 @@ class ScreenSnapShotAssembly(gz_jQuery.Stack, ScreenAssemblyMixin):
         self.info("Taking snapshot.")
         do(C.element.screen_capture.snapshot())
 
-class ScreenAnimationAssembly(ScreenSnapShotAssembly):
+class ScreenAnimationAssembly(gz_jQuery.Stack, ScreenAssemblyMixin):
 
     "Gizmo interface for capturing an animated GIF from the screen."
+
+    def __init__(self, filename="screen_animation.gif"):
+        self.capture = ScreenCapCanvas(self.size_callback, self.snap_callback)
+        self.x_slider = gz_jQuery.RangeSlider(-10, 100, step=1.0, on_change=self.on_change)
+        self.y_slider = gz_jQuery.RangeSlider(-10, 100, step=1.0, orientation="vertical", on_change=self.on_change)
+        self.snap_button = gz_jQuery.Button("Snap!", on_click=self.snap_click)
+        self.copy_tag_button = gz_jQuery.Button("Copy tag")
+        self.copy_path_button = gz_jQuery.Button("Copy path")
+        #title = gz_jQuery.Text("filename:")
+        self.info_text = gz_jQuery.Text("Select a window to snapshot.")
+        self.file_input = gz_jQuery.Input(filename, size=100)
+        label = gz_jQuery.jQueryLabel("file path", self.file_input)
+        self.delay_input = gz_jQuery.Input("0", size=4)
+        delay_label = gz_jQuery.jQueryLabel("delay seconds", self.delay_input)
+        top = gz_jQuery.Shelf(
+            [self.capture, self.y_slider],
+            css={"grid-template-rows": "auto min-content"},
+            )
+        middle = gz_jQuery.Shelf(
+            [self.x_slider, self.snap_button],
+            css={"grid-template-rows": "auto min-content"},
+            )
+        bottom = gz_jQuery.Shelf(
+            #[title, self.file_input, self.copy_tag_button, self.copy_path_button],
+            [label, self.copy_tag_button, self.copy_path_button, delay_label],
+            #css={"grid-template-rows": "min-content auto"},
+            child_css={"width": "min-content"},
+            )
+        children = [
+            top,
+            middle,
+            bottom,
+            self.info_text,
+        ]
+        self.filename = None  # no filename until image is saved.
+        self.path = None
+        super().__init__(children)
