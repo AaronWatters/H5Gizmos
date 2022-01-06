@@ -39,7 +39,55 @@ class ScreenCapCanvas(gz_jQuery.jQueryComponent):
         pixel_info = await get(C.element.screen_capture.snapshot(), to_depth=3)
         return get_snapshot_array(pixel_info)
 
-class ScreenSnapShotAssembly(gz_jQuery.Stack):
+class ScreenAssemblyMixin:
+
+    "Common operations for screen shot and animation."
+
+    def info(self, text):
+        self.info_text.html(text)
+
+    def copy_tag(self, *ignored):
+        "copy tag button callback."
+        filename = self.filename
+        tag = '<img src="%s"/>' % filename
+        pyperclip.copy(tag)
+        qtag = html.escape(tag)
+        self.info(repr(qtag) + " copied to clipboard.")
+
+    def copy_path(self, *ignored):
+        "copy path button callback."
+        path = self.path
+        pyperclip.copy(path)
+        self.info(repr(path) + " copied to clipboard.")
+
+    def size_callback(self, width, height):
+        self.width = width
+        self.height = height
+        SH = self.x_slider
+        SV = self.y_slider
+        SH.resize(width=width)
+        SH.set_range(0, width)
+        SH.set_values(0, width)
+        SV.resize(height=height)
+        SV.set_range(0, height)
+        SV.set_values(0, height)
+        self.info("Adjust sliders for snapshot: " + repr((width, height)))
+
+    def on_change(self, *ignored):
+        SH = self.x_slider
+        SV = self.y_slider
+        C = self.capture
+        x1 = SH.low_value
+        x2 = SH.high_value
+        y1 = SV.maximum - SV.high_value
+        y2 = SV.maximum - SV.low_value
+        self.info("Adjusting window: " + repr((x1, y1, x2, y2)))
+        do(C.element.screen_capture.set_rectangle(x1, y1, x2, y2))
+
+
+class ScreenSnapShotAssembly(gz_jQuery.Stack, ScreenAssemblyMixin):
+
+    "Gizmo interface for capturing a PNG from the screen."
 
     width = height = None
 
@@ -80,9 +128,6 @@ class ScreenSnapShotAssembly(gz_jQuery.Stack):
         self.path = None
         super().__init__(children)
 
-    def info(self, text):
-        self.info_text.html(text)
-
     def snap_callback(self, pixel_info):
         image_array = get_snapshot_array(pixel_info)
         filename = self.file_input.value
@@ -94,44 +139,6 @@ class ScreenSnapShotAssembly(gz_jQuery.Stack):
         self.path = path
         self.copy_path_button.set_on_click(self.copy_path)
         self.copy_tag_button.set_on_click(self.copy_tag)
-
-    def copy_tag(self, *ignored):
-        "copy tag button callback."
-        filename = self.filename
-        tag = '<img src="%s"/>' % filename
-        pyperclip.copy(tag)
-        qtag = html.escape(tag)
-        self.info(repr(qtag) + " copied to clipboard.")
-
-    def copy_path(self, *ignored):
-        "copy path button callback."
-        path = self.path
-        pyperclip.copy(path)
-        self.info(repr(path) + " copied to clipboard.")
-
-    def size_callback(self, width, height):
-        self.width = width
-        self.height = height
-        SH = self.x_slider
-        SV = self.y_slider
-        SH.resize(width=width)
-        SH.set_range(0, width)
-        SH.set_values(0, width)
-        SV.resize(height=height)
-        SV.set_range(0, height)
-        SV.set_values(0, height)
-        self.info("Adjust sliders for snapshot: " + repr((width, height)))
-
-    def on_change(self, *ignored):
-        SH = self.x_slider
-        SV = self.y_slider
-        C = self.capture
-        x1 = SH.low_value
-        x2 = SH.high_value
-        y1 = SV.maximum - SV.high_value
-        y2 = SV.maximum - SV.low_value
-        self.info("Adjusting window: " + repr((x1, y1, x2, y2)))
-        do(C.element.screen_capture.set_rectangle(x1, y1, x2, y2))
 
     def snap_click(self, *ignored):
         delay_str = self.delay_input.value
@@ -159,3 +166,7 @@ class ScreenSnapShotAssembly(gz_jQuery.Stack):
         C = self.capture
         self.info("Taking snapshot.")
         do(C.element.screen_capture.snapshot())
+
+class ScreenAnimationAssembly(ScreenSnapShotAssembly):
+
+    "Gizmo interface for capturing an animated GIF from the screen."
