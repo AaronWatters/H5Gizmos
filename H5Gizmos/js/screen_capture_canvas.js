@@ -14,7 +14,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
         constructor(element, size_callback, snap_callback) {
             console.log("size callback", size_callback)
             //super();
-            debugger;
+            //debugger;
             var that = this;
             this.element = element;
             this.size_callback = size_callback;
@@ -53,7 +53,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
             this.ymax = Math.max(y1, y2);
         };
         handle_success(stream) {
-            debugger;
+            //debugger;
             this.stream = stream;
             this.video.srcObject = stream;  
             this.load_stream();
@@ -69,7 +69,8 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
             }
             return [width, height];
         };
-        snapshot() {
+        snapshot(null_return) {
+            debugger
             //  Get pixels under the currently highlighted region
             var ctx = this.context;
             var p = this.rectangle_parameters();
@@ -78,10 +79,12 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
             if (this.snap_callback) {
                 this.snap_callback(info)
             }
-            return info;
+            if (!null_return) {
+                return info;
+            }
         };
         load_stream() {
-            debugger;
+            //debugger;
             var that = this;
             var width = this.canvas.width = this.video.videoWidth;
             var height = this.canvas.height = this.video.videoHeight;
