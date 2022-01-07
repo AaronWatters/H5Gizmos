@@ -1104,7 +1104,7 @@ class GZPipeline:
     def __init__(self, gizmo, packet_limit=1000000, auto_flush=True):
         self.gizmo = gizmo
         gizmo._set_pipeline(self)
-        self.sender = None
+        #self.sender = None
         self.request = None
         self.web_socket = None
         self.waiting_chunks = []
@@ -1170,7 +1170,7 @@ class GZPipeline:
         with self.my_stderr():
             with self.my_stdout():
                 self.check_web_socket_not_closed()
-                if self.sender is not None:
+                if self.web_socket is not None:
                     await self.sender(chunk)
                 else:
                     self.waiting_chunks.append(chunk)
@@ -1193,13 +1193,18 @@ class GZPipeline:
         self.web_socket = ws
         await ws.prepare(request)
         self.request = request
-        self.sender = ws.send_str
+        #self.sender = ws.send_str
         wc = self.waiting_chunks
         self.waiting_chunks = []
         for chunk in wc:
             #pr ("pipeline sending waiting chunk", repr(chunk))
             await self._send(chunk)
         await self.listen_to_websocket(ws)
+
+    async def sender(self, data):
+        await self.web_socket.send_str(data)
+        # after every send, give the other side a chance to send (?)
+        await self.web_socket.drain()
 
     MSG_TYPE_TEXT = aiohttp.WSMsgType.text
     MSG_TYPE_ERROR = aiohttp.WSMsgType.error
