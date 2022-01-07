@@ -297,6 +297,8 @@ class ScreenAnimationAssembly(gz_jQuery.Stack, ScreenAssemblyMixin):
         finally:
             self.stop_click()
             self.enable_capture()
+        # wait for a final capture -- force websocket to sync (?)
+        await get(C.element.screen_capture.snapshot(True), timeout=None)  # 
         path = self.prepare_path()
         self.info("Storing %s to %s. Elapsed %s." % (len(self.image_arrays), repr(path), (elapsed, limit, count)))
         #return # DEBUGGING
