@@ -114,14 +114,18 @@ class jQueryComponent(gz_components.Component):
         else:
             do(self.element.html(html_text))
 
-    def css(self, **name_to_style):
+    def css(self, dict=None, **name_to_style):
         """
         Set CSS properties of the element before or after the Gizmo is displayed.
         """
+        styles = {}
+        styles.update(name_to_style)
+        if dict is not None:
+            styles.update(dict)
         if self.element is not None:
-            do(self.element.css(name_to_style))
+            do(self.element.css(styles))
         else:
-            self.initial_css.update(name_to_style)
+            self.initial_css.update(styles)
 
     def resize(self, width=None, height=None):
         """
