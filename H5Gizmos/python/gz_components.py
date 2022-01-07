@@ -54,7 +54,7 @@ class Component:
 
     async def run_main(self, gizmo):
         self.prepare_application(gizmo)
-        do(gizmo.window.addEventListener("unload", self.shutdown), to_depth=1)
+        self.shutdown_on_unload(gizmo)
         self.add_std_icon(gizmo)
         if self.auto_start:
             await gizmo.start_in_browser()
@@ -64,6 +64,9 @@ class Component:
         task = self.task
         if task is not None:
             await task()
+
+    def shutdown_on_unload(self, gizmo):
+        do(gizmo.window.addEventListener("unload", self.shutdown), to_depth=1)
 
     def add_std_icon(self, gizmo):
         # https://www.w3.org/2005/10/howto-favicon
@@ -77,11 +80,14 @@ class Component:
         await gizmo.start_in_iframe()
 
     async def browse(self, auto_start=True, verbose=True, log_messages=False):
-        assert gizmo_server.isnotebook(), "browse method only runs in IPython kernel."
+        #assert gizmo_server.isnotebook(), "browse method only runs in IPython kernel."
+        in_notebook = gizmo_server.isnotebook()
         if verbose:
             print("Displaying gizmo component in new browser window.")
         gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages)
         self.prepare_application(gizmo)
+        if not in_notebook:
+            self.shutdown_on_unload(gizmo)
         self.add_std_icon(gizmo)
         if auto_start:
             await gizmo.start_in_browser()
