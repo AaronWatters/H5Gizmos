@@ -42,6 +42,20 @@ def run(main_awaitable, server=None, run_forever=True, exit_on_disconnect=None, 
     if run_forever:
         get_or_create_event_loop().run_forever()
 
+def serve(task, verbose=False, delay=0.5):
+    """
+    Set up the global gizmo server and schedule the task, then run the event loop forever.
+    """
+    # xxx common code refactor?
+    _check_server(None, verbose=verbose)
+
+    async def deferred_task():
+        await asyncio.sleep(delay)
+        await task
+
+    H5Gizmos.schedule_task(deferred_task())
+    get_or_create_event_loop().run_forever()
+
 async def get_gizmo(from_server=None, verbose=False, log_messages=False):
     """
     Get a gizmo (the official way).  Set up a server iff needed.
