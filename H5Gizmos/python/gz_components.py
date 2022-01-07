@@ -86,6 +86,8 @@ class Component:
             print("Displaying gizmo component in new browser window.")
         gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages)
         self.prepare_application(gizmo)
+        # always add close button ???
+        gizmo._insert_html('<button onclick="self.close()">Close</button>')
         if not in_notebook:
             self.shutdown_on_unload(gizmo)
         self.add_std_icon(gizmo)
