@@ -10,10 +10,10 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
 
 (function () {
 
-    class ScreenCapture {
-        constructor(element, size_callback, snap_callback) {
-            console.log("size callback", size_callback)
-            //super();
+    class ScreenCapture extends H5Gizmos.DeferredValue {
+        constructor(element, size_callback, snap_callback, defer_media) {
+            //console.log("size callback", size_callback)
+            super();
             //debugger;
             var that = this;
             this.element = element;
@@ -33,6 +33,17 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
             this.context.font = "30px Arial";
             this.context.fillText("No window attached.", 10, 100);
             this.xmin = this.xmax = this.ymin = this.ymax = 0;
+            this.stream = null;
+            element.screen_capture = this;
+            this.snapshot_list = null;
+            if (defer_media) {
+                this.get_media();
+            }
+            // a version of get_media with correct "that" for use as a callback.
+            this._get_media = function () { that.get_media(); };
+        };
+        get_media() {
+            var that = this;
             var err = (function (error) { that.reject(error); });
             var success = (function (stream) {that.handle_success(stream); });
             this.stream = null;
@@ -44,7 +55,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
             };
             navigator.mediaDevices.getDisplayMedia(displayMediaOptions).then(success).catch(err);
             //navigator.mediaDevices.getUserMedia(constraints).then(success).catch(err);
-            element.screen_capture = this;
+            this.snapshot_list = null;
         };
         set_rectangle(x1, y1, x2, y2) {
             this.xmin = Math.min(x1, x2);
@@ -69,6 +80,12 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
             }
             return [width, height];
         };
+        reset_snapshot_list() {
+            this.snapshot_list = [];
+        };
+        get_snapshot_list() {
+            return this.snapshot_list;
+        };
         snapshot(null_return) {
             debugger
             //  Get pixels under the currently highlighted region
@@ -78,6 +95,9 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
             var info = {height: imgData.height, width: imgData.width, data: imgData.data};
             if (this.snap_callback) {
                 this.snap_callback(info)
+            }
+            if (this.snapshot_list != null) {
+                this.snapshot_list.push(info)
             }
             if (!null_return) {
                 return info;
