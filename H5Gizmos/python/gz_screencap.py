@@ -18,10 +18,11 @@ from H5Gizmos.python import gz_tools
 
 class ScreenCapCanvas(gz_jQuery.jQueryComponent):
 
-    def __init__(self, size_callback=None, snap_callback=None):
+    def __init__(self, size_callback=None, snap_callback=None, defer_media=True):
         super().__init__("Screen capture, not yet attached.")
         self.size_callback = size_callback
         self.snap_callback = snap_callback
+        self.defer_media = defer_media
 
     def add_dependencies(self, gizmo):
         super().add_dependencies(gizmo)
@@ -31,7 +32,7 @@ class ScreenCapCanvas(gz_jQuery.jQueryComponent):
         result = super().dom_element_reference(gizmo)
         # initialize the screen capture
         #print("initializing size callback", self.size_callback)
-        do(gizmo.H5Gizmos.screen_capture(self.element, self.size_callback, self.snap_callback))
+        do(gizmo.H5Gizmos.screen_capture(self.element, self.size_callback, self.snap_callback, self.defer_media))
         return result
 
     def set_rectangle(self, x1, y1, x2, y2):
@@ -122,17 +123,36 @@ class ScreenAssemblyMixin:
         self.info("Adjusting window: " + repr((x1, y1, x2, y2)))
         do(C.element.screen_capture.set_rectangle(x1, y1, x2, y2))
 
+class jQuerySnapSuperClass(gz_jQuery.Stack, ScreenAssemblyMixin):
 
-class ScreenSnapShotAssembly(gz_jQuery.Stack, ScreenAssemblyMixin):
+    def configure_jQuery_element(self, element):
+        result = super().configure_jQuery_element(element)
+        self.attach_button.set_on_click(self.get_media_method_reference())
+
+    def get_media(self, *ignored):
+        C = self.capture
+        do(C.element.screen_capture.get_media())
+
+    def get_media_method_reference(self):
+        # get media must be caled directly from gesture callback in Safari...
+        C = self.capture
+        return C.element.screen_capture._get_media
+
+
+class ScreenSnapShotAssembly(jQuerySnapSuperClass):
 
     "Gizmo interface for capturing a PNG from the screen."
 
     def __init__(self, filename="snapshot.png"):
-        self.capture = ScreenCapCanvas(self.size_callback, self.snap_callback)
+        defer_media = True
+        self.capture = ScreenCapCanvas(self.size_callback, self.snap_callback, defer_media)
         self.x_slider = gz_jQuery.RangeSlider(-10, 100, step=1.0, on_change=self.on_change)
         self.y_slider = gz_jQuery.RangeSlider(-10, 100, step=1.0, orientation="vertical", on_change=self.on_change)
         #self.snap_button = gz_jQuery.Button("Snap!", on_click=self.snap_click)
         self.snap_button = gz_jQuery.Button("Snap!")
+        # get media must be called from gesture callback directly (not via Python)
+        self.attach_button = gz_jQuery.Button("Attach media")
+        # self.attach_button = gz_jQuery.Button("Attach media", on_click=self.get_media)
         self.copy_tag_button = gz_jQuery.Button("Copy tag")
         self.copy_path_button = gz_jQuery.Button("Copy path")
         #title = gz_jQuery.Text("filename:")
@@ -146,7 +166,7 @@ class ScreenSnapShotAssembly(gz_jQuery.Stack, ScreenAssemblyMixin):
             css={"grid-template-rows": "auto min-content"},
             )
         middle = gz_jQuery.Shelf(
-            [self.x_slider, self.snap_button],
+            [self.x_slider, self.snap_button, self.attach_button],
             css={"grid-template-rows": "auto min-content"},
             )
         bottom = gz_jQuery.Shelf(
@@ -203,16 +223,18 @@ class ScreenSnapShotAssembly(gz_jQuery.Stack, ScreenAssemblyMixin):
         self.info("Taking snapshot.")
         do(C.element.screen_capture.snapshot())
 
-class ScreenAnimationAssembly(gz_jQuery.Stack, ScreenAssemblyMixin):
+class ScreenAnimationAssembly(jQuerySnapSuperClass):
 
     "Gizmo interface for capturing an animated GIF from the screen."
 
     def __init__(self, filename="screen_animation.gif"):
-        self.capture = ScreenCapCanvas(self.size_callback, self.snap_callback)
+        defer_media = True
+        self.capture = ScreenCapCanvas(self.size_callback, self.snap_callback, defer_media)
         self.x_slider = gz_jQuery.RangeSlider(-10, 100, step=1.0, on_change=self.on_change)
         self.y_slider = gz_jQuery.RangeSlider(-10, 100, step=1.0, orientation="vertical", on_change=self.on_change)
         self.record_button = gz_jQuery.Button("Record")
         self.copy_tag_button = gz_jQuery.Button("Copy tag")
+        self.attach_button = gz_jQuery.Button("Attach media", on_click=self.get_media)
         self.stop_button = gz_jQuery.Button("Stop")
         self.copy_path_button = gz_jQuery.Button("Copy path")
         #title = gz_jQuery.Text("filename:")
@@ -228,7 +250,7 @@ class ScreenAnimationAssembly(gz_jQuery.Stack, ScreenAssemblyMixin):
             css={"grid-template-rows": "auto min-content"},
             )
         middle = gz_jQuery.Shelf(
-            [self.x_slider, self.record_button, self.stop_button],
+            [self.x_slider, self.record_button, self.stop_button, self.attach_button],
             css={"grid-template-rows": "auto min-content min-content"},
             )
         bottom = gz_jQuery.Shelf(
