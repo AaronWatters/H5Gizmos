@@ -36,6 +36,7 @@ class Component:
     js_object_cache = None
     cache_name = None
     auto_start = True  # start browser page automatically.
+    close_button = True
 
     def attach_gizmo(self, gizmo):
         self.gizmo = gizmo
@@ -43,9 +44,10 @@ class Component:
         # add deferred dependencies after standard dependencies (for example so jQuery is available in deferred code)
         self.add_deferred_dependencies(gizmo)
 
-    def run(self, task=None, auto_start=True, verbose=True, log_messages=False):
+    def run(self, task=None, auto_start=True, verbose=True, log_messages=False, close_button=True):
         self.task = task
         self.auto_start = auto_start
+        self.close_button = close_button
         run(self.run_main, verbose=verbose, log_messages=log_messages)
 
     def prepare_application(self, gizmo):
@@ -56,6 +58,8 @@ class Component:
         self.prepare_application(gizmo)
         self.shutdown_on_unload(gizmo)
         self.add_std_icon(gizmo)
+        if self.close_button:
+            gizmo._insert_html('<button onclick="self.close()">Close</button>')
         if self.auto_start:
             await gizmo.start_in_browser()
         else:
