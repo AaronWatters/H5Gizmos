@@ -79,15 +79,15 @@ class Component:
         self.prepare_application(gizmo)
         await gizmo.start_in_iframe()
 
-    async def browse(self, auto_start=True, verbose=True, log_messages=False):
+    async def browse(self, auto_start=True, verbose=True, log_messages=False, close_button=True):
         #assert gizmo_server.isnotebook(), "browse method only runs in IPython kernel."
         in_notebook = gizmo_server.isnotebook()
         if verbose:
             print("Displaying gizmo component in new browser window.")
         gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages)
         self.prepare_application(gizmo)
-        # always add close button ???
-        gizmo._insert_html('<button onclick="self.close()">Close</button>')
+        if close_button:
+            gizmo._insert_html('<button onclick="self.close()">Close</button>')
         if not in_notebook:
             self.shutdown_on_unload(gizmo)
         self.add_std_icon(gizmo)
