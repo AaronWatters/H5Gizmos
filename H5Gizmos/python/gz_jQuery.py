@@ -66,6 +66,11 @@ class jQueryComponent(gz_components.Component):
     def error_message(self, error_text):
         do(self.gizmo.websocket_error_callback(error_text))
 
+    def get_element(self, gizmo):
+        if self.element is None:
+            self.dom_element_reference(gizmo)
+        return self.element
+
     def dom_element_reference(self, gizmo):
         super().dom_element_reference(gizmo)
         # ??? does it cause harm to always create an extra container around the element ???
@@ -82,6 +87,20 @@ class jQueryComponent(gz_components.Component):
         do(self.element.appendTo(self.container))
         self.configure_jQuery_element(self.element)
         return self.container[0]
+
+    def add(self, component):
+        """
+        Add a JQuery component after this one or the last add.
+        The new component should not require dependancies which have not been loaded
+        previously into the gizmo.
+        """
+        gizmo = self.gizmo
+        if not isinstance(component, jQueryComponent):
+            ty = type(component)
+            assert type(component) is str, "Only strings or jQuery components may be added: " + repr(ty)
+            component = Text(component)
+        do(component.get_element(gizmo).appendTo(self.container))
+        return component
 
     def configure_jQuery_element(self, element):
         "For subclasses: configure the jQuery element by adding children or callbacks, etc."
@@ -529,7 +548,8 @@ class jQueryLabel(jQueryComponent):
 
     def configure_jQuery_element(self, element):
         gizmo = self.gizmo
-        label_for_ref = gizmo.jQuery(self.label_for_component.dom_element_reference(self.gizmo))
+        #label_for_ref = gizmo.jQuery(self.label_for_component.dom_element_reference(self.gizmo))
+        label_for_ref = self.label_for_component.get_element(gizmo)
         do(label_for_ref.appendTo(element))
 
 def contain_in_label(label_text, component):
