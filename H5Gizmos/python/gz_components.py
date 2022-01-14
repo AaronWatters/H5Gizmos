@@ -224,7 +224,8 @@ class Component:
 
             new javascript_class(javascript_arguments);
         """
-        return self.gizmo.H5Gizmos.New(javascript_class_link, javascript_argument_links)
+        #return self.gizmo.H5Gizmos.New(javascript_class_link, javascript_argument_links) # doesn't always work?
+        return self.window.Reflect.construct(javascript_class_link, javascript_argument_links)
 
     def function(self, argument_names, body_string):
         """
