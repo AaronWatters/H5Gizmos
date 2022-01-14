@@ -15,6 +15,9 @@ import sys
 from H5Gizmos.python.gz_screencap import ScreenAnimationAssembly
 
 try:
+    print()
+    print("Note: This screen capture gizmo is only known to work using recent versions of the Chrome brouser.")
+    print()
     assert len(sys.argv) == 2, "Please provide only one filename"
     gif_path = sys.argv[1]
     assert gif_path.upper().endswith(".GIF"), "Output file must be *.gif " + repr(gif_path)
