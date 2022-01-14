@@ -628,7 +628,7 @@ class GizmoManager:
             if method == GET:
                 return handler.handle_get(info, request, interface=interface)
             elif method == POST:
-                return handler.handle_post(info, request, interface=interface)
+                return await handler.handle_post(info, request, interface=interface)
             else:
                 raise AssertionError("unknown http method: " + repr(method))
 
@@ -701,7 +701,7 @@ class FileGetter:
         bytes = interface.get_file_bytes(path)
         return interface.respond(body=bytes, content_type=self.content_type)
 
-    def handle_post(self, info, request, interface=STDInterface):
+    async def handle_post(self, info, request, interface=STDInterface):
         return self.handle_get(info, request, interface=interface)
 
 class BytesGetter(FileGetter):
