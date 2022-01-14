@@ -919,12 +919,13 @@ var H5Gizmos = {};
         return new Function(...args);
     };
 
+    /* commented new emulation -- doesn't seem to always work (for Chart.js, eg) see gz_components alternative
     // "new" keyword emulation
     // http://stackoverflow.com/questions/17342497/dynamically-control-arguments-while-creating-objects-in-javascript 
     H5Gizmos.New = function(klass, args) {
         var obj = Object.create(klass.prototype);
         return klass.apply(obj, args) || obj;
-    };
+    };*/
 
     // https://stackoverflow.com/questions/22086722/resize-cross-domain-iframe-height
     H5Gizmos.periodically_send_height_to_parent = function(identifier, delay) {
