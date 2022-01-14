@@ -519,11 +519,14 @@ class Gizmo:
 
     def _register_future(self, timeout=None):
         self._counter += 1
-        oid = "GZget_" + repr(self._counter)
-        future = self._make_future()
         o2f = self._oid_to_get_futures
+        oid = "GZget_" + repr(self._counter)
+        def on_timeout():
+            if o2f.get(oid) is not None:
+                del o2f[oid]
+        future = self._make_future(timeout=timeout, on_timeout=on_timeout)
         o2f[oid] = future
-        if timeout is not None:
+        """if timeout is not None:
             async def timeout_check():
                 await asyncio.sleep(timeout)
                 if not future.done():
@@ -531,14 +534,25 @@ class Gizmo:
                     future.set_exception(exc)
                 if o2f.get(oid) is not None:
                     del o2f[oid]
-            schedule_task(timeout_check())
+            schedule_task(timeout_check())"""  # refactored
         return (oid, future)
 
-    def _make_future(self):
+    def _make_future(self, timeout=None, on_timeout=None):
         "Get a future associated with the global event loop."
         # Convenience
         loop = gizmo_server.get_or_create_event_loop()
-        return loop.create_future()
+        future = loop.create_future()
+        # xxx this is cut/paste/modified from _register_future
+        if timeout is not None:
+            async def timeout_check():
+                await asyncio.sleep(timeout)
+                if not future.done():
+                    exc = FutureTimeout("Timeout expired: "+ repr(timeout))
+                    future.set_exception(exc)
+                if on_timeout is not None:
+                    on_timeout()
+            schedule_task(timeout_check())
+        return future
 
 
 GZ = Gizmo
