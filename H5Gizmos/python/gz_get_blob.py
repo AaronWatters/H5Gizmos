@@ -25,10 +25,12 @@ class BytesPostBack(gizmo_server.FileGetter):
         self.content_type = response_content_type
 
     def handle_get(self, info, request, interface=gizmo_server.STDInterface):
-        raise NotImplementedError("Please use POST for this end point.")
+        text = "This end point only accepts POST requests."
+        status = 405
+        return interface.respond(body=text, content_type="text/plain", status=status)
 
     async def handle_post(self, info, request, interface=gizmo_server.STDInterface):
         body = await request.read()
         query = request.query
         text = self.processor(body, query)
-    
+        return interface.respond(body=text, content_type=self.content_type)
