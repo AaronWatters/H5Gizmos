@@ -4,6 +4,7 @@ from H5Gizmos.python.gz_resources import MISC_OPERATIONS_TEMPLATE
 from . import gz_components
 from . import H5Gizmos
 from .H5Gizmos import do, get
+import html
 
 # add Markdown(...)
 # new method jqc.append(other_jqc)
@@ -126,12 +127,19 @@ class jQueryComponent(gz_components.Component):
 
     def html(self, html_text):
         """
-        Set the innerHTML for the element (not appropriate for all subclasses)
+        Set the innerHTML for the element (not appropriate for all subclasses).
         """
         if self.element is None:
             self.init_text = html_text
         else:
             do(self.element.html(html_text))
+
+    def text(self, string_text):
+        """
+        Set the innerHTML for the element to plain HTML escaped text (not appropriate for all subclasses).
+        """
+        html_text = html.escape(string_text)
+        return self.html(html_text)
 
     def css(self, dict=None, **name_to_style):
         """
@@ -573,8 +581,9 @@ def Html(tag, init_text=None):
     return jQueryComponent(tag=tag, init_text=init_text)
 
 def Text(content):
-    "Simple text."
-    return Html("<div>%s</div>"  % str(content))
+    "Simple text, escaped."
+    econtent = html.escape(content)
+    return Html("<div>%s</div>"  % str(econtent))
 
 Button = jQueryButton
 Image = jQueryImage
