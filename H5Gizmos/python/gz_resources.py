@@ -37,7 +37,7 @@ STD_HTML_PAGE_TEMPLATE = """
 {HEAD}
     </head>
 
-    <body id="GIZMO_BODY">
+    <body id="GIZMO_BODY" class="gizmobody">
 {BODY}
     </body>
 </html>

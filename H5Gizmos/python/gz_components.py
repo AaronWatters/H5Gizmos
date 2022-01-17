@@ -113,10 +113,15 @@ class Component:
         target = self.target = interface.Target
         do(body.append(target))
 
+    stylesheet_path = "../static/gizmo_style.css"  # changable in subclass (to None to disable)
+
     def add_dependencies(self, gizmo):
         """
         Add libraries, css files, references, or other resources required by the component to the gizmo.
         """
+        stylesheet_path = self.stylesheet_path
+        if (stylesheet_path):
+            gizmo._css_file(stylesheet_path)
         gizmo._initial_reference("window")
         gizmo._initial_reference("document")
         gizmo._initial_reference("H5GIZMO_INTERFACE")
