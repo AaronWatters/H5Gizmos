@@ -5,6 +5,8 @@ Gizmo implementations for extracting images and animations from the screen.
 from ..python import gz_jQuery
 from .. import do, get, schedule_task
 from .gz_tools import get_snapshot_array
+from .gz_get_blob import BytesPostBack
+from . import H5Gizmos
 import numpy as np
 from imageio import imsave, mimsave
 import pyperclip
@@ -13,8 +15,10 @@ import html
 import asyncio
 import math
 import time
-
+#from . import H5Gizmos
 from H5Gizmos.python import gz_tools
+
+from H5Gizmos.python import gz_get_blob
 
 class ScreenCapCanvas(gz_jQuery.jQueryComponent):
 
@@ -38,9 +42,9 @@ class ScreenCapCanvas(gz_jQuery.jQueryComponent):
     def set_rectangle(self, x1, y1, x2, y2):
         do(self.element.screen_capture.set_rectangle(x1, y1, x2, y2))
 
-    async def get_snapshot_array(self):
-        pixel_info = await get(C.element.screen_capture.snapshot(), to_depth=3)
-        return get_snapshot_array(pixel_info)
+    #async def get_snapshot_array(self):
+    #    pixel_info = await get(C.element.screen_capture.snapshot(), to_depth=3)
+    #    return get_snapshot_array(pixel_info)
 
 class ScreenAssemblyMixin:
 
@@ -128,14 +132,18 @@ class jQuerySnapSuperClass(gz_jQuery.Stack, ScreenAssemblyMixin):
     def configure_jQuery_element(self, element):
         result = super().configure_jQuery_element(element)
         self.add("This screen capture gizmo is only known to work using recent version of the Chrome browser")
-        self.attach_button.set_on_click(self.get_media_method_reference())
+        self.attach_button.set_on_click(self.get_media_method_reference()) # xxxx
+        self.postback = gz_get_blob.BytesPostBack()
+        gizmo = self.gizmo
+        self.end_point = H5Gizmos.new_identifier("snapshot_endpoint")
+        gizmo._add_getter(self.end_point, self.postback)
 
     def get_media(self, *ignored):
         C = self.capture
         do(C.element.screen_capture.get_media())
 
     def get_media_method_reference(self):
-        # get media must be caled directly from gesture callback in Safari...
+        # get media must be called directly from gesture callback in Safari...
         C = self.capture
         return C.element.screen_capture._get_media
 
@@ -144,7 +152,8 @@ class ScreenSnapShotAssembly(jQuerySnapSuperClass):
 
     "Gizmo interface for capturing a PNG from the screen."
 
-    def __init__(self, filename="snapshot.png"):
+    def __init__(self, filename="snapshot.png", timeout=60):
+        self.timeout = timeout
         defer_media = True
         self.capture = ScreenCapCanvas(self.size_callback, self.snap_callback, defer_media)
         self.x_slider = gz_jQuery.RangeSlider(-10, 100, step=1.0, on_change=self.on_change)
@@ -206,10 +215,11 @@ class ScreenSnapShotAssembly(jQuerySnapSuperClass):
         delay = self.check_labelled_input(self.delay_input, 0, 100, 0)
         if delay is None:
             return
-        if delay <= 1:
-            self.do_snapshot()
-        else:
-            schedule_task(self.delay_snapshot(delay))
+        #if delay <= 1:
+        #    self.do_snapshot()
+        #else:
+        #    schedule_task(self.delay_snapshot(delay))
+        schedule_task(self.delay_snapshot(delay))
 
     async def delay_snapshot(self, delay):
         counter = math.ceil(delay)
@@ -217,12 +227,20 @@ class ScreenSnapShotAssembly(jQuerySnapSuperClass):
             self.info("Delay Countdown: " + str(counter))
             counter -= 1
             await asyncio.sleep(1)
-        self.do_snapshot()
+        await self.do_snapshot()
 
-    def do_snapshot(self):
+    async def do_snapshot(self):
         C = self.capture
         self.info("Taking snapshot.")
-        do(C.element.screen_capture.snapshot())
+        do(C.element.screen_capture.post_snapshot(self.end_point))
+        data = await self.postback.wait_for_post(timeout=self.timeout, on_timeout=self.on_timeout)
+        (body, query) = data
+        info = query.copy()
+        info["data"] = body
+        self.snap_callback(info)
+
+    def on_timeout(self, *ignored):
+        self.info("Snapshot timed out.")
 
 class ScreenAnimationAssembly(jQuerySnapSuperClass):
 

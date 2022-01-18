@@ -10,7 +10,14 @@ def get_snapshot_array(pixel_info, invert=False):
     Convert pixel data from an HTML canvas to an appropriate numpy array.
     Data coming from a 2d canvas is right side up -- data coming from WebGL must be inverted.
     """
-    data_bytes = hex_to_bytearray(pixel_info["data"])
+    data_bytes = pixel_info["data"]
+    #print ("pixel_info", list(pixel_info.keys()))
+    #print ("got data bytes", len(data_bytes), type(data_bytes), data_bytes[:10])
+    ty = type(data_bytes)
+    if ty is str:
+        data_bytes = hex_to_bytearray(pixel_info["data"])
+    elif ty is bytes:
+        data_bytes = bytearray(data_bytes)
     width = pixel_info["width"]
     height = pixel_info["height"]
     bytes_per_pixel = 4
