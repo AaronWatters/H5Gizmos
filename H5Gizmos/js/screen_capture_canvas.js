@@ -1,5 +1,5 @@
 /*
-Create a canvas for use in screen captures.
+Canvas snapshot and screen capture support.
 
 Assumes H5Canvas and jQueryUI.
 
@@ -10,8 +10,24 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
 
 (function () {
 
+    H5Gizmos.post_2d_canvas_image = function(end_point, dom_canvas, context2d, x, y, w, h, gizmo_translator) {
+        // Send the image data from the canvas to the parent in a POST request
+        context2d = context2d || dom_canvas.getContext("2d");
+        x = x || 0;
+        y = y || 0;
+        w = w || canvas.width;
+        h = h || canvas.height;
+        // default to global interface
+        gizmo_translator = gizmo_translator || H5GIZMO_INTERFACE;
+        var image_data = context2d.getImageData(x, y, w, h);
+        var json_metadata = {height: image_data.height, width: image_data.width};
+        gizmo_translator.post_binary_data(end_point, image_data.data, json_metadata);
+    };
+
+
+    // XXXX NOTE: This screen capture method only seems to work in recent versions of Chrome (not Firefox, Safari...)
     class ScreenCapture extends H5Gizmos.DeferredValue {
-        constructor(element, size_callback, snap_callback, defer_media) {
+        constructor(element, size_callback, snap_callback, connect_media_now) {
             //console.log("size callback", size_callback)
             super();
             //debugger;
@@ -36,7 +52,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
             this.stream = null;
             element.screen_capture = this;
             this.snapshot_list = null;
-            if (defer_media) {
+            if (connect_media_now) {
                 this.get_media();
             }
             // a version of get_media with correct "that" for use as a callback.
@@ -49,7 +65,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
             this.stream = null;
             var displayMediaOptions = {
                 video: {
-                  cursor: "always"
+                  cursor: "always",
                 },
                 audio: false
             };
@@ -87,8 +103,8 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
             return this.snapshot_list;
         };
         snapshot(null_return) {
-            debugger
-            //  Get pixels under the currently highlighted region
+            //debugger
+            // Get pixels under the currently highlighted region
             var ctx = this.context;
             var p = this.rectangle_parameters();
             var imgData = ctx.getImageData(p.x, p.y, p.w, p.h);
@@ -102,6 +118,15 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
             if (!null_return) {
                 return info;
             }
+        };
+        post_snapshot(to_endpoint) {
+            // Send a canvas snapshot using the POST method to the url endpoint.
+            debugger;
+            var canvas = this.canvas;
+            var context = this.context;
+            var p = this.rectangle_parameters();
+            // xxx always use the global translator???
+            H5Gizmos.post_2d_canvas_image(to_endpoint, canvas, context, p.x, p.y, p.w, p.h);
         };
         load_stream() {
             //debugger;
