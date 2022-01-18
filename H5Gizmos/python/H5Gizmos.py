@@ -166,7 +166,7 @@ class Gizmo:
 
     async def _has_started(self):
         # Await callback confirmation
-        self._start_confirm_future = self._make_future()
+        self._start_confirm_future = make_future()
         callback = GizmoCallback(self._confirm_start, self)
         call_callback = GizmoCall(callback, [], self)
         do(call_callback)
@@ -524,7 +524,7 @@ class Gizmo:
         def on_timeout():
             if o2f.get(oid) is not None:
                 del o2f[oid]
-        future = self._make_future(timeout=timeout, on_timeout=on_timeout)
+        future = make_future(timeout=timeout, on_timeout=on_timeout)
         o2f[oid] = future
         """if timeout is not None:
             async def timeout_check():
@@ -537,22 +537,22 @@ class Gizmo:
             schedule_task(timeout_check())"""  # refactored
         return (oid, future)
 
-    def _make_future(self, timeout=None, on_timeout=None):
-        "Get a future associated with the global event loop."
-        # Convenience
-        loop = gizmo_server.get_or_create_event_loop()
-        future = loop.create_future()
-        # xxx this is cut/paste/modified from _register_future
-        if timeout is not None:
-            async def timeout_check():
-                await asyncio.sleep(timeout)
-                if not future.done():
-                    exc = FutureTimeout("Timeout expired: "+ repr(timeout))
-                    future.set_exception(exc)
-                if on_timeout is not None:
-                    on_timeout()
-            schedule_task(timeout_check())
-        return future
+def make_future(timeout=None, on_timeout=None):
+    "Get a future associated with the global event loop."
+    # Convenience
+    loop = gizmo_server.get_or_create_event_loop()
+    future = loop.create_future()
+    # xxx this is cut/paste/modified from _register_future
+    if timeout is not None:
+        async def timeout_check():
+            await asyncio.sleep(timeout)
+            if not future.done():
+                exc = FutureTimeout("Timeout expired: "+ repr(timeout))
+                future.set_exception(exc)
+            if on_timeout is not None:
+                on_timeout()
+        schedule_task(timeout_check())
+    return future
 
 
 GZ = Gizmo
