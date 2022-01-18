@@ -11,6 +11,9 @@ import os
 import sys
 import contextlib
 
+# Max size for posts -- really big
+DEFAULT_MAX_SIZE = 1000 * 1000 * 1000 * 1000
+
 # xxxx
 # need to implement some sort of reconnect logic:
 # https://stackoverflow.com/questions/48472977/how-to-catch-and-deal-with-websocket-is-already-in-closing-or-closed-state-in
@@ -462,7 +465,7 @@ class GzServer:
         return task
 
     def get_app(self, app_factory=web.Application):
-        self.app = app_factory()
+        self.app = app_factory(client_max_size=DEFAULT_MAX_SIZE)
         self.add_routes()
         self.app.on_shutdown.append(self.on_shutdown)
         return self.app
