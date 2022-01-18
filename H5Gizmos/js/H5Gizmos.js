@@ -170,6 +170,32 @@ var H5Gizmos = {};
             this.send(json);
             throw err;
         };
+        post_binary_data(end_point, binary_data, json_metadata) {
+            var that = this
+            json_metadata = json_metadata || {};
+            var json = JSON.stringify(json_metadata);
+            var query_string = "?json=" + encodeURIComponent(json)
+            var url = end_point + query_string;
+    
+            // https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/send
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", url, true);
+    
+            //Send the proper header information along with the request
+            xhr.setRequestHeader("Content-Type", "application/octet-stream");
+    
+            xhr.onreadystatechange = function() {
+                if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+                    // Request finished. Do processing here.
+                    //console.log("request finished", xhr)
+                    // The POST is for sending data -- reply is ignored if not in error.
+                } else if (this.readyState === XMLHttpRequest.DONE) {
+                    var status = this.status;
+                    that.send_error("Bad status sent for POST: " + status);
+                }
+            }
+            xhr.send(binary_data);
+        };
         send_keepalive() {
             // Send a keepalive message to force a reconnect if the connection drops.
             // The message should be ignored by the parent.
@@ -822,6 +848,30 @@ var H5Gizmos = {};
             }
         };
     };
+
+    /* moved into translator for error handling
+    H5Gizmos.post_binary_data = function(end_point, binary_data, json_metadata) {
+        json_metadata = json_metadata || {};
+        var json = JSON.stringify(json_metadata);
+        var query_string = "?json=" + encodeURIComponent(json)
+        var url = end_point + query_string;
+
+        // https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/send
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", url, true);
+
+        //Send the proper header information along with the request
+        xhr.setRequestHeader("Content-Type", "application/octet-stream");
+
+        xhr.onreadystatechange = function() {
+            if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+                // Request finished. Do processing here.
+                console.log("request finished", xhr)
+                // The POST is for sending data -- reply is ignored if not in error.
+            }
+        }
+        xhr.send(binary_data);
+    };*/
 
     H5Gizmos.store_blob = function (url, to_object, property_name, converter) {
         return new StoreBlob(url, to_object, property_name, converter);
