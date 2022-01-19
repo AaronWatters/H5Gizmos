@@ -215,6 +215,79 @@ class jQueryButton(jQueryComponent):
             do(self.element.prop("disabled", True))
             do(self.element.css("opacity", 0.5))
 
+class RadioButtons(jQueryComponent):
+
+    # based on https://api.jqueryui.com/checkboxradio/
+
+    def __init__(self, label_value_pairs, selected_value=None, legend=None, on_click=None, options=None):
+        """
+        Create a radio button fieldset for the label/pair values.
+        If onclick is provided it will be called with on_click(value) when the corresponding
+        radio button is selected.
+        """
+        tag = "<fieldset/>"
+        super().__init__(init_text="", tag=tag)
+        label_value_pairs = [(label, value) for (label, value) in label_value_pairs]
+        self.label_value_pairs = label_value_pairs
+        self.labels = [pair[0] for pair in label_value_pairs]
+        self.values = [pair[1] for pair in label_value_pairs]
+        assert selected_value is None or selected_value in self.values, \
+            "no such value to select: " + repr(selected_value)
+        self.selected_value = selected_value
+        self.legend = legend
+        self.on_click = on_click
+        self.options = options or {}
+        self.id2value = None
+
+    def configure_jQuery_element(self, element):
+        id2value = {}
+        gizmo = self.gizmo
+        legend = self.legend
+        options = self.options
+        selected_value = self.selected_value
+        label_value_pairs = self.label_value_pairs
+        jQuery = gizmo.jQuery
+        name = H5Gizmos.new_identifier("gzRadioName")
+        if legend:
+            legend_tag = "<legend>%s</legend>" % legend
+            do(jQuery(legend_tag).appendTo(element))
+        for (label, value) in label_value_pairs:
+            checked = ""
+            if value == selected_value:
+                checked = " checked "
+            #input_options = options.copy()
+            #input_options["label"] = label
+            identity = H5Gizmos.new_identifier("gzRadio")
+            id2value[identity] = value
+            label_tag = '<label for="%s">%s</label>' % (identity, label)
+            do(jQuery(label_tag).appendTo(self.element))
+            input_tag = '<input type="radio" name="%s" id="%s" value="%s" %s/>' %(
+                name, identity, identity, checked
+            )
+            do(jQuery(input_tag).appendTo(element))
+        selector = "input[name=%s]" % name
+        self.selector_checked = selector + ":checked"
+        do(self.element.find(selector).checkboxradio(options))
+        do(self.element.find(selector).change(self.check_value), to_depth=1)
+        self.id2value = id2value
+
+    def check_value(self, *ignored):
+        #print("check", ignored)
+        #self.add("clicked!")
+        H5Gizmos.schedule_task(self.update_value())
+
+    async def update_value(self):
+        gizmo = self.gizmo
+        jQuery = gizmo.jQuery
+        selector = self.selector_checked
+        id = await get(jQuery(selector).attr("id"))
+        value = self.id2value[id]
+        #self.add("got id %s with value %s" % (repr(id), repr(value)))
+        self.selected_value = value
+        on_click = self.on_click
+        if on_click:
+            on_click(value)
+        #print("update done!")
 
 class jQueryInput(jQueryComponent):
 
