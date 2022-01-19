@@ -12,11 +12,7 @@ import sys
 import contextlib
 
 # Max size for posts -- really big
-DEFAULT_MAX_SIZE = 1000 * 1000 * 1000 * 1000
-
-# xxxx
-# need to implement some sort of reconnect logic:
-# https://stackoverflow.com/questions/48472977/how-to-catch-and-deal-with-websocket-is-already-in-closing-or-closed-state-in
+DEFAULT_MAX_SIZE = 1000 * 1000 * 1000 * 1000 * 100
 
 PROCESS_SHARED_GIZMO_SERVER = None
 
