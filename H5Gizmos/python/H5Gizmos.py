@@ -73,6 +73,8 @@ class Gizmo:
         server=None, 
         exit_on_disconnect=False,
         log_messages=False,
+        # file-like where to send callback prints (set to false to send to server log StringIO)
+        callback_stdout=None, 
         ):
         self._log_messages = log_messages
         self._exit_on_disconnect = exit_on_disconnect
@@ -100,6 +102,11 @@ class Gizmo:
         self._unreported_exception_payload = None
         self._embedded_components = set()
         self._out = None
+        if callback_stdout != False:
+            if callback_stdout is None:
+                self._out = contextlib.redirect_stdout(sys.stdout)
+            else:
+                self._out = contextlib.redirect_stdout(callback_stdout)
         self._err = None
         self._start_confirm_future = None
 
