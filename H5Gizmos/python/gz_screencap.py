@@ -4,7 +4,7 @@ Gizmo implementations for extracting images and animations from the screen.
 
 from ..python import gz_jQuery
 from .. import do, get, schedule_task
-from .gz_tools import get_snapshot_array
+from .gz_tools import get_snapshot_array, get_snapshot_arrays
 from .gz_get_blob import BytesPostBack
 from . import H5Gizmos
 import numpy as np
@@ -155,7 +155,7 @@ class ScreenSnapShotAssembly(jQuerySnapSuperClass):
     def __init__(self, filename="snapshot.png", timeout=60):
         self.timeout = timeout
         defer_media = True
-        self.capture = ScreenCapCanvas(self.size_callback, self.snap_callback, defer_media)
+        self.capture = ScreenCapCanvas(self.size_callback, snap_callback=None, defer_media=defer_media)
         self.x_slider = gz_jQuery.RangeSlider(-10, 100, step=1.0, on_change=self.on_change)
         self.y_slider = gz_jQuery.RangeSlider(-10, 100, step=1.0, orientation="vertical", on_change=self.on_change)
         #self.snap_button = gz_jQuery.Button("Snap!", on_click=self.snap_click)
@@ -246,14 +246,15 @@ class ScreenAnimationAssembly(jQuerySnapSuperClass):
 
     "Gizmo interface for capturing an animated GIF from the screen."
 
-    def __init__(self, filename="screen_animation.gif"):
+    def __init__(self, filename="screen_animation.gif", timeout=10):
+        self.timeout = timeout
         defer_media = True
-        self.capture = ScreenCapCanvas(self.size_callback, self.snap_callback, defer_media)
+        self.capture = ScreenCapCanvas(self.size_callback, snap_callback=None, defer_media=defer_media)
         self.x_slider = gz_jQuery.RangeSlider(-10, 100, step=1.0, on_change=self.on_change)
         self.y_slider = gz_jQuery.RangeSlider(-10, 100, step=1.0, orientation="vertical", on_change=self.on_change)
         self.record_button = gz_jQuery.Button("Record")
         self.copy_tag_button = gz_jQuery.Button("Copy tag")
-        self.attach_button = gz_jQuery.Button("Attach media", on_click=self.get_media)
+        self.attach_button = gz_jQuery.Button("Attach media")  # on_click is automatically attached
         self.stop_button = gz_jQuery.Button("Stop")
         self.copy_path_button = gz_jQuery.Button("Copy path")
         #title = gz_jQuery.Text("filename:")
@@ -262,7 +263,7 @@ class ScreenAnimationAssembly(jQuerySnapSuperClass):
         #label = gz_jQuery.jQueryLabel("file path", self.file_input)
         self.delay_input = gz_jQuery.LabelledInput("delay seconds", "0", size=4)
         #delay_label = gz_jQuery.jQueryLabel("delay seconds", self.delay_input)
-        self.fps_input = gz_jQuery.LabelledInput("FPS", "30", size=4)
+        self.fps_input = gz_jQuery.LabelledInput("FPS", "5", size=4)
         self.limit_input = gz_jQuery.LabelledInput("limit seconds", "60", size=4)
         top = gz_jQuery.Shelf(
             [self.capture, self.y_slider],
@@ -314,6 +315,7 @@ class ScreenAnimationAssembly(jQuerySnapSuperClass):
     async def get_frames(self, time_interval_seconds, delay, limit):
         self.stopped = False
         C = self.capture
+        do(C.element.screen_capture.reset_snapshot_list())
         try:
             self.record_button.set_on_click(None)
             self.image_arrays = []
@@ -340,7 +342,17 @@ class ScreenAnimationAssembly(jQuerySnapSuperClass):
             self.enable_capture()
         # wait for a final capture -- force websocket to sync (?)
         await get(C.element.screen_capture.snapshot(True), timeout=None)  # 
+        error_message = await get(C.element.screen_capture.prepare_all_snapshots())
+        if error_message:
+            self.info(error_message)
+            return
         path = self.prepare_path()
+        do(C.element.screen_capture.post_all_snapshots(self.end_point))
+        data = await self.postback.wait_for_post(timeout=self.timeout, on_timeout=self.on_timeout)
+        (body, query) = data
+        info = query.copy()
+        info["data"] = body
+        self.image_arrays = get_snapshot_arrays(info)
         self.info("Storing %s to %s. Elapsed %s." % (len(self.image_arrays), repr(path), (elapsed, limit, count)))
         #return # DEBUGGING
         mimsave(path, self.image_arrays, format='GIF', duration=time_interval_seconds)
@@ -350,6 +362,9 @@ class ScreenAnimationAssembly(jQuerySnapSuperClass):
         self.stopped = True
         self.stop_button.set_on_click(None)
 
-    def snap_callback(self, pixel_info):
+    def on_timeout(self, *ignored):
+        self.info("Data transfer timed out.")
+
+    """def snap_callback(self, pixel_info):
         image_array = get_snapshot_array(pixel_info)
-        self.image_arrays.append(image_array)
+        self.image_arrays.append(image_array) # not used """
