@@ -52,6 +52,8 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
             this.stream = null;
             element.screen_capture = this;
             this.snapshot_list = null;
+            this.all_snapshots_binary = null;
+            this.all_snapshots_json = null;
             if (connect_media_now) {
                 this.get_media();
             }
@@ -72,6 +74,8 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
             navigator.mediaDevices.getDisplayMedia(displayMediaOptions).then(success).catch(err);
             //navigator.mediaDevices.getUserMedia(constraints).then(success).catch(err);
             this.snapshot_list = null;
+            this.all_snapshots_binary = null;
+            this.all_snapshots_json = null;
         };
         set_rectangle(x1, y1, x2, y2) {
             this.xmin = Math.min(x1, x2);
@@ -98,6 +102,8 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
         };
         reset_snapshot_list() {
             this.snapshot_list = [];
+            this.all_snapshots_binary = null;
+            this.all_snapshots_json = null;
         };
         get_snapshot_list() {
             return this.snapshot_list;
@@ -118,6 +124,62 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
             if (!null_return) {
                 return info;
             }
+        };
+        prepare_all_snapshots() {
+            // Set up and validate data for POST of all snapshot data.
+            // Return error message or null on success.
+            this.all_snapshots_binary = null;
+            this.all_snapshots_json = null;
+            var snapshot_list = this.snapshot_list;
+            if (!snapshot_list) {
+                return "Snapshost list is not initialized.";
+            }
+            var nsnaps = snapshot_list.length;
+            if (nsnaps < 1) {
+                return "There are no snapshots.";
+            }
+            var snap0 = snapshot_list[0];
+            var height = snap0.height;
+            var width = snap0.width;
+            var bands = 4;
+            var snap_size = width * height * bands;
+            var data_size = nsnaps * snap_size;
+            try {
+                var all_binary = new Uint8ClampedArray(data_size);
+            } catch (error) {
+                return "Could not combine frames -- too large?: " + error;
+            }
+            for (var i=0; i<nsnaps; i++) {
+                var snap = snapshot_list[i];
+                if (snap.width != width) {
+                    return "Can't combine snapshots with width change " + [width, snap.width]
+                }
+                if (snap.height != height) {
+                    return "Can't combine snapshots with height change " + [height, snap.height]
+                }
+                var offset = i * snap_size;
+                var data = snap.data;
+                all_binary.set(data, offset);
+            }
+            this.all_snapshots_binary = all_binary;
+            this.all_snapshots_json = {
+                height: height,
+                width: width,
+                count: nsnaps,
+                bands: bands,
+            }
+            return null;   // No error: success
+        };
+        post_all_snapshots(to_endpoint, gizmo_translator) {
+            // no automatic prepare for now.
+            var binary = this.all_snapshots_binary;
+            var json = this.all_snapshots_json;
+            if (!binary || !json) {
+                throw new Error("All snapshots must be prepared before posting.");
+            }
+            // default to global interface
+            gizmo_translator = gizmo_translator || H5GIZMO_INTERFACE;
+            gizmo_translator.post_binary_data(to_endpoint, binary, json);
         };
         post_snapshot(to_endpoint) {
             // Send a canvas snapshot using the POST method to the url endpoint.
