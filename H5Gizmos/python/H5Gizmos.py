@@ -242,8 +242,11 @@ class Gizmo:
             #display(HTML(msg))
             self._display_html_in_ipython(msg)
         else:
+            OKGREEN = '\033[92m'
+            ENDC = '\033[0m'
             msg = "Open gizmo using link (control-click / open link)\n\n" + link + "\n\n"
-            print (msg)
+            txt = "%s\n%s\n%s" % (OKGREEN, msg, ENDC)
+            print (txt)
         await self._has_started()
 
     def _display_html_in_ipython(self, msg):
