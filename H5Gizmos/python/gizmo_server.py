@@ -197,6 +197,7 @@ class WebInterface:
         ws_respond = web.WebSocketResponse,
         get_file_bytes = get_file_bytes,
         file_exists = os.path.isfile,
+        folder_exists = os.path.isdir,
         app_factory=web.Application,
         async_run=web._run_app,
     ):
@@ -205,6 +206,7 @@ class WebInterface:
         self.ws_respond = ws_respond
         self.get_file_bytes = get_file_bytes
         self.file_exists = file_exists
+        self.folder_exists = folder_exists
         self.app_factory = app_factory
         self.async_run = async_run
 
@@ -576,15 +578,17 @@ class RequestUrlInfo:
         sp = self.splitpath = path.split("/")
         ln = len(sp)
         # ??? xxx eventually allow mounting directories?
-        assert 4 <= ln <= 5, "expected 4 or 5 components to path: " + repr(sp)
+        assert 4 <= ln, "expected 4 or more components to path: " + repr(sp)
         assert sp[0] == "", "path should start with slash: " + repr(path)
         assert sp[1] == prefix, "path should have prefix: " + repr((prefix, path))
         method = self.method = sp[2]
         assert method in self.request_methods, "unknown request method: " + repr((method, path))
         self.identifier = sp[3]
         self.filename = None
-        if ln == 5:
+        self.additional_path = None
+        if ln > 4:
             self.filename = sp[4]
+            self.additional_path = sp[5:]
 
 class GizmoManager:
 
@@ -604,6 +608,11 @@ class GizmoManager:
         handler = FileGetter(at_path, filename, self, content_type, interface=interface)
         return self.add_http_handler(filename, handler)
 
+    def serve_folder(self, full_path, url_file_name, interface=STDInterface):
+        #print("\n making folder getter for", full_path)
+        handler = FolderGetter(full_path, url_file_name, self, interface=interface)
+        return self.add_http_handler(url_file_name, handler)
+
     def add_http_handler(self, filename, handler):
         self.filename_to_http_handler[filename] = handler
         return handler
@@ -611,6 +620,23 @@ class GizmoManager:
     def remove_http_handler(self, filename):
         if filename in self.filename_to_http_handler:
             del self.filename_to_http_handler[filename]
+
+    def validate_relative_path(self, path):
+        """
+        Check that relative path will resolve.
+        """
+        if path.startswith("./"):
+            path = path[2:]
+        components = path.split("/")
+        if not components:
+            raise NoSuchRelativePath("no components in relative path: " + repr(path))
+        filename = components[0]
+        remainder = components[1:]
+        f2h = self.filename_to_http_handler
+        handler = f2h.get(filename)
+        if handler is None:
+            raise NoSuchRelativePath("no handler for filename " + repr([filename, remainder]))
+        return handler.validate_relative_path(remainder)
 
     async def handle(self, method, info, request, interface=STDInterface):
         #pr("... mgr handling", request.path, "method", method)
@@ -660,14 +686,24 @@ class GizmoManager:
         url = "%s://%s:%s/%s" % (protocol, server, port, path)
         return url
 
+class NoSuchRelativePath(ValueError):
+    "The manager doesn't know how to resolve this path."
+
 class FileGetter:
 
     "Serve the contents of a file from the file system."
 
     def __init__(self, fs_path, filename, mgr, content_type=None, interface=STDInterface):
-        assert interface.file_exists(fs_path)
+        assert self.path_ok(fs_path, interface), "Bad path: " + repr(fs_path)
         self.fs_path = fs_path
         self.get_url_info(filename, mgr, content_type)
+
+    def path_ok(self, fs_path, interface):
+        return interface.file_exists(fs_path)
+
+    def validate_relative_path(self, remainder):
+        if remainder:
+            raise NoSuchRelativePath("File is not a folder: " + repr([self.fs_path, remainder]))
 
     def get_url_info(self, filename, mgr, content_type):
         self.prefix = mgr.prefix
@@ -696,6 +732,8 @@ class FileGetter:
 
     def handle_get(self, info, request, interface=STDInterface):
         path = self.fs_path
+        apath = info.additional_path
+        assert not apath, "File is not a folder: " + repr((path, apath))
         assert interface.file_exists(path)
         bytes = interface.get_file_bytes(path)
         return interface.respond(body=bytes, content_type=self.content_type)
@@ -703,11 +741,48 @@ class FileGetter:
     async def handle_post(self, info, request, interface=STDInterface):
         return self.handle_get(info, request, interface=interface)
 
+class FolderGetter(FileGetter):
+
+    """
+    Serve files under folder, guessing content types.
+    """
+
+    def path_ok(self, fs_path, interface):
+        #print ("\n checking folder", fs_path, "\n")
+        return interface.folder_exists(fs_path)
+
+    def handle_get(self, info, request, interface=STDInterface):
+        path = self.fs_path
+        apath = info.additional_path
+        assert apath, "Folder requires sub-path: " + repr((path))
+        all = [path] + list(apath)
+        full_os_path = "/".join(all)
+        assert interface.file_exists(full_os_path), "No such file found: " + repr(full_os_path)
+        bytes = interface.get_file_bytes(full_os_path)
+        (content_type, encoding) = mimetypes.guess_type(full_os_path)
+        return interface.respond(body=bytes, content_type=content_type)
+
+    def validate_relative_path(self, remainder, interface=STDInterface):
+        path = self.fs_path
+        if not remainder:
+            raise NoSuchRelativePath("Cannot serve folder root: " + repr(path))
+        all = [path] + list(remainder)
+        full_os_path = "/".join(all)
+        assert interface.file_exists(full_os_path), "No such file found: " + repr(full_os_path)
+
 class BytesGetter(FileGetter):
+
+    """
+    Serve bytes.
+    """
 
     def __init__(self, filename, byte_content, mgr, content_type):
         self.get_url_info(filename, mgr, content_type)  # xxxx remove mgr someday (only for testing?)
         self.set_content(byte_content)
+
+    def validate_relative_path(self, remainder):
+        if remainder:
+            raise NoSuchRelativePath("Bytes is not a folder: " + repr([self.filename, remainder]))
 
     def set_content(self, byte_content):
         self.bytes = bytes(byte_content)
