@@ -51,9 +51,12 @@ class jQueryComponent(gz_components.Component):
 
     def add_dependencies(self, gizmo):
         super().add_dependencies(gizmo)
-        gizmo._css_file("../static/jquery-ui-1.12.1/jquery-ui.css")
-        gizmo._js_file("../static/jquery-ui-1.12.1/jquery.min.js")
-        gizmo._js_file("../static/jquery-ui-1.12.1/jquery-ui.js")
+        #gizmo._css_file("../static/jquery-ui-1.12.1/jquery-ui.css")
+        #gizmo._js_file("../static/jquery-ui-1.12.1/jquery.min.js")
+        #gizmo._js_file("../static/jquery-ui-1.12.1/jquery-ui.js")
+        gizmo._relative_css("GIZMO_STATIC/jquery-ui-1.12.1/jquery-ui.css")
+        gizmo._relative_js("GIZMO_STATIC/jquery-ui-1.12.1/jquery.min.js")
+        gizmo._relative_js("GIZMO_STATIC/jquery-ui-1.12.1/jquery-ui.js")
         gizmo._embedded_script(MISC_JAVASCRIPT)
         gizmo._initial_reference("jQuery")
         gizmo._initial_reference("websocket_error_callback", "add_websocket_error_callback()")
