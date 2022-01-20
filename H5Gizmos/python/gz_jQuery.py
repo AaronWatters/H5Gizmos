@@ -392,6 +392,43 @@ class CheckBoxes(RadioButtons):
         if on_click:
             on_click(selected_values)
 
+class DropDownSelect(RadioButtons):
+
+    def configure_jQuery_element(self, element):
+        id2value = {}
+        gizmo = self.gizmo
+        jQuery = gizmo.jQuery
+        legend = self.legend
+        options = self.options
+        label_value_pairs = self.label_value_pairs
+        name = H5Gizmos.new_identifier("gzSelectName")
+        if legend:
+            legend_tag = '<label for="%s">%s</label>' % (name, legend)
+            do(jQuery(legend_tag).appendTo(element))
+        select_tag = '<select name="%s" id="%s"/>'
+        select = self.cache("select", jQuery(select_tag))
+        do(select.appendTo(element))
+        for (label, value) in label_value_pairs:
+            selected = ""
+            if value in self.selected_values:
+                selected = " selected "
+            identity = H5Gizmos.new_identifier("gzOption")
+            option_tag = '<option value="%s" %s>%s</option>' % (identity, selected, label)
+            do(jQuery(option_tag).appendTo(select))
+            id2value[identity] = value
+        self.id2value = id2value
+        do(select.selectmenu(options))
+        do(select.on('selectmenuchange', self.check_value), to_depth=1)
+        self.select = select
+
+    async def update_value(self):
+        identifier = await get(self.select.val())
+        value = self.id2value[identifier]
+        self.select_values(value)
+        on_click = self.on_click
+        if on_click:
+            on_click(value)
+
 class jQueryInput(jQueryComponent):
 
     def __init__(
