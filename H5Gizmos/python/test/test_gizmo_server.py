@@ -24,7 +24,7 @@ from H5Gizmos.python.gizmo_server import (
 
 class FakeApp:
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.router = FakeRouter()
         self.shut = False
         self.clean = False
