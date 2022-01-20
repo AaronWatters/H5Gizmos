@@ -77,7 +77,7 @@ class jQueryComponent(gz_components.Component):
         return self.element
 
     def enable_tooltips(self):
-        "Enable tool tips for the whole gizmo document."
+        "Enable jQueryUI tool tips for the whole gizmo document."
         self.tooltips_enabled = True
         if self.gizmo:
             # only enable tooltips after gizmo connect...
@@ -111,7 +111,7 @@ class jQueryComponent(gz_components.Component):
         self.configure_jQuery_element(self.element)
         return self.container[0]
 
-    def add(self, component):
+    def add(self, component, title=None):
         """
         Add a JQuery component after this one or the last add.
         The new component should not require dependancies which have not been loaded
@@ -121,7 +121,7 @@ class jQueryComponent(gz_components.Component):
         if not isinstance(component, jQueryComponent):
             ty = type(component)
             assert type(component) is str, "Only strings or jQuery components may be added: " + repr(ty)
-            component = Text(component)
+            component = Text(component, title=title)
         do(component.get_element(gizmo).appendTo(self.container))
         return component
 
@@ -207,8 +207,8 @@ class jQueryButton(jQueryComponent):
     options = None  # default
     on_click = None
     
-    def __init__(self, init_text, tag="<button/>", on_click=None, options=None):
-        super().__init__(init_text, tag)
+    def __init__(self, init_text, tag="<button/>", on_click=None, options=None, title=None):
+        super().__init__(init_text, tag, title=title)
         self.options = options
         self.on_click = on_click
 
@@ -241,14 +241,22 @@ class RadioButtons(jQueryComponent):
 
     # based on https://api.jqueryui.com/checkboxradio/
 
-    def __init__(self, label_value_pairs, selected_value=None, legend=None, on_click=None, options=None):
+    def __init__(
+        self, 
+        label_value_pairs, 
+        selected_value=None, 
+        legend=None, 
+        on_click=None, 
+        options=None,
+        title=None,
+        ):
         """
         Create a radio button fieldset for the label/pair values.
         If onclick is provided it will be called with on_click(value) when the corresponding
         radio button is selected.
         """
         tag = "<fieldset/>"
-        super().__init__(init_text="", tag=tag)
+        super().__init__(init_text="", tag=tag, title=title)
         label_value_pairs = [(label, value) for (label, value) in label_value_pairs]
         self.label_value_pairs = label_value_pairs
         self.labels = [pair[0] for pair in label_value_pairs]
@@ -313,12 +321,18 @@ class RadioButtons(jQueryComponent):
 
 class jQueryInput(jQueryComponent):
 
-    def __init__(self, initial_value="", input_type="text", size=None, change_callback=None):
+    def __init__(
+        self, 
+        initial_value="", 
+        input_type="text", 
+        size=None, 
+        change_callback=None,
+        title=None):
         sizetext = ""
         if size is not None:
             sizetext = ' size="%s"' % size
         tag = '<input type="%s" value="%s" %s/>' % (input_type, initial_value, sizetext)
-        super().__init__("", tag=tag)
+        super().__init__("", tag=tag, title=title)
         self.value = initial_value
         self.last_event = None # for debug
         self.change_callback = change_callback
@@ -348,7 +362,16 @@ class jQueryInput(jQueryComponent):
 
 class Slider(jQueryComponent):
 
-    def __init__(self, minimum, maximum, on_change=None, value=None, step=None, orientation="horizontal"):
+    def __init__(
+        self, 
+        minimum, 
+        maximum, 
+        on_change=None, 
+        value=None, 
+        step=None, 
+        orientation="horizontal",
+        title=None,
+        ):
         assert maximum > minimum, "Bad slider range: " + repr((minimum, maximum))
         if value is None:
             value = minimum
@@ -359,7 +382,7 @@ class Slider(jQueryComponent):
                 value = minimum
         if step is None:
             step = (maximum - minimum) * 0.01
-        super().__init__("")
+        super().__init__("", title=title)
         self.on_change = on_change
         self.minimum = minimum
         self.maximum = maximum
@@ -401,7 +424,17 @@ class RangeSlider(jQueryComponent):
 
     # xxx cut/paste from Slider -- too hard to refactor for now
 
-    def __init__(self, minimum, maximum, on_change=None, low_value=None, high_value=None, step=None, orientation="horizontal"):
+    def __init__(
+        self, 
+        minimum, 
+        maximum, 
+        on_change=None, 
+        low_value=None, 
+        high_value=None, 
+        step=None, 
+        orientation="horizontal",
+        title=None,
+        ):
         assert maximum > minimum, "Bad slider range: " + repr((minimum, maximum))
         if low_value is None:
             low_value = minimum
@@ -413,7 +446,7 @@ class RangeSlider(jQueryComponent):
         high_value = max(lw, hg)
         if step is None:
             step = (maximum - minimum) * 0.01
-        super().__init__("")
+        super().__init__("", title=title)
         self.on_change = on_change
         self.minimum = minimum
         self.maximum = maximum
@@ -488,8 +521,15 @@ class Stack(jQueryComponent):
         "padding": "3px",
     }
 
-    def __init__(self, children, tag="<div/>", css=None, child_css=None):
-        super().__init__(init_text=None, tag=tag)
+    def __init__(
+        self, 
+        children, 
+        tag="<div/>", 
+        css=None, 
+        child_css=None,
+        title=None,
+        ):
+        super().__init__(init_text=None, tag=tag, title=title)
         self.children = children
         self.css = css or {}
         self.child_css = child_css or {}
@@ -593,11 +633,20 @@ class jQueryImage(jQueryComponent):
     # quick and dirty for now
     version = 0
 
-    def __init__(self, filename, bytes_content, height=None, width=None, mime_type=None, alt="image"):
+    def __init__(
+        self, 
+        filename, 
+        bytes_content, 
+        height=None, 
+        width=None, 
+        mime_type=None, 
+        alt="image",
+        title=None,
+        ):
         self.filename = filename
         self.alt = alt
         self.tag = '<img src="%s" alt="%s"/>' % (self.versioned_link(), self.alt)
-        super().__init__(None, self.tag)
+        super().__init__(None, self.tag, title=title)
         self.bytes_content = bytes_content
         self.height = height
         self.width = width
@@ -634,10 +683,10 @@ class jQueryImage(jQueryComponent):
 
 class jQueryLabel(jQueryComponent):
 
-    def __init__(self, label_text, label_for_component):
+    def __init__(self, label_text, label_for_component, title=None):
         self.label_text = label_text
         self.label_for_component = label_for_component
-        super().__init__(init_text=label_text, tag="<label/>")
+        super().__init__(init_text=label_text, tag="<label/>", title=title)
 
     def add_dependencies(self, gizmo):
         super().add_dependencies(gizmo)
@@ -655,19 +704,29 @@ class jQueryLabel(jQueryComponent):
         label_for_ref = self.label_for_component.get_element(gizmo)
         do(label_for_ref.appendTo(element))
 
-def contain_in_label(label_text, component):
+def contain_in_label(label_text, component, title=None):
     """
-    Add a container surrounding the component.  Access the container using `component.label_container`
+    Add a container surrounding the component.
+    Access the container using `component.label_container`.
+    Use the container instead of the component, for exampla, as a child of Stack.
     """
-    component.label_container = jQueryLabel(label_text, component)
+    component.label_container = jQueryLabel(label_text, component, title=title)
     component.label_text = label_text
     return component
 
 class LabelledjQueryInput(jQueryInput):
 
-    def __init__(self, label_text, initial_value="", input_type="text", size=None, change_callback=None):
+    def __init__(
+        self, 
+        label_text, 
+        initial_value="", 
+        input_type="text", 
+        size=None, 
+        change_callback=None,
+        title=None,
+        ):
         super().__init__(initial_value, input_type, size, change_callback)
-        contain_in_label(label_text, self)
+        contain_in_label(label_text, self, title=title)
 
 
 def Html(tag, init_text=None, title=None):
@@ -675,10 +734,10 @@ def Html(tag, init_text=None, title=None):
     assert tag.startswith("<"), "The tag should be in a tag form like '<h1>this</h1>': " + repr(tag[:20])
     return jQueryComponent(tag=tag, init_text=init_text, title=title)
 
-def Text(content):
+def Text(content, title=None):
     "Simple text, escaped."
     econtent = html.escape(content)
-    return Html("<div>%s</div>"  % str(econtent))
+    return Html("<div>%s</div>"  % str(econtent), title=title)
 
 Button = jQueryButton
 Image = jQueryImage
