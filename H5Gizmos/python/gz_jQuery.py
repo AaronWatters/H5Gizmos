@@ -241,6 +241,8 @@ class RadioButtons(jQueryComponent):
 
     # based on https://api.jqueryui.com/checkboxradio/
 
+    input_type = "radio"
+
     def __init__(
         self, 
         label_value_pairs, 
@@ -255,35 +257,62 @@ class RadioButtons(jQueryComponent):
         If onclick is provided it will be called with on_click(value) when the corresponding
         radio button is selected.
         """
+        self.checkbox_radio_common_init(
+            label_value_pairs,
+            legend,
+            on_click,
+            options,
+            title
+        )
+        self.select_values(selected_value)
+
+    def checkbox_radio_common_init(
+        self,
+        label_value_pairs,
+        legend,
+        on_click,
+        options,
+        title
+        ):
         tag = "<fieldset/>"
         super().__init__(init_text="", tag=tag, title=title)
         label_value_pairs = [(label, value) for (label, value) in label_value_pairs]
         self.label_value_pairs = label_value_pairs
-        self.labels = [pair[0] for pair in label_value_pairs]
+        #self.labels = [pair[0] for pair in label_value_pairs]
         self.values = [pair[1] for pair in label_value_pairs]
-        assert selected_value is None or selected_value in self.values, \
-            "no such value to select: " + repr(selected_value)
-        self.selected_value = selected_value
+        #assert selected_value is None or selected_value in self.values, \
+        #    "no such value to select: " + repr(selected_value)
+        #self.selected_value = selected_value
         self.legend = legend
         self.on_click = on_click
         self.options = options or {}
         self.id2value = None
+
+    def select_values(self, *values):
+        selected_values = []
+        for value in values:
+            if value is not None:
+                assert value in self.values, \
+                    "no such value to select: " + repr((value, self.values))
+                selected_values.append(value)
+        self.selected_values = selected_values
 
     def configure_jQuery_element(self, element):
         id2value = {}
         gizmo = self.gizmo
         legend = self.legend
         options = self.options
-        selected_value = self.selected_value
+        #selected_value = self.selected_value
         label_value_pairs = self.label_value_pairs
         jQuery = gizmo.jQuery
         name = H5Gizmos.new_identifier("gzRadioName")
         if legend:
             legend_tag = "<legend>%s</legend>" % legend
             do(jQuery(legend_tag).appendTo(element))
+        ty = self.input_type
         for (label, value) in label_value_pairs:
             checked = ""
-            if value == selected_value:
+            if value in self.selected_values:
                 checked = " checked "
             #input_options = options.copy()
             #input_options["label"] = label
@@ -291,8 +320,8 @@ class RadioButtons(jQueryComponent):
             id2value[identity] = value
             label_tag = '<label for="%s">%s</label>' % (identity, label)
             do(jQuery(label_tag).appendTo(self.element))
-            input_tag = '<input type="radio" name="%s" id="%s" value="%s" %s/>' %(
-                name, identity, identity, checked
+            input_tag = '<input type="%s" name="%s" id="%s" value="%s" %s/>' %(
+                ty, name, identity, identity, checked
             )
             do(jQuery(input_tag).appendTo(element))
         selector = "input[name=%s]" % name
@@ -313,11 +342,55 @@ class RadioButtons(jQueryComponent):
         id = await get(jQuery(selector).attr("id"))
         value = self.id2value[id]
         #self.add("got id %s with value %s" % (repr(id), repr(value)))
-        self.selected_value = value
+        #self.selected_value = value
+        self.select_values(value)
         on_click = self.on_click
         if on_click:
             on_click(value)
         #print("update done!")
+
+class CheckBoxes(RadioButtons):
+
+    input_type = "checkbox"
+
+    def __init__(
+        self, 
+        label_value_pairs, 
+        selected_values=(), 
+        legend=None, 
+        on_click=None, 
+        options=None,
+        title=None,
+        ):
+        """
+        Create a radio button fieldset for the label/pair values.
+        If onclick is provided it will be called with on_click(value) when the corresponding
+        radio button is selected.
+        """
+        self.checkbox_radio_common_init(
+            label_value_pairs,
+            legend,
+            on_click,
+            options,
+            title
+        )
+        self.select_values(*selected_values)
+
+    async def update_value(self):
+        gizmo = self.gizmo
+        jQuery = gizmo.jQuery
+        id2value = self.id2value
+        selected_values = []
+        for identifier in id2value:
+            checked = await get(jQuery("#" + identifier)[0].checked)
+            #print("for", identifier, "checked is", checked)
+            if checked:
+                value = id2value[identifier]
+                selected_values.append(value)
+        self.select_values(*selected_values)
+        on_click = self.on_click
+        if on_click:
+            on_click(selected_values)
 
 class jQueryInput(jQueryComponent):
 
