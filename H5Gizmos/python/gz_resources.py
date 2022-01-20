@@ -25,6 +25,7 @@ def get_file_path(filename, local=True, relative_to_module=None, my_dir=my_dir):
             return result  # The file was found normally
     # otherwise look relative to the module.
     result = os.path.join(my_dir, filename)
+    result = os.path.abspath(result)
     #print ("exists test", result, my_dir)
     assert os.path.exists(result), "no such file " + repr((filename, result, user_path))
     return result
