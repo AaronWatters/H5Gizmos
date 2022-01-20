@@ -321,7 +321,7 @@ class Gizmo:
             return True
 
     def _insert_html(self, html_text, in_body=True):
-        # don't check for duplicates
+        # don't check for duplicates xxx?
         assert self._page_is_configurable()
         self._html_page.insert_html(html_text, in_body=in_body)
 
@@ -341,6 +341,14 @@ class Gizmo:
     def _remote_js(self, js_url, in_body=False, check=True):
         if self._embed_no_duplicate(js_url, check):
             self._html_page.remote_js(js_url, in_body=in_body)
+
+    def _relative_js(self, js_url, in_body=False, check=True):
+        self._manager.validate_relative_path(js_url)
+        return self._remote_js(js_url, in_body, check)
+
+    def _relative_css(self, css_url, in_body=False, check=True):
+        self._manager.validate_relative_path(css_url)
+        return self._remote_css(css_url, check)
 
     def _js_file(self, os_path, url_path=None, in_body=False):
         if self._embed_no_duplicate(os_path):
@@ -363,6 +371,16 @@ class Gizmo:
             #full_url = mgr.local_url(for_gizmo=self, method="http", filename=filename)
             relative_url = self.relative_url(filename)
             self._remote_css(relative_url, check=False)
+
+    def _serve_folder(self, url_file_name, os_path):
+        """
+        Serve all files below os_path using prefix url_file_name
+        """
+        # this is prolly not really correct
+        assert "/" not in url_file_name, "Url file name should not contain subfolders."
+        full_path = gz_resources.get_file_path(os_path)
+        mgr = self._manager
+        mgr.serve_folder(full_path, url_file_name)
 
     def _add_content(self, os_path, content_type, url_path=None, dont_duplicate=True):
         # don't check for duplicates, etc. content may be modified during processing.

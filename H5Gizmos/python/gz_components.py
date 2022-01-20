@@ -127,6 +127,7 @@ class Component:
         gizmo._initial_reference("H5GIZMO_INTERFACE")
         gizmo._initial_reference("H5Gizmos")
         gizmo._initial_reference("GIZMO_BODY", 'document.getElementById("GIZMO_BODY")')
+        self.serve_folder("GIZMO_STATIC", "../static")
 
     def add_deferred_dependencies(self, gizmo):
         "Add deferred dependencies after standard dependencies."
@@ -148,6 +149,20 @@ class Component:
     def initial_reference(self, identity, js_expression=None):
         "Reference to a Javascript value, bound at initialization."
         return self.dependency("_initial_reference", (identity, js_expression))
+
+    def serve_folder(self, url_file_name, os_path):
+        "Serve files from folder locally, guessing MIME type.."
+        if self.gizmo is not None:
+            return self.gizmo._serve_folder(url_file_name, os_path)
+        return self.dependency("_serve_folder", (url_file_name, os_path))
+
+    def relative_js(self, js_url, in_body=False, check=True):
+        "Load a Javascript URL from a locally served folder."
+        return self.dependency("_relative_js", (js_url, in_body, check))
+
+    def relative_css(self, css_url, in_body=False, check=True):
+        "Load a CSS style sheet URL from a locally served folder."
+        return self.dependency("_relative_css", (css_url, in_body, check))
 
     def insert_html(self, html_text, in_body=True):
         "Insert HTML at initialization time."
