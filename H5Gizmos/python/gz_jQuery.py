@@ -31,8 +31,11 @@ function add_websocket_error_callback() {
 class jQueryComponent(gz_components.Component):
 
     init_text = "" # default for subclasses
+    title_string = None
 
-    def __init__(self, init_text="Uninitialized JQuery Gizmo.", tag="<div/>"):
+    def __init__(self, init_text="Uninitialized JQuery Gizmo.", tag="<div/>", title=None):
+        if title:
+            self.set_title(title)
         self.init_text = init_text
         self.tag = tag
         #self.element_name = H5Gizmos.new_identifier("JQuery_element")
@@ -44,6 +47,7 @@ class jQueryComponent(gz_components.Component):
         self.initial_css = {}
         self.height = None
         self.width = None
+        self.tooltips_enabled = False
 
     def add_dependencies(self, gizmo):
         super().add_dependencies(gizmo)
@@ -72,11 +76,25 @@ class jQueryComponent(gz_components.Component):
             self.dom_element_reference(gizmo)
         return self.element
 
+    def enable_tooltips(self):
+        "Enable tool tips for the whole gizmo document."
+        self.tooltips_enabled = True
+        if self.gizmo:
+            # only enable tooltips after gizmo connect...
+            do(self.jQuery(self.window.document).tooltip())
+
+    def set_title(self, title_string):
+        ty = type(title_string)
+        assert ty is str, "Element title must be a string: " + repr(ty)
+        self.title_string = title_string
+
     def dom_element_reference(self, gizmo):
         super().dom_element_reference(gizmo)
         # ??? does it cause harm to always create an extra container around the element ???
         #self.container = name(self.container_name, gizmo.jQuery("<div/>"))
         self.container = self.cache("container", gizmo.jQuery("<div/>"))
+        # Convenience access to jQuery reference:
+        self.jQuery = gizmo.jQuery
         #divtext = "<div>%s</div>" % self.init_text
         self.element = self.cache("element", gizmo.jQuery(self.tag))
         self.resize(width=self.width, height=self.height)
@@ -85,6 +103,10 @@ class jQueryComponent(gz_components.Component):
             do(self.element.css(css))
         if self.init_text:
             do(self.element.html(self.init_text))
+        if self.title_string:
+            do(self.element.prop("title", self.title_string))
+        if self.tooltips_enabled:
+            self.enable_tooltips()
         do(self.element.appendTo(self.container))
         self.configure_jQuery_element(self.element)
         return self.container[0]
@@ -648,10 +670,10 @@ class LabelledjQueryInput(jQueryInput):
         contain_in_label(label_text, self)
 
 
-def Html(tag, init_text=None):
+def Html(tag, init_text=None, title=None):
     tag = str(tag).strip()
     assert tag.startswith("<"), "The tag should be in a tag form like '<h1>this</h1>': " + repr(tag[:20])
-    return jQueryComponent(tag=tag, init_text=init_text)
+    return jQueryComponent(tag=tag, init_text=init_text, title=title)
 
 def Text(content):
     "Simple text, escaped."
