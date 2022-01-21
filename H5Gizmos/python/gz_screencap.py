@@ -137,6 +137,23 @@ class jQuerySnapSuperClass(gz_jQuery.Stack, ScreenAssemblyMixin):
         gizmo = self.gizmo
         self.end_point = H5Gizmos.new_identifier("snapshot_endpoint")
         gizmo._add_getter(self.end_point, self.postback)
+        self.stopped = False
+        dialog_options = dict(
+            autoOpen=False,
+            Buttons={"Stop": self.stop_click},
+            resizable=False,
+            modal=True,
+        )
+        self.status_dialog = self.add_dialog("Status dialog.", dialog_options, "Status")
+
+    def status(self, message):
+        d = self.status_dialog
+        d.open_dialog()
+        d.html(message)
+
+    def stop_click(self, *ignored):
+        self.stopped = True
+        self.status_dialog.close_dialog()
 
     def get_media(self, *ignored):
         C = self.capture
@@ -201,8 +218,11 @@ class ScreenSnapShotAssembly(jQuerySnapSuperClass):
         #filename = self.file_input.value
         #path = os.path.expanduser(filename)
         #path = os.path.abspath(path)
-        self.info("Saving %s to %s." % (image_array.shape, repr(path)))
+        self.status("Saving %s to %s." % (image_array.shape, repr(path)))
         imsave(path, image_array)
+        #self.status_dialog.close_dialog()
+        self.info("Saved %s to %s." % (image_array.shape, repr(path)))
+        print("Saved", repr(path))
         #self.filename = filename
         #self.path = path
         #self.copy_path_button.set_on_click(self.copy_path)
@@ -219,19 +239,25 @@ class ScreenSnapShotAssembly(jQuerySnapSuperClass):
         #    self.do_snapshot()
         #else:
         #    schedule_task(self.delay_snapshot(delay))
+        self.stopped = False
         schedule_task(self.delay_snapshot(delay))
 
     async def delay_snapshot(self, delay):
         counter = math.ceil(delay)
         while counter > 0:
-            self.info("Delay Countdown: " + str(counter))
+            if self.stopped:
+                break
+            self.status("Delay Countdown: " + str(counter))
             counter -= 1
             await asyncio.sleep(1)
         await self.do_snapshot()
+        self.status("Snapshot saved.")
+        await asyncio.sleep(1)
+        self.status_dialog.close_dialog()
 
     async def do_snapshot(self):
         C = self.capture
-        self.info("Taking snapshot.")
+        self.status("Taking snapshot.")
         do(C.element.screen_capture.post_snapshot(self.end_point))
         data = await self.postback.wait_for_post(timeout=self.timeout, on_timeout=self.on_timeout)
         (body, query) = data
@@ -241,6 +267,7 @@ class ScreenSnapShotAssembly(jQuerySnapSuperClass):
 
     def on_timeout(self, *ignored):
         self.info("Snapshot timed out.")
+        self.status_dialog.close_dialog()
 
 class ScreenAnimationAssembly(jQuerySnapSuperClass):
 
@@ -255,7 +282,7 @@ class ScreenAnimationAssembly(jQuerySnapSuperClass):
         self.record_button = gz_jQuery.Button("Record")
         self.copy_tag_button = gz_jQuery.Button("Copy tag")
         self.attach_button = gz_jQuery.Button("Attach media")  # on_click is automatically attached
-        self.stop_button = gz_jQuery.Button("Stop")
+        #self.stop_button = gz_jQuery.Button("Stop")
         self.copy_path_button = gz_jQuery.Button("Copy path")
         #title = gz_jQuery.Text("filename:")
         self.info_text = gz_jQuery.Text("Select a window to snapshot.")
@@ -270,7 +297,7 @@ class ScreenAnimationAssembly(jQuerySnapSuperClass):
             css={"grid-template-rows": "auto min-content"},
             )
         middle = gz_jQuery.Shelf(
-            [self.x_slider, self.record_button, self.stop_button, self.attach_button],
+            [self.x_slider, self.record_button, self.attach_button],
             css={"grid-template-rows": "auto min-content min-content"},
             )
         bottom = gz_jQuery.Shelf(
@@ -320,10 +347,10 @@ class ScreenAnimationAssembly(jQuerySnapSuperClass):
             self.record_button.set_on_click(None)
             self.image_arrays = []
             counter = math.ceil(delay)
-            self.stop_button.set_on_click(self.stop_click)
+            #self.stop_button.set_on_click(self.stop_click)
             self.stopped = False
             while counter > 0:
-                self.info("Delay Countdown: " + str(counter))
+                self.status("Delay Countdown: " + str(counter))
                 counter -= 1
                 await asyncio.sleep(1)
                 if self.stopped:
@@ -332,35 +359,46 @@ class ScreenAnimationAssembly(jQuerySnapSuperClass):
             started = time.time()
             count = 0
             while not self.stopped and (elapsed < limit):
-                self.info("Captured %s. Elapsed %s." % (len(self.image_arrays), (count, elapsed)))
+                self.status("Captured %s. Elapsed %s." % (count, elapsed))
                 do(C.element.screen_capture.snapshot())
                 await asyncio.sleep(time_interval_seconds)
                 elapsed = time.time() - started
                 count += 1
         finally:
-            self.stop_click()
+            #self.stop_click()
             self.enable_capture()
         # wait for a final capture -- force websocket to sync (?)
-        await get(C.element.screen_capture.snapshot(True), timeout=None)  # 
+        self.status("Final snapshot.")
+        await get(C.element.screen_capture.snapshot(True), timeout=None)
+        self.status("Preparing data transfer.")
         error_message = await get(C.element.screen_capture.prepare_all_snapshots())
         if error_message:
             self.info(error_message)
+            self.status("Data transfer error: " + repr(error_message))
             return
         path = self.prepare_path()
+        self.status("Posting data to parent process.")
         do(C.element.screen_capture.post_all_snapshots(self.end_point))
         data = await self.postback.wait_for_post(timeout=self.timeout, on_timeout=self.on_timeout)
+        self.status("Got postback from parent process.")
         (body, query) = data
         info = query.copy()
         info["data"] = body
+        self.status("Preparing snapshot arrays.")
         self.image_arrays = get_snapshot_arrays(info)
         self.info("Storing %s to %s. Elapsed %s." % (len(self.image_arrays), repr(path), (elapsed, limit, count)))
         #return # DEBUGGING
+        self.status("Storing arrays to " + repr(path))
         mimsave(path, self.image_arrays, format='GIF', duration=time_interval_seconds)
         self.info("Saved %s to %s. Elapsed %s." % (len(self.image_arrays), repr(path), elapsed))
+        self.status("Store complete: " + repr(path))
+        print("wrote animated gif", path)
+        await asyncio.sleep(1)
+        self.status_dialog.close_dialog()
 
-    def stop_click(self, *ignored):
-        self.stopped = True
-        self.stop_button.set_on_click(None)
+    #def stop_click(self, *ignored):
+    #    self.stopped = True
+    #    self.stop_button.set_on_click(None)
 
     def on_timeout(self, *ignored):
         self.info("Data transfer timed out.")
