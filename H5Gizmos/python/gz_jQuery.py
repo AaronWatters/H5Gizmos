@@ -48,6 +48,7 @@ class jQueryComponent(gz_components.Component):
         self.height = None
         self.width = None
         self.tooltips_enabled = False
+        self.is_dialog = False
 
     def add_dependencies(self, gizmo):
         super().add_dependencies(gizmo)
@@ -117,17 +118,49 @@ class jQueryComponent(gz_components.Component):
 
     def add(self, component, title=None):
         """
-        Add a JQuery component after this one or the last add.
+        Add a JQuery component after this one or the last add to this one into a started gizmo
         The new component should not require dependancies which have not been loaded
-        previously into the gizmo.
+        before the gizmo started.
+        Return the added component.
         """
         gizmo = self.gizmo
+        assert gizmo is not None, "add() only to a component of a started gizmo."
         if not isinstance(component, jQueryComponent):
             ty = type(component)
             assert type(component) is str, "Only strings or jQuery components may be added: " + repr(ty)
             component = Text(component, title=title)
+        else:
+            if title:
+                component.set_title(title)
         do(component.get_element(gizmo).appendTo(self.container))
         return component
+
+    def add_dialog(self, text_or_component, dialog_options, title=None, to_depth=1):
+        """
+        Add a JQueryUI dialog after the gizmo has started.
+        Options should be a dictionary of jQueryUI dialog options.
+        See https://api.jqueryui.com/dialog/ for options documentation.
+        Return the dialog component.
+        """
+        assert self.gizmo is not None, "add dialog only to a component of a started gizmo."
+        component = self.add(text_or_component, title)
+        do(component.element.dialog(dialog_options), to_depth=to_depth)
+        component.is_dialog = True
+        return component
+
+    def close_dialog(self):
+        """
+        Close this dialog.  Error if the component is not a jQueryUI dialog.
+        """
+        assert self.is_dialog, "This operation is only valid for dialogs."
+        do(self.element.dialog("close"))
+
+    def open_dialog(self):
+        """
+        Open this dialog.  Error if the component is not a jQueryUI dialog.
+        """
+        assert self.is_dialog, "This operation is only valid for dialogs."
+        do(self.element.dialog("open"))
 
     def configure_jQuery_element(self, element):
         "For subclasses: configure the jQuery element by adding children or callbacks, etc."
