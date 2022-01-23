@@ -313,6 +313,15 @@ class RadioButtons(jQueryComponent):
         ):
         tag = "<fieldset/>"
         super().__init__(init_text="", tag=tag, title=title)
+        assert len(label_value_pairs) > 0, "please provide labels and values."
+        entry0 = label_value_pairs[0]
+        if type(entry0) is str:
+            # Allow list of strings as mapping to list of (s,s)
+            pairs = []
+            for s in label_value_pairs:
+                assert type(s) is str, "please provide label value pairs or all string options."
+                pairs.append((s,s))
+            label_value_pairs = pairs
         label_value_pairs = [(label, value) for (label, value) in label_value_pairs]
         self.label_value_pairs = label_value_pairs
         #self.labels = [pair[0] for pair in label_value_pairs]
