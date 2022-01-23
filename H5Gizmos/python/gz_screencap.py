@@ -129,6 +129,8 @@ class ScreenAssemblyMixin:
 
 class jQuerySnapSuperClass(gz_jQuery.Stack, ScreenAssemblyMixin):
 
+    aborted = False
+
     def configure_jQuery_element(self, element):
         result = super().configure_jQuery_element(element)
         self.add("This screen capture gizmo is only known to work using recent version of the Chrome browser")
@@ -140,7 +142,7 @@ class jQuerySnapSuperClass(gz_jQuery.Stack, ScreenAssemblyMixin):
         self.stopped = False
         dialog_options = dict(
             autoOpen=False,
-            Buttons={"Stop": self.stop_click},
+            buttons={"Stop": self.stop_click, "Abort": self.abort_click},
             resizable=False,
             modal=True,
         )
@@ -150,6 +152,10 @@ class jQuerySnapSuperClass(gz_jQuery.Stack, ScreenAssemblyMixin):
         d = self.status_dialog
         d.open_dialog()
         d.html(message)
+
+    def abort_click(self, *ignored):
+        self.aborted = True
+        self.stop_click()
 
     def stop_click(self, *ignored):
         self.stopped = True
@@ -240,12 +246,15 @@ class ScreenSnapShotAssembly(jQuerySnapSuperClass):
         #else:
         #    schedule_task(self.delay_snapshot(delay))
         self.stopped = False
+        self.aborted = False
         schedule_task(self.delay_snapshot(delay))
 
     async def delay_snapshot(self, delay):
         counter = math.ceil(delay)
         while counter > 0:
             if self.stopped:
+                if self.aborted: 
+                    return
                 break
             self.status("Delay Countdown: " + str(counter))
             counter -= 1
@@ -322,6 +331,7 @@ class ScreenAnimationAssembly(jQuerySnapSuperClass):
         self.filename = None  # no filename until image is saved.
         self.path = None
         self.stopped = True
+        self.aborted = False
         self.image_arrays = None
         super().__init__(children)
 
@@ -341,6 +351,7 @@ class ScreenAnimationAssembly(jQuerySnapSuperClass):
 
     async def get_frames(self, time_interval_seconds, delay, limit):
         self.stopped = False
+        self.aborted = False
         C = self.capture
         do(C.element.screen_capture.reset_snapshot_list())
         try:
@@ -348,12 +359,13 @@ class ScreenAnimationAssembly(jQuerySnapSuperClass):
             self.image_arrays = []
             counter = math.ceil(delay)
             #self.stop_button.set_on_click(self.stop_click)
-            self.stopped = False
             while counter > 0:
                 self.status("Delay Countdown: " + str(counter))
                 counter -= 1
                 await asyncio.sleep(1)
                 if self.stopped:
+                    if self.aborted:
+                        return
                     break
             elapsed = 0
             started = time.time()
@@ -364,6 +376,9 @@ class ScreenAnimationAssembly(jQuerySnapSuperClass):
                 await asyncio.sleep(time_interval_seconds)
                 elapsed = time.time() - started
                 count += 1
+            if self.stopped:
+                if self.aborted:
+                    return
         finally:
             #self.stop_click()
             self.enable_capture()
