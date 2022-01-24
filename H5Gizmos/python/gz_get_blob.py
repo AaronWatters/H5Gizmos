@@ -55,7 +55,7 @@ class BytesPostBack(gizmo_server.FileGetter):
         await future
         return future.result()
 
-    def handle_get(self, info, request, interface=gizmo_server.STDInterface):
+    async def handle_get(self, info, request, interface=gizmo_server.STDInterface):
         text = "This end point only accepts POST requests."
         status = 405
         return interface.respond(body=text, content_type="text/plain", status=status)

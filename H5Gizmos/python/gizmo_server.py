@@ -656,7 +656,7 @@ class GizmoManager:
             assert handler is not None, "No handler for filename " + repr(info.splitpath)
             #pr("... mgr delegating to handler", handler)
             if method == GET:
-                return handler.handle_get(info, request, interface=interface)
+                return await handler.handle_get(info, request, interface=interface)
             elif method == POST:
                 return await handler.handle_post(info, request, interface=interface)
             else:
@@ -735,7 +735,7 @@ class FileGetter:
         components = ["", self.prefix, mprefix, self.identifier, self.filename]
         return "/".join(components)
 
-    def handle_get(self, info, request, interface=STDInterface):
+    async def handle_get(self, info, request, interface=STDInterface):
         path = self.fs_path
         apath = info.additional_path
         assert not apath, "File is not a folder: " + repr((path, apath))
@@ -744,7 +744,7 @@ class FileGetter:
         return interface.respond(body=bytes, content_type=self.content_type)
 
     async def handle_post(self, info, request, interface=STDInterface):
-        return self.handle_get(info, request, interface=interface)
+        return await self.handle_get(info, request, interface=interface)
 
 class FolderGetter(FileGetter):
 
@@ -756,7 +756,7 @@ class FolderGetter(FileGetter):
         #print ("\n checking folder", fs_path, "\n")
         return interface.folder_exists(fs_path)
 
-    def handle_get(self, info, request, interface=STDInterface):
+    async def handle_get(self, info, request, interface=STDInterface):
         path = self.fs_path
         apath = info.additional_path
         assert apath, "Folder requires sub-path: " + repr((path))
@@ -792,7 +792,7 @@ class BytesGetter(FileGetter):
     def set_content(self, byte_content):
         self.bytes = bytes(byte_content)
 
-    def handle_get(self, info, request, interface=STDInterface):
+    async def handle_get(self, info, request, interface=STDInterface):
         return interface.respond(body=self.bytes, content_type=self.content_type)
 
 class GizmoPipelineSocketHandler:

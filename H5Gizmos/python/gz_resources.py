@@ -46,9 +46,9 @@ STD_HTML_PAGE_TEMPLATE = """
 
 class DelegatePOSTtoGETMixin:
 
-    def handle_post(self, info, request, interface=None):
+    async def handle_post(self, info, request, interface=None):
         interface = interface or gizmo_server.STDInterface
-        return self.handle_get(info, request, interface=interface)
+        return await self.handle_get(info, request, interface=interface)
 
 
 class HTMLPage(DelegatePOSTtoGETMixin):
@@ -84,7 +84,7 @@ class HTMLPage(DelegatePOSTtoGETMixin):
         assert self.embed_gizmo, "Embed gizmo must be enabled for standard link references."
         self.ref_id_and_js_expression.append([identity, js_expression])
 
-    def handle_get(self, info, request, interface=None):
+    async def handle_get(self, info, request, interface=None):
         interface = interface or gizmo_server.STDInterface
         bytes = self.as_string().encode("utf-8")
         self.materialized = True
