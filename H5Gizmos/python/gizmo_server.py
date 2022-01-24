@@ -304,10 +304,13 @@ IFRAME_TEMPLATE = """
     window.addEventListener("message", function(e) {{
         var this_frame = document.getElementById(identifier);
         var margin = {MARGIN};
+        var min_height = {MIN_HEIGHT};
         if ((this_frame) && (this_frame.contentWindow === e.source)) {{
             //console.log("processing message", e.data.height);
-            this_frame.height = (e.data.height + margin) + "px";
-            this_frame.style.height = (e.data.height + margin) + "px";
+            var height = Math.max(min_height, e.data.height + margin)
+            var height_px = (height) + "px";
+            this_frame.height = height_px;
+            this_frame.style.height = height_px;
         }}
     }});
 }}) ();
@@ -316,13 +319,14 @@ IFRAME_TEMPLATE = """
 <iframe id="{IDENTIFIER}"
     title="{TITLE}"
     width="100%"
+    height="{MIN_HEIGHT}px"
     src="{URL}"
     {ALLOW_LIST}
 </iframe>"""
 
 STD_ALLOW_LIST = 'allow="camera;microphone;display-capture;autoplay"'
 
-async def display_gizmo_jupyter_iframe(gizmo, delay=0.1, allow_list=STD_ALLOW_LIST, **args):
+async def display_gizmo_jupyter_iframe(gizmo, min_height=20, delay=0.1, allow_list=STD_ALLOW_LIST, **args):
     identifier = gizmo._identifier
     url = gizmo._entry_url()
     D = dict(
@@ -333,6 +337,7 @@ async def display_gizmo_jupyter_iframe(gizmo, delay=0.1, allow_list=STD_ALLOW_LI
         URL = url,
         ALLOW_LIST = allow_list,
         DELAY = 10000,
+        MIN_HEIGHT = min_height,
     )
     iframe_html = IFRAME_TEMPLATE.format(**D)
     #server_task = server.run_in_task(**args)
