@@ -230,6 +230,12 @@ class Component:
         do(self.js_object_cache._set(name, js_reference))
         return self.js_object_cache[name]
 
+    def uncache(self, name):
+        "Break the reference to the cached object."
+        cache = self.js_object_cache
+        window = self.window
+        return do(window.Reflect.deleteProperty(cache, name))
+
     def my(self, name):
         "Get reference to a previously cached object on the JS side"
         return self.js_object_cache[name]
@@ -255,12 +261,13 @@ class Component:
         """
         return self.gizmo.H5Gizmos.Function(list(argument_names), body_string)
 
-
     async def store_array(self, array, cache_name, dtype=None):
         """
         Transfer a numpy array to Javascript and store it in the local cache.
         The array is flattened and converted to an appropriate Javascript indexed collection.
         Return a reference to the cached index collection.
+
+        When done with the array in JS, break the array reference with component.uncache(cache_name).
         """
         #element = self.element
         gizmo = self.gizmo
