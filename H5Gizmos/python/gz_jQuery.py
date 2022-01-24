@@ -32,6 +32,7 @@ class jQueryComponent(gz_components.Component):
 
     init_text = "" # default for subclasses
     title_string = None
+    on_click_depth = 1
 
     def __init__(self, init_text="Uninitialized JQuery Gizmo.", tag="<div/>", title=None):
         if title:
@@ -49,6 +50,16 @@ class jQueryComponent(gz_components.Component):
         self.width = None
         self.tooltips_enabled = False
         self.is_dialog = False
+        self.on_click = None
+
+    def set_on_click(self, on_click):
+        self.on_click = on_click
+        if self.element is None:
+            return  # not yet configured.
+        if on_click is not None:
+            do(self.element.on("click", on_click), to_depth=self.on_click_depth)
+        else:
+            do(self.element.off("click"))
 
     def add_dependencies(self, gizmo):
         super().add_dependencies(gizmo)
@@ -70,7 +81,7 @@ class jQueryComponent(gz_components.Component):
     def on_callback_exception(self, error_text):
         error_text = "JQUERY GIZMO CALLBACK ERROR\n" + error_text
         error_text = error_text.replace("\n", "<br/>\n")
-        html = "<pre>%s</pre>" % error_text
+        #html = "<pre>%s</pre>" % error_text
         self.error_message(error_text)
 
     def error_message(self, error_text):
@@ -114,6 +125,8 @@ class jQueryComponent(gz_components.Component):
             self.enable_tooltips()
         do(self.element.appendTo(self.container))
         self.configure_jQuery_element(self.element)
+        # Set on_click after element has been configured -- order important for Button
+        self.set_on_click(self.on_click)
         return self.container[0]
 
     def add(self, component, title=None):
@@ -259,7 +272,7 @@ class jQueryButton(jQueryComponent):
             do(initializer(options))
         else:
             do(initializer())
-        self.set_on_click(self.on_click)
+        #self.set_on_click(self.on_click) # called in super()
 
     def set_on_click(self, on_click):
         self.on_click = on_click
@@ -885,15 +898,29 @@ class LabelledjQueryInput(jQueryInput):
         contain_in_label(label_text, self, title=title)
 
 
-def Html(tag, init_text=None, title=None):
+def Html(tag, init_text=None, title=None, css=None):
     tag = str(tag).strip()
     assert tag.startswith("<"), "The tag should be in a tag form like '<h1>this</h1>': " + repr(tag[:20])
-    return jQueryComponent(tag=tag, init_text=init_text, title=title)
+    result = jQueryComponent(tag=tag, init_text=init_text, title=title)
+    if css:
+        result.css(css)
+    return result
 
-def Text(content, title=None):
+def Text(content, title=None, css=None):
     "Simple text, escaped."
     econtent = html.escape(content)
-    return Html("<div>%s</div>"  % str(econtent), title=title)
+    result = Html("<div>%s</div>"  % str(econtent), title=title)
+    if css:
+        result.css(**css)
+    return result
+
+def ClickableText(content, title=None, on_click=None):
+    css = dict(color="blue", cursor="pointer")
+    # https://stackoverflow.com/questions/20165590/make-a-clickable-link-with-onclick-but-without-href/20165626
+    result = Html("<tag/>", content, title=title, css=css)
+    if on_click:
+        result.set_on_click(on_click)
+    return result
 
 Button = jQueryButton
 Image = jQueryImage
