@@ -43,4 +43,5 @@ from .python.gz_jQuery import (
     RadioButtons,
     CheckBoxes,
     LabelledInput,
+    ClickableText,
 )
