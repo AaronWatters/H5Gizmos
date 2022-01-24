@@ -77,11 +77,11 @@ class Component:
         gizmo._add_content(os_path="../static/icon.png", content_type="image/png")
         gizmo._insert_html('<link rel="icon" type="image/png" href="./icon.png"/>', in_body=False)
 
-    async def iframe(self, verbose=False, log_messages=False):
+    async def iframe(self, height=20, verbose=False, log_messages=False):
         assert gizmo_server.isnotebook(), "iframe method only runs in IPython kernel."
         gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages)
         self.prepare_application(gizmo)
-        await gizmo.start_in_iframe()
+        await gizmo.start_in_iframe(height=height)
 
     async def browse(self, auto_start=True, verbose=True, log_messages=False, close_button=True):
         #assert gizmo_server.isnotebook(), "browse method only runs in IPython kernel."

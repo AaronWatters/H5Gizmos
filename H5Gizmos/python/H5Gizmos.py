@@ -166,9 +166,9 @@ class Gizmo:
         await self._has_started()
 
 
-    async def start_in_iframe(self):
+    async def start_in_iframe(self, height=20):
         assert gizmo_server.isnotebook(), "Iframe interface only runs in a Jupyter IPython notebook."
-        await self._open_in_jupyter_iframe()
+        await self._open_in_jupyter_iframe(height=height)
         await self._has_started()
 
     async def _has_started(self):
@@ -268,8 +268,8 @@ class Gizmo:
         else:
             webbrowser.open_new_tab(url)
 
-    async def _open_in_jupyter_iframe(self):
-        await gizmo_server.display_gizmo_jupyter_iframe(self)
+    async def _open_in_jupyter_iframe(self, height=20):
+        await gizmo_server.display_gizmo_jupyter_iframe(self, min_height=height)
 
     def _initial_reference(self, identity, js_expression=None):
         assert type(identity) == str, "identity must be str " + repr(identity)
