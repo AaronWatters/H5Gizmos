@@ -8,6 +8,7 @@ from numpy.lib.function_base import _ARGUMENT
 from H5Gizmos import do, get, name, run, get_gizmo
 from . import gizmo_server
 from . import H5Gizmos
+from . import gz_get_blob
 import numpy as np
 
 JS_COLLECTION_NAME_MAP = {
@@ -291,6 +292,28 @@ class Component:
             # Remove the resource
             gizmo._remove_getter(url)
         return self.my(cache_name)
+
+    async def get_array_from_buffer(self, buffer_reference, dtype=np.uint8, timeout=60):
+        """
+        Get a binary buffer from Javascript and convert it to a numpy array of the specified dtype.
+        """
+        gizmo = self.gizmo
+        postback = gz_get_blob.BytesPostBack()
+        endpoint = H5Gizmos.new_identifier("array_post_endpoint")
+        gizmo._add_getter(endpoint, postback)
+        json_metadata = {}
+        try:
+            do(gizmo.H5GIZMO_INTERFACE.post_binary_data(endpoint, buffer_reference, json_metadata))
+            data = await postback.wait_for_post(timeout=timeout, on_timeout=self.on_timeout)
+        finally:
+            gizmo._remove_getter(endpoint)
+        (body, query) = data
+        print (type(body), len(body))
+        data_bytes = bytearray(body)
+        return np.frombuffer(data_bytes, dtype=dtype)
+
+    def on_timeout(self, *ignored):
+        raise TimeoutError("Operation timed out")
         
     def shutdown(self, *args):
         "Graceful shutdown"
