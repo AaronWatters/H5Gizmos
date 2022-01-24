@@ -505,9 +505,19 @@ class jQueryInput(jQueryComponent):
         self.value = initial_value
         self.last_event = None # for debug
         self.change_callback = change_callback
+        self.enter_callback = None
+    
+    def on_enter(self, callback):
+        self.enter_callback = callback
+
+    def on_keypress(self, event):
+        keyCode = event["keyCode"]
+        if keyCode == 13 and self.enter_callback:
+            self.enter_callback(event)
 
     def configure_jQuery_element(self, element):
         do(element.on("input", self.on_change), to_depth=2)
+        do(element.keypress(self.on_keypress), to_depth=1)
 
     def on_change(self, event):
         self.last_event = event   # for debugging
@@ -914,8 +924,8 @@ def Text(content, title=None, css=None):
         result.css(**css)
     return result
 
-def ClickableText(content, title=None, on_click=None):
-    css = dict(color="blue", cursor="pointer")
+def ClickableText(content, title=None, on_click=None, color="blue"):
+    css = dict(color=color, cursor="pointer")
     # https://stackoverflow.com/questions/20165590/make-a-clickable-link-with-onclick-but-without-href/20165626
     result = Html("<tag/>", content, title=title, css=css)
     if on_click:
