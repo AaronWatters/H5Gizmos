@@ -4,6 +4,7 @@ Composable gizmo factories.
 
 # run should work in jupyter -- delegate to browse when jupyter env detected.
 
+from time import time
 from numpy.lib.function_base import _ARGUMENT
 from H5Gizmos import do, get, name, run, get_gizmo
 from . import gizmo_server
@@ -262,7 +263,7 @@ class Component:
         """
         return self.gizmo.H5Gizmos.Function(list(argument_names), body_string)
 
-    async def store_array(self, array, cache_name, dtype=None):
+    async def store_array(self, array, cache_name, dtype=None, timeout=60):
         """
         Transfer a numpy array to Javascript and store it in the local cache.
         The array is flattened and converted to an appropriate Javascript indexed collection.
@@ -270,7 +271,7 @@ class Component:
 
         When done with the array in JS, break the array reference with component.uncache(cache_name).
         """
-        #element = self.element
+        # XXX add multiple get implementation for VERY large arrays.
         gizmo = self.gizmo
         if dtype is None:
             dtype = array.dtype
@@ -287,7 +288,7 @@ class Component:
         gizmo._add_getter(url, getter)
         # Pull the resource on the JS side.
         try:
-            length = await get(gizmo.H5Gizmos.store_blob(url, object, cache_name, converter))
+            length = await get(gizmo.H5Gizmos.store_blob(url, object, cache_name, converter), timeout=timeout)
         finally:
             # Remove the resource
             gizmo._remove_getter(url)
