@@ -2,7 +2,7 @@
 from . import H5Gizmos
 #from . import gz_resources
 
-from aiohttp import web
+from aiohttp import content_disposition_filename, web
 #import aiohttp
 import asyncio
 #import weakref
@@ -781,7 +781,8 @@ class BytesGetter(FileGetter):
     Serve bytes.
     """
 
-    def __init__(self, filename, byte_content, mgr, content_type):
+    def __init__(self, filename, byte_content, mgr, content_type, chunksize=10000000):
+        self.chunksize = chunksize
         self.get_url_info(filename, mgr, content_type)  # xxxx remove mgr someday (only for testing?)
         self.set_content(byte_content)
 
@@ -790,10 +791,40 @@ class BytesGetter(FileGetter):
             raise NoSuchRelativePath("Bytes is not a folder: " + repr([self.filename, remainder]))
 
     def set_content(self, byte_content):
+        if len(byte_content) > self.get_sanity_limit:
+            raise ValueError("transfers larger than %s not yet supported" %
+                self.get_sanity_limit)
         self.bytes = bytes(byte_content)
 
+    get_sanity_limit = 1590000000
+
     async def handle_get(self, info, request, interface=STDInterface):
-        return interface.respond(body=self.bytes, content_type=self.content_type)
+        # based on https://gist.github.com/buxx/d0a749b6673a18a90b47464b79254124
+        bytes = self.bytes
+        ln = len(bytes)
+        chunksize = self.chunksize
+        content_type = self.content_type
+        if ln < chunksize:
+            return interface.respond(body=bytes, content_type=content_type)
+        elif ln < self.get_sanity_limit:
+            response = web.StreamResponse(
+                status=200,
+                reason='OK',
+                headers={'Content-Type': content_type},
+            )
+            await response.prepare(request)
+            cursor = 0
+            while cursor < ln:
+                #print("cursor", cursor)
+                end = cursor + chunksize
+                chunk = bytes[cursor : end]
+                await response.write(chunk)
+                cursor = end
+            await response.write_eof()
+            return response
+        else:
+            raise ValueError("transfers larger than %s not yet supported" %
+                self.get_sanity_limit)
 
 class GizmoPipelineSocketHandler:
 
