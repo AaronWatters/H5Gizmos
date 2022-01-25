@@ -52,6 +52,7 @@ class jQueryComponent(gz_components.Component):
         self.tooltips_enabled = False
         self.is_dialog = False
         self.on_click = None
+        self.cached_dom_element_reference = None
 
     def __repr__(self):
         return self.__class__.__name__ + repr( (self.tag, self.init_text))
@@ -111,6 +112,9 @@ class jQueryComponent(gz_components.Component):
         return self
 
     def dom_element_reference(self, gizmo):
+        result = self.cached_dom_element_reference
+        if result is not None:
+            return result
         super().dom_element_reference(gizmo)
         # ??? does it cause harm to always create an extra container around the element ???
         #self.container = name(self.container_name, gizmo.jQuery("<div/>"))
@@ -133,7 +137,9 @@ class jQueryComponent(gz_components.Component):
         self.configure_jQuery_element(self.element)
         # Set on_click after element has been configured -- order important for Button
         self.set_on_click(self.on_click)
-        return self.container[0]
+        result = self.container[0]
+        self.cached_dom_element_reference = result
+        return result
 
     def add(self, component, title=None):
         """
@@ -232,10 +238,11 @@ class jQueryComponent(gz_components.Component):
         styles.update(name_to_style)
         if dict is not None:
             styles.update(dict)
-        if self.element is not None:
-            do(self.element.css(styles))
-        else:
-            self.initial_css.update(styles)
+        if styles:
+            if self.element is not None:
+                do(self.element.css(styles))
+            else:
+                self.initial_css.update(styles)
         return self
 
     def resize(self, width=None, height=None):
