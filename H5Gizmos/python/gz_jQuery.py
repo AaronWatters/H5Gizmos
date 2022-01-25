@@ -53,6 +53,7 @@ class jQueryComponent(gz_components.Component):
         self.is_dialog = False
         self.on_click = None
         self.cached_dom_element_reference = None
+        self.class_list = []
 
     def __repr__(self):
         return self.__class__.__name__ + repr( (self.tag, self.init_text))
@@ -124,6 +125,9 @@ class jQueryComponent(gz_components.Component):
         #divtext = "<div>%s</div>" % self.init_text
         self.element = self.cache("element", gizmo.jQuery(self.tag))
         self.resize(width=self.width, height=self.height)
+        classes = " ".join(self.class_list)
+        if classes:
+            do(self.element.addClass(classes))
         css = self.initial_css
         if css:
             do(self.element.css(css))
@@ -143,7 +147,7 @@ class jQueryComponent(gz_components.Component):
 
     def add(self, component, title=None):
         """
-        Add a JQuery component after this one or the last add to this one into a started gizmo
+        Append a JQuery component after a started gizmo.
         The new component should not require dependancies which have not been loaded
         before the gizmo started.
         Return the added component.
@@ -243,6 +247,26 @@ class jQueryComponent(gz_components.Component):
                 do(self.element.css(styles))
             else:
                 self.initial_css.update(styles)
+        return self
+
+    def addClass(self, class_string):
+        classes = class_string.split()
+        if classes:
+            for css_class in classes:
+                if css_class not in self.class_list:
+                    self.class_list.append(css_class)
+            if self.element is not None:
+                do(self.element.addClass(class_string))
+        return self
+
+    def removeClass(self, class_string):
+        classes = class_string.split()
+        if classes:
+            for css_class in classes:
+                if css_class in self.class_list:
+                    self.class_list.remove(css_class)
+            if self.element is not None:
+                do(self.element.removeClass(class_string))
         return self
 
     def resize(self, width=None, height=None):
