@@ -211,8 +211,10 @@ class Component:
 
     def initialize_object_cache(self):
         gizmo = self.gizmo
-        cache_name = self.cache_name = (self.cache_name or self.get_cache_name())
-        self.js_object_cache = name(cache_name, H5Gizmos.GizmoLiteral({}, gizmo))
+        cache_name = self.cache_name
+        if cache_name is None:
+            cache_name = self.cache_name = (self.cache_name or self.get_cache_name())
+            self.js_object_cache = name(cache_name, H5Gizmos.GizmoLiteral({}, gizmo))
 
     def get_cache_name(self):
         prefix = "cache"
