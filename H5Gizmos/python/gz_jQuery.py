@@ -1,4 +1,5 @@
 
+from numpy import isin
 from H5Gizmos.python import gizmo_server
 from H5Gizmos.python.gz_resources import MISC_OPERATIONS_TEMPLATE
 from . import gz_components
@@ -107,6 +108,7 @@ class jQueryComponent(gz_components.Component):
         ty = type(title_string)
         assert ty is str, "Element title must be a string: " + repr(ty)
         self.title_string = title_string
+        return self
 
     def dom_element_reference(self, gizmo):
         super().dom_element_reference(gizmo)
@@ -171,6 +173,7 @@ class jQueryComponent(gz_components.Component):
         """
         assert self.is_dialog, "This operation is only valid for dialogs."
         do(self.element.dialog("close"))
+        return self
 
     def open_dialog(self):
         """
@@ -178,6 +181,7 @@ class jQueryComponent(gz_components.Component):
         """
         assert self.is_dialog, "This operation is only valid for dialogs."
         do(self.element.dialog("open"))
+        return self
 
     def configure_jQuery_element(self, element):
         "For subclasses: configure the jQuery element by adding children or callbacks, etc."
@@ -192,6 +196,7 @@ class jQueryComponent(gz_components.Component):
         do(function_call, to_depth=to_depth)
 
     def get_info_div(self):
+        "Attach a DIV to the surrounding container for displaying miscellaneous information."
         if self.info_div is None:
             gizmo = self.gizmo
             assert gizmo is not None, "no gizmo to attach"
@@ -209,6 +214,7 @@ class jQueryComponent(gz_components.Component):
             self.init_text = html_text
         else:
             do(self.element.html(html_text))
+        return self
 
     def text(self, string_text):
         """
@@ -216,6 +222,7 @@ class jQueryComponent(gz_components.Component):
         """
         html_text = html.escape(string_text)
         return self.html(html_text)
+        return self
 
     def css(self, dict=None, **name_to_style):
         """
@@ -229,6 +236,7 @@ class jQueryComponent(gz_components.Component):
             do(self.element.css(styles))
         else:
             self.initial_css.update(styles)
+        return self
 
     def resize(self, width=None, height=None):
         """
@@ -243,18 +251,22 @@ class jQueryComponent(gz_components.Component):
                 do(self.element.width(width))
             if height is not None:
                 do(self.element.height(height))
+        return self
 
     def on(self, event_name, callback, to_depth=1):
         "When an event of this type happens to this object, invoke the callback."
         do(self.element.on(event_name, callback), to_depth=to_depth)
+        return self
 
     def off(self, event_name):
         "Cancel event callbacks of this type for this object."
         do(self.element.off(event_name))
+        return self
 
     def empty(self):
         "Remove all content from this element."
         do(self.element.empty())
+        return self
 
 class jQueryButton(jQueryComponent):
 
@@ -715,7 +727,7 @@ class Stack(jQueryComponent):
         title=None,
         ):
         super().__init__(init_text=None, tag=tag, title=title)
-        self.children = children
+        self.children = self.check_children(children)
         self.css = css or {}
         self.child_css = child_css or {}
         #self.children_name = H5Gizmos.new_identifier("JQuery_container")
@@ -731,6 +743,27 @@ class Stack(jQueryComponent):
         #L.append("])")
         L[-1] = L[-1] + "])"
         return "\n".join(L)
+
+    def check_children(self, children):
+        checked = []
+        for c in children:
+            if not isinstance(c, jQueryComponent):
+                tc = type(c)
+                if tc is list:
+                    c = self.listChild(c)
+                else:
+                    assert tc is str, "child must be jQueryComponent, list, or string: " + repr((tc, c))
+                    # automatically convert string to Html or Text
+                    cs = c.strip()
+                    if cs.startswith("<"):
+                        c = Html(cs)
+                    else:
+                        c = Text(c)
+            checked.append(c)
+        return checked
+
+    def listChild(self, seq):
+        return Shelf(seq)
 
     def add_dependencies(self, gizmo):
         super().add_dependencies(gizmo)
@@ -751,7 +784,7 @@ class Stack(jQueryComponent):
         gizmo = self.gizmo
         assert gizmo is not None, "gizmo must be attached."
         do(self.element.empty())
-        self.children = children
+        self.children = self.check_children(children)
         # xxxx maybe use child.element?
         references = [self.child_reference(child, gizmo) for child in children]
         #jq = gizmo.jQuery
@@ -811,6 +844,9 @@ class Shelf(Stack):
             "grid-template-rows": row_template,
         }
         return css
+
+    def listChild(self, seq):
+        return Stack(seq)
 
     def element_css(self, index):
         child_css = {
