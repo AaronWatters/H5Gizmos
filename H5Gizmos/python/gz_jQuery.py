@@ -52,6 +52,9 @@ class jQueryComponent(gz_components.Component):
         self.is_dialog = False
         self.on_click = None
 
+    def __repr__(self):
+        return self.__class__.__name__ + repr( (self.tag, self.init_text))
+
     def set_on_click(self, on_click):
         self.on_click = on_click
         if self.element is None:
@@ -60,6 +63,7 @@ class jQueryComponent(gz_components.Component):
             do(self.element.on("click", on_click), to_depth=self.on_click_depth)
         else:
             do(self.element.off("click"))
+        return self
 
     def add_dependencies(self, gizmo):
         super().add_dependencies(gizmo)
@@ -277,7 +281,7 @@ class jQueryButton(jQueryComponent):
     def set_on_click(self, on_click):
         self.on_click = on_click
         if self.element is None:
-            return  # not yet configured.
+            return  self # not yet configured.
         if on_click is not None:
             do(self.element.on("click", on_click), to_depth=self.on_click_depth)
             do(self.element.prop("disabled", False))
@@ -286,6 +290,7 @@ class jQueryButton(jQueryComponent):
             do(self.element.off("click"))
             do(self.element.prop("disabled", True))
             do(self.element.css("opacity", 0.5))
+        return self
 
 class RadioButtons(jQueryComponent):
 
@@ -509,6 +514,7 @@ class jQueryInput(jQueryComponent):
     
     def on_enter(self, callback):
         self.enter_callback = callback
+        return self
 
     def on_keypress(self, event):
         keyCode = event["keyCode"]
@@ -714,6 +720,17 @@ class Stack(jQueryComponent):
         self.child_css = child_css or {}
         #self.children_name = H5Gizmos.new_identifier("JQuery_container")
         #self.children_reference = None
+
+    def __repr__(self):
+        L = [self.__class__.__name__ + "(["]
+        indent = "    "
+        for c in self.children:
+            rc = repr(c)
+            rc = rc.replace("\n", "\n" + indent)
+            L.append( indent + rc + ",")
+        #L.append("])")
+        L[-1] = L[-1] + "])"
+        return "\n".join(L)
 
     def add_dependencies(self, gizmo):
         super().add_dependencies(gizmo)
