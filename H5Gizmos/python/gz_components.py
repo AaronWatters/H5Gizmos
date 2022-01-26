@@ -192,7 +192,7 @@ class Component:
 
     def css_file(self, os_path, url_path=None):
         "Load a CSS style sheet from a file at initialization."
-        return self.dependency("_js_file", (os_path, url_path))
+        return self.dependency("_css_file", (os_path, url_path))
 
     def add_content(self, os_path, content_type, url_path=None, dont_duplicate=True):
         "Configure a content resource from a file."
