@@ -299,6 +299,11 @@ class jQueryComponent(gz_components.Component):
         do(self.element.empty())
         return self
 
+    def focus(self):
+        "Set focus to this element."
+        do(self.element.focus())
+        return self
+
 class jQueryButton(jQueryComponent):
 
     options = None  # default
@@ -785,6 +790,58 @@ class ChildContainerSuper(jQueryComponent):
             return gizmo.jQuery(child.dom_element_reference(gizmo))
 
 
+class Template(ChildContainerSuper):
+
+    def __init__(self, html_template, title=None, empty_targets=True):
+        self.html_template = html_template
+        super().__init__(init_text=None, tag=html_template, title=title)
+        self.class_child_pairs = []
+        self.empty_targets = empty_targets
+
+    def put(self, child_component, at_class):
+        assert self.gizmo is None, "Cannot attach after gizmo is started."
+        assert at_class in self.html_template, "class string not found in template: " + repr(at_class)
+        [component] = self.check_children([child_component])
+        self.class_child_pairs.append([at_class, component])
+        return self
+
+    def __repr__(self):
+        L = [self.__class__.__name__ + "(["]
+        indent = "    "
+        for (to_id, component) in self.class_child_pairs:
+            crepr = repr(component)
+            idrepr = repr(to_id)
+            rc = idrepr + " << " + crepr
+            rc = rc.replace("\n", "\n" + indent)
+            L.append( indent + rc + ",")
+        L[-1] = L[-1] + "])"
+        return "\n".join(L)
+
+    def configure_jQuery_element(self, element):
+        gizmo = self.gizmo
+        pairs = self.class_child_pairs
+        classes = set(p[0] for p in pairs)
+        ref_pairs = []
+        class_to_ref = {}
+        for (classname, c) in pairs:
+            class_ref = element.find("." + classname)
+            child_ref = self.child_reference(c, gizmo)
+            class_to_ref[classname] = class_ref
+            ref_pairs.append((class_ref, child_ref))
+        if self.empty_targets:
+            for class_ref in class_to_ref.values():
+                do(class_ref.empty())
+        for (class_ref, child_ref) in ref_pairs:
+            do(child_ref.appendTo(class_ref))
+        self.ref_pairs = ref_pairs
+
+    async def validate_classes(self):
+        "After gizmo start, find the class names in the template via the DOM."
+        for pair in self.ref_pairs:
+            class_ref = pair[0]
+            ln = await get(class_ref.length)
+            assert ln > 0, "Class ref not found: " + repr(class_ref)
+
 class Stack(ChildContainerSuper):
 
     '''element_css_defaults = {
@@ -836,7 +893,7 @@ class Stack(ChildContainerSuper):
         gizmo = self.gizmo
         assert gizmo is not None, "gizmo must be attached."
         do(self.element.empty())
-        self.children = self.check_children(children)
+        children = self.children = self.check_children(children)
         # xxxx maybe use child.element?
         references = [self.child_reference(child, gizmo) for child in children]
         #jq = gizmo.jQuery
