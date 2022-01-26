@@ -297,8 +297,10 @@ class jQueryComponent(gz_components.Component):
         if self.element is not None:
             if width is not None:
                 do(self.element.width(width))
+                do(self.container.width(width))
             if height is not None:
                 do(self.element.height(height))
+                do(self.container.height(height))
         return self
 
     def on(self, event_name, callback, to_depth=1):
