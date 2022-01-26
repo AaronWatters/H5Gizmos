@@ -45,4 +45,6 @@ from .python.gz_jQuery import (
     LabelledInput,
     ClickableText,
     Template,
+    Plotter,
+    Label,
 )

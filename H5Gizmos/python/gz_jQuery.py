@@ -1147,6 +1147,7 @@ Button = jQueryButton
 Image = jQueryImage
 Input = jQueryInput
 LabelledInput = LabelledjQueryInput
+Label = jQueryLabel
 
 # Tests and Demos:
 
