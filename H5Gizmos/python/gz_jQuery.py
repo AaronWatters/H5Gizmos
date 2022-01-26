@@ -732,8 +732,60 @@ class RangeSlider(jQueryComponent):
         if c is not None:
             c(values)
 
+class ChildContainerSuper(jQueryComponent):
 
-class Stack(jQueryComponent):
+    # defaults
+    children = ()
+    css = {}
+    child_css = {}
+
+    def check_children(self, children):
+        checked = []
+        for c in children:
+            if not isinstance(c, jQueryComponent):
+                tc = type(c)
+                if tc is list:
+                    c = self.listChild(c)
+                else:
+                    assert tc is str, "child must be jQueryComponent, list, or string: " + repr((tc, c))
+                    # automatically convert string to Html or Text
+                    cs = c.strip()
+                    if cs.startswith("<"):
+                        c = Html(cs)
+                    else:
+                        c = Text(c)
+            checked.append(c)
+        return checked
+
+    def listChild(self, seq):
+        return Stack(seq)
+
+    def add_dependencies(self, gizmo):
+        super().add_dependencies(gizmo)
+        # also add child dependencies
+        for child in self.children:
+            child.add_dependencies(gizmo)
+
+    def add_deferred_dependencies(self, gizmo):
+        super().add_deferred_dependencies(gizmo)
+        # also add child dependencies
+        for child in self.children:
+            child.add_deferred_dependencies(gizmo)
+
+    def configure_jQuery_element(self, element):
+        self.attach_children(self.children)
+        
+    def attach_children(self, children):
+        raise NotImplementedError("this must be defined in a subclass.")
+
+    def child_reference(self, child, gizmo):
+        if child is None:
+            return None
+        else:
+            return gizmo.jQuery(child.dom_element_reference(gizmo))
+
+
+class Stack(ChildContainerSuper):
 
     '''element_css_defaults = {
         "display": "grid",
@@ -777,41 +829,8 @@ class Stack(jQueryComponent):
         L[-1] = L[-1] + "])"
         return "\n".join(L)
 
-    def check_children(self, children):
-        checked = []
-        for c in children:
-            if not isinstance(c, jQueryComponent):
-                tc = type(c)
-                if tc is list:
-                    c = self.listChild(c)
-                else:
-                    assert tc is str, "child must be jQueryComponent, list, or string: " + repr((tc, c))
-                    # automatically convert string to Html or Text
-                    cs = c.strip()
-                    if cs.startswith("<"):
-                        c = Html(cs)
-                    else:
-                        c = Text(c)
-            checked.append(c)
-        return checked
-
     def listChild(self, seq):
         return Shelf(seq)
-
-    def add_dependencies(self, gizmo):
-        super().add_dependencies(gizmo)
-        # also add child dependencies
-        for child in self.children:
-            child.add_dependencies(gizmo)
-
-    def add_deferred_dependencies(self, gizmo):
-        super().add_deferred_dependencies(gizmo)
-        # also add child dependencies
-        for child in self.children:
-            child.add_deferred_dependencies(gizmo)
-
-    def configure_jQuery_element(self, element):
-        self.attach_children(self.children)
 
     def attach_children(self, children):
         gizmo = self.gizmo
@@ -838,12 +857,6 @@ class Stack(jQueryComponent):
             else:
                 #do(child_container)  # ???? is this needed?
                 pass
-
-    def child_reference(self, child, gizmo):
-        if child is None:
-            return None
-        else:
-            return gizmo.jQuery(child.dom_element_reference(gizmo))
 
     def main_css(self, children):
         row_template = "auto"
