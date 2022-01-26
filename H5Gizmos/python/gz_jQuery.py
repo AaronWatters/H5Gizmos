@@ -6,6 +6,7 @@ from . import gz_components
 from . import H5Gizmos
 from .H5Gizmos import do, get
 import html
+import io
 
 # add Markdown(...)
 # new method jqc.append(other_jqc)
@@ -970,7 +971,7 @@ class jQueryImage(jQueryComponent):
 
     def __init__(
         self, 
-        filename, 
+        filename,   # filename of None generates a fresh "don't care" name.
         bytes_content, 
         height=None, 
         width=None, 
@@ -978,6 +979,8 @@ class jQueryImage(jQueryComponent):
         alt="image",
         title=None,
         ):
+        if filename is None:
+            filename = H5Gizmos.new_identifier("jQueryImage")
         self.filename = filename
         self.alt = alt
         self.tag = '<img src="%s" alt="%s"/>' % (self.versioned_link(), self.alt)
@@ -1013,8 +1016,44 @@ class jQueryImage(jQueryComponent):
         gizmo._add_getter(self.filename, self.getter)
         self.resize(height=self.height, width=self.width)
 
-# aliases
-#Html = jQueryComponent
+SMALL_PNG_BYTES = (
+    b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x01\x03\x00\x00'
+    b'\x00%\xdbV\xca\x00\x00\x00\x03PLTE\x00\x00\x00\xa7z=\xda\x00\x00\x00\x01tRNS\x00@\xe6'
+    b'\xd8f\x00\x00\x00\nIDAT\x08\xd7c`\x00\x00\x00\x02\x00\x01\xe2!\xbc3\x00\x00\x00\x00IEND\xaeB`\x82')
+
+class Plotter(jQueryImage):
+
+    """
+    Context manager to capture matplotlib output.
+    """
+
+    def __init__(self, alt="matplotlib plot"):
+        super().__init__(
+            filename=None,
+            bytes_content=SMALL_PNG_BYTES,  # initial default
+            mime_type="image/png",
+            alt=alt
+        )
+        self.png_content = None
+
+    def __enter__(self):
+        #print("entering", self)
+        pass
+
+    def __exit__(self, type, value, traceback):
+        # https://stackoverflow.com/questions/47816175/pandas-dataframe-and-seaborn-graph-interaction-with-html-webpage
+        import matplotlib.pyplot as plt
+        #print("exitting", self)
+        if type is None:
+            # no error
+            figfile = io.BytesIO()
+            plt.savefig(figfile, format='png')
+            figfile.seek(0)
+            figbytes = figfile.getvalue()
+            #print("changing content", len(figbytes))
+            self.change_content(figbytes)
+            plt.close()  # don't display the figure anywhere else (?)
+            self.png_content = figbytes
 
 class jQueryLabel(jQueryComponent):
 
