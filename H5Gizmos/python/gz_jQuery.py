@@ -735,7 +735,7 @@ class RangeSlider(jQueryComponent):
 
 class Stack(jQueryComponent):
 
-    element_css_defaults = {
+    '''element_css_defaults = {
         "display": "grid",
         "grid-gap": "3px",
         "padding": "3px",
@@ -747,7 +747,7 @@ class Stack(jQueryComponent):
     child_css_defaults = {
         "background-color": "white",
         "padding": "3px",
-    }
+    }'''
 
     def __init__(
         self, 
@@ -756,11 +756,13 @@ class Stack(jQueryComponent):
         css=None, 
         child_css=None,
         title=None,
+        css_class="H5Gizmo-stack"
         ):
         super().__init__(init_text=None, tag=tag, title=title)
         self.children = self.check_children(children)
         self.css = css or {}
         self.child_css = child_css or {}
+        self.addClass(css_class)
         #self.children_name = H5Gizmos.new_identifier("JQuery_container")
         #self.children_reference = None
 
@@ -823,12 +825,12 @@ class Stack(jQueryComponent):
         #seq = H5Gizmos.GizmoSequence(references, self.gizmo)  # not needed?
         #name(self.children_name, seq)
         css = self.main_css(children)
-        css.update(self.element_css_defaults)
+        #css.update(self.element_css_defaults)
         css.update(self.css)
         do(self.element.css(css))
         for (index, childref) in enumerate(references):
             child_css = self.element_css(index)
-            child_css.update(self.child_css_defaults)
+            #child_css.update(self.child_css_defaults)
             child_css.update(self.child_css)
             child_container = gizmo.jQuery("<div/>").css(child_css).appendTo(self.element)
             if childref is not None:

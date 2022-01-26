@@ -6,3 +6,16 @@
   filter: Alpha(Opacity=50) !important;
   background: rgb(50, 50, 50) !important; /* This will make it darker */
 }
+
+.H5Gizmo-stack {
+    display: grid;
+    grid-gap: 3px;
+    padding: 3px;
+    border-radius: 3px;
+    background-color: #ddd;
+}
+
+.H5Gizmo-stack > div {
+    background-color: white;
+    padding: 3px;
+}
