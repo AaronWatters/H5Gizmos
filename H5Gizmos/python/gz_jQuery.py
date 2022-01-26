@@ -165,6 +165,22 @@ class jQueryComponent(gz_components.Component):
         do(component.get_element(gizmo).appendTo(self.container))
         return component
 
+    def add_pyplot(self, title=None):
+        """
+        Context manager to append a plot.  For example:
+
+        from H5Gizmos import Html
+        import matplotlib.pyplot as plt
+
+        H = Html("<h2>an example plot</h2>")
+        await H.browse()
+        with H.add_pyplot():
+            fig= plt.figure()
+            plt.plot(range(10))
+        """
+        P = Plotter()
+        return self.add(P, title=title)
+
     def add_dialog(self, text_or_component, dialog_options, title=None, to_depth=1):
         """
         Add a JQueryUI dialog after the gizmo has started.
