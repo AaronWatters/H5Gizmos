@@ -65,6 +65,9 @@ class Gizmo:
     KEEPALIVE = "K"
     RECONNECT_ID = "reconnect_id"
 
+    # derault slot -- override this to optimize transfers of 1-d numeric arrays
+    _translate_1d_array = None
+
     def __init__(
         self, 
         sender=None, 
@@ -883,8 +886,21 @@ class GizmoCallback(GizmoLink):
         return [GZ.CALLBACK, self._oid, to_depth]
 
 
-def np_array_to_list(a):
+def np_array_translator(a, gizmo):
+    # allow the gizmo to translate 1d arrays
+    translator = gizmo._translate_1d_array
+    if translator is not None and len(a.shape) == 1:
+        return translator(a)
     return a.tolist()
+
+def tuple_to_list(t, gizmo):
+    return list(t)
+
+def np_literal_to_float(n, gizmo):
+    return float(n)
+
+def np_literal_to_int(n, gizmo):
+    return int(n)
 
 class ValueConverter:
 
@@ -901,7 +917,7 @@ class ValueConverter:
         #pr("translation for",  ty, "is", translator)
         translation = value
         if translator is not None:
-            translation = translator(value)
+            translation = translator(value, owner)
             ty = type(translation)
             #pr ("translation", translation, ty)
         if ty in self.scalar_types:
@@ -958,8 +974,8 @@ class ValueConverter:
     scalar_types = set([int, float, str,  bool, type(None)])
 
     translators = {
-        np.ndarray: np_array_to_list,
-        tuple: list,
+        np.ndarray: np_array_translator,
+        tuple: tuple_to_list
         #np.float: float,
         #np.float128: float,
         #np.float16: float,
@@ -974,11 +990,11 @@ class ValueConverter:
     for type_name in "float float128 float16 float32 float64".split():
         if hasattr(np, type_name):
             ty = getattr(np, type_name)
-            translators[ty] = float
+            translators[ty] = np_literal_to_float
     for type_name in "int int0 int16 int32 int64".split():
         if hasattr(np, type_name):
             ty = getattr(np, type_name)
-            translators[ty] = int
+            translators[ty] = np_literal_to_int
 
 FINISHED_UNICODE = "F"
 CONTINUE_UNICODE = "C"
