@@ -45,6 +45,7 @@ class Component:
         self.add_dependencies(gizmo)
         # add deferred dependencies after standard dependencies (for example so jQuery is available in deferred code)
         self.add_deferred_dependencies(gizmo)
+        gizmo._translate_1d_array = self.translate_1d_array
 
     def run(self, task=None, auto_start=True, verbose=True, log_messages=False, close_button=True):
         self.task = task
@@ -130,6 +131,7 @@ class Component:
         gizmo._initial_reference("document")
         gizmo._initial_reference("H5GIZMO_INTERFACE")
         gizmo._initial_reference("H5Gizmos")
+        gizmo._initial_reference("make_array_buffer", "H5Gizmos.make_array_buffer")
         gizmo._initial_reference("GIZMO_BODY", 'document.getElementById("GIZMO_BODY")')
         self.serve_folder("GIZMO_STATIC", "../static")
 
@@ -269,7 +271,7 @@ class Component:
 
     async def store_array(self, array, cache_name, dtype=None, timeout=60):
         """
-        Transfer a numpy array to Javascript and store it in the local cache.
+        Transfer a numpy array to Javascript and store it in the local cache using HTTP GET.
         The array is flattened and converted to an appropriate Javascript indexed collection.
         Return a reference to the cached index collection.
 
@@ -297,6 +299,21 @@ class Component:
             # Remove the resource
             gizmo._remove_getter(url)
         return self.my(cache_name)
+
+    def translate_1d_array(self, array):
+        """
+        Convert a 1d numpy array into an array buffer of a corresponding type if possible in JS.
+        Returns a link to a function call for generating the value on JS side.
+        """
+        dtype = array.dtype
+        converter_name = JS_COLLECTION_NAME_MAP.get(dtype);
+        if converter_name is not None:
+            array_bytes = bytearray( array.tobytes() )
+            gizmo = self.gizmo
+            result = gizmo.make_array_buffer(converter_name, array_bytes)
+            return result
+        # default
+        return array.tolist()
 
     async def get_array_from_buffer(self, buffer_reference, dtype=np.uint8, timeout=60):
         """
