@@ -849,32 +849,16 @@ var H5Gizmos = {};
         };
     };
 
-    /* moved into translator for error handling
-    H5Gizmos.post_binary_data = function(end_point, binary_data, json_metadata) {
-        json_metadata = json_metadata || {};
-        var json = JSON.stringify(json_metadata);
-        var query_string = "?json=" + encodeURIComponent(json)
-        var url = end_point + query_string;
-
-        // https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/send
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", url, true);
-
-        //Send the proper header information along with the request
-        xhr.setRequestHeader("Content-Type", "application/octet-stream");
-
-        xhr.onreadystatechange = function() {
-            if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-                // Request finished. Do processing here.
-                console.log("request finished", xhr)
-                // The POST is for sending data -- reply is ignored if not in error.
-            }
-        }
-        xhr.send(binary_data);
-    };*/
-
     H5Gizmos.store_blob = function (url, to_object, property_name, converter) {
         return new StoreBlob(url, to_object, property_name, converter);
+    };
+
+    H5Gizmos.make_array_buffer = function (array_buffer_name, binary_data) {
+        var array_buffer_class = window[array_buffer_name];
+        if (!array_buffer_class) {
+            throw new Error("array buffer class not found: " + array_buffer_class);
+        }
+        return new array_buffer_class(binary_data.buffer);
     };
 
     // JSON_Codec -- coder decoder
