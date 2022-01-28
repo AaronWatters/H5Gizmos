@@ -144,13 +144,22 @@ class Component:
                 method(*arguments)
 
     dependency_list = None
+    dependency_set = None
 
     def dependency(self, method_name, arguments):
         "deferred dependency -- must be evaluated after gizmo is bound."
         assert self.gizmo is None, "cannot load this dependency after initialization."
-        list = self.dependency_list or []
-        list.append([method_name, arguments])
-        self.dependency_list = list
+        dlist = self.dependency_list or []
+        dset = self.dependency_set or set()
+        entry = (method_name, tuple(arguments))
+        if entry in dset:
+            # ignore duplicate
+            return
+        assert self.gizmo is None, "cannot load this dependency after initialization: " + repr(entry)
+        dlist.append(entry)
+        dset.add(entry)
+        self.dependency_list = dlist
+        self.dependency_set = dset
 
     def initial_reference(self, identity, js_expression=None):
         "Reference to a Javascript value, bound at initialization."
