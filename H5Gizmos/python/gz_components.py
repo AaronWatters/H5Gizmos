@@ -39,6 +39,7 @@ class Component:
     cache_name = None
     auto_start = True  # start browser page automatically.
     close_button = True
+    gizmo_configured = False
 
     def attach_gizmo(self, gizmo):
         self.gizmo = gizmo
@@ -46,6 +47,7 @@ class Component:
         # add deferred dependencies after standard dependencies (for example so jQuery is available in deferred code)
         self.add_deferred_dependencies(gizmo)
         gizmo._translate_1d_array = self.translate_1d_array
+        self.gizmo_configured = True
 
     def run(self, task=None, auto_start=True, verbose=True, log_messages=False, close_button=True):
         self.task = task
@@ -148,14 +150,13 @@ class Component:
 
     def dependency(self, method_name, arguments):
         "deferred dependency -- must be evaluated after gizmo is bound."
-        assert self.gizmo is None, "cannot load this dependency after initialization."
         dlist = self.dependency_list or []
         dset = self.dependency_set or set()
         entry = (method_name, tuple(arguments))
         if entry in dset:
             # ignore duplicate
             return
-        assert self.gizmo is None, "cannot load this dependency after initialization: " + repr(entry)
+        assert not self.gizmo_configured, "cannot load this dependency after initialization: " + repr(entry)
         dlist.append(entry)
         dset.add(entry)
         self.dependency_list = dlist

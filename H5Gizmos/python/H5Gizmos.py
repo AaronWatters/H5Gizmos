@@ -8,7 +8,9 @@ See js/H5Gizmos.js for protocol JSON formats.
 
 from asyncio.tasks import sleep
 import os
+from textwrap import wrap
 import time
+from attr import attr, attrib
 import numpy as np
 import json
 import asyncio
@@ -1335,3 +1337,51 @@ def schedule_task(awaitable):
     loop = gizmo_server.get_or_create_event_loop()
     task = loop.create_task(awaitable)
     return task
+
+class DoAllMethods:
+
+    """
+    Convenience for an link where you mainly want to "do" methods with literal values.
+    Instead of
+
+        do(link.method1(arg1))
+        do(link.method2(arg1))
+        ...
+
+    Use
+
+        wrapped = DoAllMethods(link)
+        wrapped.method1(arg1)
+        wrapped.method2(arg2)
+        ...
+    """
+    # Note: added to support jp_doodle.
+    #   Added here because it might be generally useful.
+
+    def __init__(self, wrapped_link, to_depth=3):
+        assert isinstance(wrapped_link, GizmoLink), "Only DoAllMethods for a link object. " + repr(wrapped_link)
+        self._wrapped_link = wrapped_link
+        self._to_depth = 3
+
+    def __getattr__(self, attribute):
+        #print("getting", self._wrapped_link, attribute)
+        assert not attribute.startswith("_"), "Don't access hidden attributes: " + repr(
+            (attribute, self._wrapped_link)
+        )
+        method_link = getattr(self._wrapped_link, attribute)
+        return DoAllMethodsMethodWrapper(method_link, to_depth=self._to_depth)
+
+    def __getitem__(self, key):
+        return self.__getattr__(key)
+
+class DoAllMethodsMethodWrapper:
+
+    def __init__(self, wrapped_method_link, to_depth=3):
+        self._wrapped_method_link = wrapped_method_link
+        self._to_depth = to_depth
+
+    def __call__(self, *args):
+        #print ("calling", self._wrapped_method_link, args)
+        call_link = self._wrapped_method_link(*args)
+        do(call_link, to_depth=self._to_depth)
+
