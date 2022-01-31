@@ -124,16 +124,17 @@ async def task(link=False):
     todos.new_item_input.focus()
 
 if __name__ == "__main__":
+    expected = "url"
     try:
         import sys
         argv = sys.argv
         ln = len(sys.argv)
         if ln > 1:
-            assert argv[1] == "link", "Please only use 'link' or no argument."
-            assert ln == 2, "Too many arguments -- ony 'link' is supported."
+            assert argv[1] == expected, "Please only use %s or no argument." % repr(expected)
+            assert ln == 2, "Too many arguments -- ony %s is supported." % repr(expected)
             serve(task(link=True))
         else:
             serve(task(link=False))
-    except:
+    except (Exception, KeyboardInterrupt):
         print(__doc__)
         raise
