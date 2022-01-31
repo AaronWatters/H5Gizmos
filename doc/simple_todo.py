@@ -1,6 +1,14 @@
 
 """
 A todo list user interface.
+
+Usage:
+
+    python simple_todo.py [url]
+
+If "url" is specified then only the URL for the gizmo is shown
+and the URL must be pasted manually into a browser URL bar.  Otherwise
+the script will attempt to automatically open a browser window.
 """
 
 from H5Gizmos import Stack, Button, LabelledInput, Text, Html, serve, ClickableText, Template
@@ -105,12 +113,27 @@ class Todo:
 def todo_from_json_object(ob, in_list=None):
     return Todo(ob["description"], ob["status"], in_list)
 
-async def task():
+async def task(link=False):
     todos = TodoList()
-    await todos.dashboard.browse()
+    if link:
+        await todos.dashboard.link(verbose=True)
+    else:
+        await todos.dashboard.browse()
     await todos.dashboard.validate_classes()
     todos.update_dashboard()
     todos.new_item_input.focus()
 
 if __name__ == "__main__":
-    serve(task())
+    try:
+        import sys
+        argv = sys.argv
+        ln = len(sys.argv)
+        if ln > 1:
+            assert argv[1] == "link", "Please only use 'link' or no argument."
+            assert ln == 2, "Too many arguments -- ony 'link' is supported."
+            serve(task(link=True))
+        else:
+            serve(task(link=False))
+    except:
+        print(__doc__)
+        raise
