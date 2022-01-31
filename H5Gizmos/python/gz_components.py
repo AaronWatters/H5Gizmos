@@ -88,7 +88,14 @@ class Component:
         self.prepare_application(gizmo)
         await gizmo.start_in_iframe(height=height)
 
-    async def browse(self, auto_start=True, verbose=True, log_messages=False, close_button=True):
+    async def browse(
+        self, 
+        auto_start=True, 
+        verbose=True, 
+        log_messages=False, 
+        close_button=True,
+        await_start=True,
+        ):
         if auto_start:
             H5Gizmos.check_browser()
         in_notebook = gizmo_server.isnotebook()
@@ -106,10 +113,28 @@ class Component:
         if auto_start:
             await gizmo.start_in_browser()
         else:
-            await gizmo._show_start_link()
+            if await_start:
+                await gizmo._show_start_link()
 
-    async def link(self, verbose=False, log_messages=False):
-        await self.browse(auto_start=False, verbose=verbose, log_messages=log_messages)
+    async def link(self, verbose=False, log_messages=False, await_start=True):
+        await self.browse(
+            auto_start=False, 
+            verbose=verbose, 
+            log_messages=log_messages,
+            await_start=await_start,
+            )
+
+    async def has_started(self):
+        gizmo = self.gizmo
+        if gizmo is None:
+            return False
+        else:
+            return await gizmo._has_started()
+
+    def entry_url(self):
+        gizmo = self.gizmo
+        assert gizmo is not None, "entry URL is available only after gizmo start"
+        return self.gizmo._entry_url()
 
     def configure_page(self, gizmo):
         self.window = gizmo.window
