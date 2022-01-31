@@ -89,7 +89,7 @@ class Gizmo:
         server=None, 
         exit_on_disconnect=False,
         log_messages=False,
-        # file-like where to send callback prints (set to false to send to server log StringIO)
+        # file-like where to send callback Prints (set to false to send to server log StringIO)
         callback_stdout=None, 
         ):
         self._log_messages = log_messages
@@ -328,10 +328,9 @@ class Gizmo:
         embedded = self._embedded_components
         if key in embedded:
             # the resource has been embedded already.. don't do it twice
-            #print("not duplicating", key)
             return False
         else:
-            #print("permitting first embedding", key)
+            #("permitting first embedding", key)
             assert self._page_is_configurable()
             embedded.add(key)
             return True
@@ -442,8 +441,8 @@ class Gizmo:
         if self._log_messages:
             print("sending json", repr(json_message)[:100])
         try:
-            #print("gizmo sending json", repr(json_message)[:100])
-            #print(self._sender)
+            #("gizmo sending json", repr(json_message)[:100])
+            #(self._sender)
             self._check_web_socket()
             self._sender(json_message)
         finally:
@@ -657,14 +656,14 @@ class GizmoLink:
             (oid, future) = self._register_get_future(timeout=timeout)
         self._get_oid = oid
         msg = [GZ.GET, oid, cmd, to_depth]
-        #print("now sending")
+        #("now sending")
         gz._send(msg)
         if test_result is not None:
             return test_result  # only for code coverage...
         await future
         self._get_oid = None
         self._get_future = None
-        #print("now awaiting get result")
+        #("now awaiting get result")
         return future.result()
 
     def _connect(self, id, to_depth=None):
@@ -1032,15 +1031,15 @@ class GizmoPacker:
                 q = self.flush_queue
                 next_flush = q[0]
                 self.flush_queue = q[1:]
-                #print ("awaiting flush queue", len(self.flush_queue))
+                #("awaiting flush queue", len(self.flush_queue))
                 await next_flush
         finally:
-            #print("terminating flush queue task.")
+            #("terminating flush queue task.")
             self.flush_queue = []  # should be redundant
             try:
                 self.check_last_flush_queue_task()
             except Exception:
-                # xxxx this shouldn't happen -- #print error?
+                # xxxx this shouldn't happen -- #Print error?
                 pass
             self.last_flush_queue_task = self.flush_queue_task
             self.flush_queue_task = None
@@ -1105,15 +1104,15 @@ class GizmoPacker:
                     data = FINISHED_UNICODE + chunk
                 else:
                     data = CONTINUE_UNICODE + chunk
-                #print ("awaiting flush")
+                # ("awaiting flush")
                 await self.awaitable_sender(data)
 
     def send_unicode(self, string):
         self.outgoing_packets.append(string)
-        #print("pipeline send unicode", repr(string)[:10])
+        #("pipeline send unicode", repr(string)[:10])
         if self.auto_flush:
             task = self.flush()
-            #print ("send unicode returns task", task)
+            # ("send unicode returns task", task)
             return task
         else:
             return None
@@ -1161,7 +1160,7 @@ class JsonCodec:
             if on_error:
                 on_error("failed to encode json " + repr((repr(json_ob)[:20], e)))
             raise e
-        #print ("CODEC sending unicode", repr(unicode_str)[:10])
+        # ("CODEC sending unicode", repr(unicode_str)[:10])
         self.send_unicode(unicode_str)
         return unicode_str
 
@@ -1228,7 +1227,7 @@ class GZPipeline:
         result = True  # ws ok
         if (ws is not None) and (ws._closed):
             result = False  # ws broken
-            #print("cannot send -- closed")
+            #("cannot send -- closed")
             exception = WebSocketIsClosed("cannot send to closed web socket.")
             self.gizmo._fail_all_gets(exception)
             self.packer.cancel_all_flushes()
@@ -1257,7 +1256,7 @@ class GZPipeline:
                 raise TooManyRequests("A pipeline can only support one request.")
             # Otherwise if the child is trying to reconnect -- allow it.
             # XXXX Ideally we would clean up the task listening to the dead web socket, but it doesn't seem possible.
-            #print("reconnecting web socket", request)
+            #("reconnecting web socket", request)
             self.packer.cancel_all_flushes()
         self.reconnect_id = incoming_id
         ws = get_websocket()
@@ -1329,7 +1328,7 @@ class GZPipeline:
 
     def send_unicode(self, unicode_str):
         "async send -- do not wait for completion."
-        #print("pipeline send unicode", repr(unicode_str)[:10])
+        #("pipeline send unicode", repr(unicode_str)[:10])
         task_or_none = self.packer.send_unicode(unicode_str)
         self.last_unicode_sent = unicode_str
         return task_or_none
@@ -1375,7 +1374,7 @@ class DoAllMethods:
         self._to_depth = 3
 
     def __getattr__(self, attribute):
-        #print("getting", self._wrapped_link, attribute)
+        #("getting", self._wrapped_link, attribute)
         assert not attribute.startswith("_"), "Don't access hidden attributes: " + repr(
             (attribute, self._wrapped_link)
         )
@@ -1392,7 +1391,7 @@ class DoAllMethodsMethodWrapper:
         self._to_depth = to_depth
 
     def __call__(self, *args):
-        #print ("calling", self._wrapped_method_link, args)
+        # ("calling", self._wrapped_method_link, args)
         call_link = self._wrapped_method_link(*args)
         do(call_link, to_depth=self._to_depth)
 
