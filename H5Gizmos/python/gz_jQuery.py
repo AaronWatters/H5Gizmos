@@ -10,7 +10,7 @@ import io
 
 # add Markdown(...)
 # new method jqc.append(other_jqc)
-# maybe prints default to appending...
+# maybe Prints default to appending...
 
 MISC_JAVASCRIPT = """
 // miscellaneous javascript to support jQuery
@@ -462,8 +462,6 @@ class RadioButtons(jQueryComponent):
         self.id2value = id2value
 
     def check_value(self, *ignored):
-        #print("check", ignored)
-        #self.add("clicked!")
         H5Gizmos.schedule_task(self.update_value())
 
     async def update_value(self):
@@ -478,7 +476,6 @@ class RadioButtons(jQueryComponent):
         on_click = self.on_click
         if on_click:
             on_click(value)
-        #print("update done!")
 
 class CheckBoxes(RadioButtons):
 
@@ -514,7 +511,6 @@ class CheckBoxes(RadioButtons):
         selected_values = []
         for identifier in id2value:
             checked = await get(jQuery("#" + identifier)[0].checked)
-            #print("for", identifier, "checked is", checked)
             if checked:
                 value = id2value[identifier]
                 selected_values.append(value)
@@ -1008,15 +1004,6 @@ class jQueryImage(jQueryComponent):
         self.width = width
         self.content_type = mime_type
 
-    '''def resize(self, height=None, width=None):
-        #print("resizing", height, width)
-        if height is not None:
-            self.height = height
-            do(self.element.height(height))
-        if width is not None:
-            self.width = width
-            do(self.element.width(width))'''  # duplicate?
-
     def change_content(self, bytes_content):
         self.bytes_content = bytes(bytes_content)
         self.getter.set_content(bytes_content)
@@ -1055,20 +1042,17 @@ class Plotter(jQueryImage):
         self.png_content = None
 
     def __enter__(self):
-        #print("entering", self)
         pass
 
     def __exit__(self, type, value, traceback):
         # https://stackoverflow.com/questions/47816175/pandas-dataframe-and-seaborn-graph-interaction-with-html-webpage
         import matplotlib.pyplot as plt
-        #print("exitting", self)
         if type is None:
             # no error
             figfile = io.BytesIO()
             plt.savefig(figfile, format='png')
             figfile.seek(0)
             figbytes = figfile.getvalue()
-            #print("changing content", len(figbytes))
             self.change_content(figbytes)
             plt.close()  # don't display the figure anywhere else (?)
             self.png_content = figbytes
@@ -1159,9 +1143,9 @@ def hello_jquery(message="<h2>Hello world: click me.</h2>", auto_start=False):
     E.counter = 0
 
     async def task():
-        print("setting message", message)
+        #("setting message", message)
         do(E.element.html(message))
-        print("setting on click", click_callback)
+        #("setting on click", click_callback)
         do(E.element.on("click", click_callback))
         info = E.get_info_div()
         do(info.html("info here."))
