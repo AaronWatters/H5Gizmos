@@ -89,7 +89,7 @@ class Component:
         await gizmo.start_in_iframe(height=height)
 
     async def browse(self, auto_start=True, verbose=True, log_messages=False, close_button=True):
-        #assert gizmo_server.isnotebook(), "browse method only runs in IPython kernel."
+        H5Gizmos.check_browser()
         in_notebook = gizmo_server.isnotebook()
         if verbose:
             print("Displaying gizmo component in new browser window.")
