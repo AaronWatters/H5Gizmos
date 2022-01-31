@@ -341,7 +341,6 @@ class Component:
         finally:
             gizmo._remove_getter(endpoint)
         (body, query) = data
-        print (type(body), len(body))
         data_bytes = bytearray(body)
         return np.frombuffer(data_bytes, dtype=dtype)
 
