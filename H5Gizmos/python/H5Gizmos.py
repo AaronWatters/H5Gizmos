@@ -49,6 +49,17 @@ def new_identifier(prefix="Gizmo"):
     t = int(time.time() * 1000)
     return "%s_%s_%s" % (prefix, t, c)
 
+FORBIDDEN_BROWSERS = ["links"]
+
+def check_browser():
+    import webbrowser
+    try:
+        name = webbrowser.get().name
+        if name in FORBIDDEN_BROWSERS:
+            raise SystemError("Cannot browse: This browser is not supported: " + repr(name))
+    except AttributeError:
+        pass  # no name
+
 
 class Gizmo:
     EXEC = "E"
