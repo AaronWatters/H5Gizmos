@@ -10,6 +10,7 @@ import mimetypes
 import os
 import sys
 import contextlib
+import socket
 
 # Max size for posts -- really big
 DEFAULT_MAX_SIZE = 1000 * 1000 * 1000 * 1000 * 100
@@ -168,9 +169,13 @@ REQUEST_METHODS = frozenset([GET, POST, WS])
 
 # https://stackoverflow.com/questions/2470971/fast-way-to-test-if-a-port-is-in-use-using-python
 def is_port_in_use(port):
-    import socket
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('localhost', port)) == 0
+
+def get_local_ip():
+    hostname = socket.gethostname()
+    local_ip = socket.gethostbyname(hostname)
+    return local_ip
 
 def choose_port(limit=1000):
     for i in range(limit):
@@ -216,11 +221,12 @@ STDInterface = WebInterface()
 
 def gizmo_task_server(
         prefix="gizmo", 
-        server="localhost", 
+        server=None, 
         port=None, 
         interface=STDInterface,
         **args,
         ):
+    server = server or get_local_ip()
     S = GzServer(
         prefix=prefix,
         server=server,
@@ -379,12 +385,13 @@ class GzServer:
     def __init__(
             self, 
             prefix="gizmo", 
-            server="localhost", 
+            server=None, 
             port=None,  # Choose an available port.
             interface=STDInterface,
             out=None,  # context redirect (like widgets.Output) or None
             err=None,  # context redirect (like widgets.Output) or None
             ):
+        server = server or get_local_ip()
         if port is None:
             port = choose_port()
         self.prefix = prefix
