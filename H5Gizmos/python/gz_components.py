@@ -133,7 +133,7 @@ class Component:
 
     def entry_url(self):
         gizmo = self.gizmo
-        assert gizmo is not None, "entry URL is available only after gizmo start"
+        assert gizmo is not None, "entry URL is available only after gizmo is configured."
         return self.gizmo._entry_url()
 
     def configure_page(self, gizmo):
