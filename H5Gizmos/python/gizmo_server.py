@@ -94,7 +94,10 @@ def is_port_in_use(port):
 
 def get_local_ip():
     hostname = socket.gethostname()
-    local_ip = socket.gethostbyname(hostname)
+    try:
+        local_ip = socket.gethostbyname(hostname)
+    except Exception:
+        local_ip = socket.gethostbyname("localhost")
     return local_ip
 
 def choose_port(limit=1000):
