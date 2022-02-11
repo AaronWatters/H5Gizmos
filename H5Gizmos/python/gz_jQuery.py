@@ -1,5 +1,5 @@
 
-from numpy import isin
+import numpy as np
 from H5Gizmos.python import gizmo_server
 from H5Gizmos.python.gz_resources import MISC_OPERATIONS_TEMPLATE
 from . import gz_components
@@ -978,6 +978,12 @@ class Shelf(Stack):
         return child_css 
 
 
+SMALL_PNG_BYTES = (
+    b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x01\x03\x00\x00'
+    b'\x00%\xdbV\xca\x00\x00\x00\x03PLTE\x00\x00\x00\xa7z=\xda\x00\x00\x00\x01tRNS\x00@\xe6'
+    b'\xd8f\x00\x00\x00\nIDAT\x08\xd7c`\x00\x00\x00\x02\x00\x01\xe2!\xbc3\x00\x00\x00\x00IEND\xaeB`\x82')
+
+
 class jQueryImage(jQueryComponent):
 
     # quick and dirty for now
@@ -995,6 +1001,9 @@ class jQueryImage(jQueryComponent):
         ):
         if filename is None:
             filename = H5Gizmos.new_identifier("jQueryImage")
+        if mime_type is None and bytes_content is None:
+            mime_type = "img/png"
+            bytes_content = SMALL_PNG_BYTES
         self.filename = filename
         self.alt = alt
         self.tag = '<img src="%s" alt="%s"/>' % (self.versioned_link(), self.alt)
@@ -1004,10 +1013,36 @@ class jQueryImage(jQueryComponent):
         self.width = width
         self.content_type = mime_type
 
-    def change_content(self, bytes_content):
+    def change_content(self, bytes_content, mime_type=None):
         self.bytes_content = bytes(bytes_content)
-        self.getter.set_content(bytes_content)
+        self.getter.set_content(bytes_content, mime_type)
         do(self.element.attr("src", self.versioned_link()))
+
+    def change_content_url(self, bytes_content, mime_type):
+        url = content_url(bytes_content, mime_type)
+        do(self.element.attr("src", url))
+
+    def change_array(self, array, url=True, scale=False, epsilon=1e-12):
+        from PIL import Image
+        if scale:
+            m = array.min()
+            M = array.max()
+            if (M - m) > epsilon:
+                A = array.astype(np.float)
+                scaled = 255 * (A - m) / (M - m)
+                array = scaled.astype(np.uint8)
+            else:
+                array = np.zeros(A.shape, dtype=np.uint8)
+                array[:] = 128  # arbitrary grey.
+        im = Image.fromarray(array)
+        f = io.BytesIO()
+        im.save(f, format="PNG")
+        byt = f.getvalue()
+        mime_type = "img/png"
+        if url:
+            self.change_content_url(byt, mime_type)
+        else:
+            self.change_content(byt, mime_type)
 
     def versioned_link(self):
         self.version += 1   # use versioning to foil browser caching.
@@ -1021,10 +1056,12 @@ class jQueryImage(jQueryComponent):
         gizmo._add_getter(self.filename, self.getter)
         self.resize(height=self.height, width=self.width)
 
-SMALL_PNG_BYTES = (
-    b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x01\x03\x00\x00'
-    b'\x00%\xdbV\xca\x00\x00\x00\x03PLTE\x00\x00\x00\xa7z=\xda\x00\x00\x00\x01tRNS\x00@\xe6'
-    b'\xd8f\x00\x00\x00\nIDAT\x08\xd7c`\x00\x00\x00\x02\x00\x01\xe2!\xbc3\x00\x00\x00\x00IEND\xaeB`\x82')
+def content_url(bytes_content, mime_type):
+    import base64
+    prefix = 'data:%s;base64,' % mime_type
+    b64 = base64.b64encode(bytes_content)
+    url = prefix + b64.decode("utf8")
+    return url
 
 class Plotter(jQueryImage):
 
