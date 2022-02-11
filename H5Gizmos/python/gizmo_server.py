@@ -670,10 +670,12 @@ class BytesGetter(FileGetter):
         if remainder:
             raise NoSuchRelativePath("Bytes is not a folder: " + repr([self.filename, remainder]))
 
-    def set_content(self, byte_content):
+    def set_content(self, byte_content, content_type=None):
         if len(byte_content) > self.get_sanity_limit:
             raise ValueError("transfers larger than %s not yet supported" %
                 self.get_sanity_limit)
+        if content_type is not None:
+            self.content_type = content_type
         self.bytes = bytes(byte_content)
 
     get_sanity_limit = 1590000000
