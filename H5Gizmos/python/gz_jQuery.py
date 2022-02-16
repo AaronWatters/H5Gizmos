@@ -756,7 +756,7 @@ class ChildContainerSuper(jQueryComponent):
 
     # defaults
     children = ()
-    css = {}
+    _css = {}
     child_css = {}
 
     def check_children(self, children):
@@ -884,7 +884,7 @@ class Stack(ChildContainerSuper):
         ):
         super().__init__(init_text=None, tag=tag, title=title)
         self.children = self.check_children(children)
-        self.css = css or {}
+        self._css = css or {}
         self.child_css = child_css or {}
         self.addClass(css_class)
         #self.children_name = H5Gizmos.new_identifier("JQuery_container")
@@ -917,7 +917,7 @@ class Stack(ChildContainerSuper):
         #name(self.children_name, seq)
         css = self.main_css(children)
         #css.update(self.element_css_defaults)
-        css.update(self.css)
+        css.update(self._css)
         do(self.element.css(css))
         for (index, childref) in enumerate(references):
             child_css = self.element_css(index)
@@ -976,6 +976,80 @@ class Shelf(Stack):
             #"padding": "15px",
         }
         return child_css 
+
+
+class LazyExpander(Template):
+
+    """
+    Open/Close container for a single child component.
+    Create the component on open.  Discard the component on close.
+    Any extra dependencies for the created child must be added elsewhere.
+    """
+
+    default_template = """
+    <div style="display:flex;" class="lazy-expander-gizmo">
+         <div class="TOGGLE">XXX</div>
+         <div class="CONTENT">YYY</div>
+    </div>
+    """.strip()
+
+    def __init__(
+        self, 
+        preview_maker,
+        child_maker, 
+        auto_open=False, 
+        more_text="+", 
+        less_text="-", 
+        title=None, 
+        template=None,
+        padding="5px",
+    ):
+        if template is None:
+            template = self.default_template
+        super().__init__(title=title, html_template=template)
+        self.preview_maker = preview_maker
+        self.child_maker = child_maker
+        self.more_text = more_text
+        self.less_text = less_text
+        self.toggle_text = ClickableText(more_text, "open", on_click=self.toggle)
+        if padding:
+            self.toggle_text.css(padding=padding)
+        self.is_open = auto_open
+        #self.toggle_text = ClickableText(self.more_text, "open", on_click=self.toggle)
+        self.content_area = Html("<div/>")
+        self.put(self.toggle_text, 'TOGGLE')
+        self.put(self.content_area, "CONTENT")
+
+    def toggle(self, *ignored):
+        if self.is_open:
+            self.close()
+        else:
+            self.open()
+
+    def open(self):
+        self.is_open = True
+        self.display_content()
+
+    def close(self):
+        self.is_open = False
+        self.display_content()
+
+    def configure_jQuery_element(self, element):
+        super().configure_jQuery_element(element)
+        self.display_content()
+
+    def display_content(self):
+        gizmo = self.gizmo
+        if self.is_open:
+            txt = self.less_text
+            content = self.child_maker()
+        else:
+            txt = self.more_text
+            content = self.preview_maker()
+        self.toggle_text.html(txt)
+        content_element = self.content_area.get_element(gizmo)
+        do(content_element.empty())
+        do(content.get_element(gizmo).appendTo(content_element))
 
 
 SMALL_PNG_BYTES = (
