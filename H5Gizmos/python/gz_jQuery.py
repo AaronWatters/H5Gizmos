@@ -995,7 +995,7 @@ class LazyExpander(Template):
 
     def __init__(
         self, 
-        preview_maker,
+        preview_maker_or_text,
         child_maker, 
         auto_open=False, 
         more_text="+", 
@@ -1007,7 +1007,11 @@ class LazyExpander(Template):
         if template is None:
             template = self.default_template
         super().__init__(title=title, html_template=template)
-        self.preview_maker = preview_maker
+        self.preview_maker = preview_maker_or_text
+        if isinstance(preview_maker_or_text, str):
+            def maker():
+                return Text(preview_maker_or_text)
+            self.preview_maker = maker
         self.child_maker = child_maker
         self.more_text = more_text
         self.less_text = less_text
