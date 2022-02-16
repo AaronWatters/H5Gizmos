@@ -82,6 +82,19 @@ class Component:
         gizmo._add_content(os_path="../static/icon.png", content_type="image/png")
         gizmo._insert_html('<link rel="icon" type="image/png" href="./icon.png"/>', in_body=False)
 
+    async def show(self, verbose=False, log_messages=False):
+        """
+        Try to guess the right way to display self as iframe, in browser tab, or default to link.
+        """
+        if gizmo_server.isnotebook():
+            return await self.iframe(verbose=verbose, log_messages=log_messages)
+        try:
+            H5Gizmos.check_browser()
+        except Exception:
+            return await self.link(verbose=verbose, log_messages=log_messages)
+        else:
+            return await self.browse(verbose=verbose, log_messages=log_messages)
+
     async def iframe(self, height=20, verbose=False, log_messages=False):
         assert gizmo_server.isnotebook(), "iframe method only runs in IPython kernel."
         gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages)
