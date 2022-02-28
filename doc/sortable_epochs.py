@@ -10,6 +10,8 @@ epochs = {name: Text(name) for name in epoch_order}
 children = [epochs[name] for name in bogus_order]
 
 sorter = Stack(children)
+sorter.resize(width=400)
+sorter.css(padding="10px")
 info = Text("Drag the epochs to order them oldest (higher) to youngest (lower).")
 
 async def task():
@@ -32,13 +34,18 @@ async def task():
 async def check_task():
     info.html("Please drag cyan elements earlier (higher) and magenta elements later (lower).")
     order = await get(sorter.element.child_order())
+    correct = True
     for (index, epoch_name) in enumerate(order):
         correct_index = epoch_order.index(epoch_name)
         color = "yellow"
         if correct_index < index:
             color = "cyan"
+            correct = False
         if correct_index > index:
             color = "magenta"
+            correct = False
         epochs[epoch_name].css({"background-color": color})
+    if correct:
+        info.html("All correct!")
 
 serve(task())

@@ -1,4 +1,5 @@
 
+from shelve import Shelf
 import numpy as np
 from H5Gizmos.python import gizmo_server
 from H5Gizmos.python.gz_resources import MISC_OPERATIONS_TEMPLATE
@@ -857,7 +858,7 @@ class Template(ChildContainerSuper):
             ln = await get(class_ref.length)
             assert ln > 0, "Class ref not found: " + repr(class_ref)
 
-class Stack(ChildContainerSuper):
+class GridStack(ChildContainerSuper):
 
     '''element_css_defaults = {
         "display": "grid",
@@ -873,6 +874,8 @@ class Stack(ChildContainerSuper):
         "padding": "3px",
     }'''
 
+    default_class = "H5Gizmo-stack"
+
     def __init__(
         self, 
         children, 
@@ -880,12 +883,13 @@ class Stack(ChildContainerSuper):
         css=None, 
         child_css=None,
         title=None,
-        css_class="H5Gizmo-stack"
+        css_class=None
         ):
         super().__init__(init_text=None, tag=tag, title=title)
         self.children = self.check_children(children)
         self._css = css or {}
         self.child_css = child_css or {}
+        css_class = css_class or self.default_class
         self.addClass(css_class)
         #self.children_name = H5Gizmos.new_identifier("JQuery_container")
         #self.children_reference = None
@@ -902,7 +906,7 @@ class Stack(ChildContainerSuper):
         return "\n".join(L)
 
     def listChild(self, seq):
-        return Shelf(seq)
+        return GridShelf(seq)
 
     def attach_children(self, children):
         gizmo = self.gizmo
@@ -943,7 +947,7 @@ class Stack(ChildContainerSuper):
     def element_css(self, index):
         child_css = {
             "grid-column": "1",
-            "grid-row": str(index + 1),  # 1 based indexing
+            #"grid-row": str(index + 1),  # 1 based indexing
             #"width": "100%",
             #"width": "100%",
             #"overflow": "auto",
@@ -951,7 +955,7 @@ class Stack(ChildContainerSuper):
         }
         return child_css
 
-class Shelf(Stack):
+class GridShelf(GridStack):
    
     def main_css(self, children):
         col_template = "auto"
@@ -964,18 +968,45 @@ class Shelf(Stack):
         return css
 
     def listChild(self, seq):
-        return Stack(seq)
+        return GridStack(seq)
 
     def element_css(self, index):
         child_css = {
             "grid-row": "1",
-            "grid-column": str(index + 1),  # 1 based indexing
+            #"grid-column": str(index + 1),  # 1 based indexing
             #"width": "100%",
             #"width": "100%",
             #"overflow": "auto",
             #"padding": "15px",
         }
         return child_css 
+
+
+class FlexColumn(GridStack):
+
+    flex_direction = "column"
+    default_class = "H5Gizmo-Column"
+
+    def main_css(self, children):
+        css = {}
+        css["display"] = "flex"
+        css["flex-direction"] = self.flex_direction
+        return css
+
+    def listChild(self, seq):
+        return FlexRow(seq)
+
+    def element_css(self, index):
+        css = {}
+        return css
+
+
+class FlexRow(FlexColumn):
+
+    flex_direction = "row"
+
+    def listChild(self, seq):
+        return FlexColumn(seq)
 
 
 class LazyExpander(Template):
@@ -1249,6 +1280,8 @@ Image = jQueryImage
 Input = jQueryInput
 LabelledInput = LabelledjQueryInput
 Label = jQueryLabel
+Stack = FlexColumn
+Shelf = FlexRow
 
 # Tests and Demos:
 
