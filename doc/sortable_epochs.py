@@ -1,5 +1,4 @@
 
-# XXXX this doesn't work at the moment!!
 
 from H5Gizmos import Html, Stack, Text, Button, do, get, serve, schedule_task
 
