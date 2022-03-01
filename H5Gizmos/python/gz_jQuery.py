@@ -416,7 +416,7 @@ class RadioButtons(jQueryComponent):
         #    "no such value to select: " + repr(selected_value)
         #self.selected_value = selected_value
         self.legend = legend
-        self.on_click = on_click
+        self.radio_on_click = on_click
         self.options = options or {}
         self.id2value = None
 
@@ -474,7 +474,8 @@ class RadioButtons(jQueryComponent):
         #self.add("got id %s with value %s" % (repr(id), repr(value)))
         #self.selected_value = value
         self.select_values(value)
-        on_click = self.on_click
+        on_click = self.radio_on_click
+        #("calling update_values onclick")
         if on_click:
             on_click(value)
 
@@ -516,7 +517,8 @@ class CheckBoxes(RadioButtons):
                 value = id2value[identifier]
                 selected_values.append(value)
         self.select_values(*selected_values)
-        on_click = self.on_click
+        #("calling checkboxes on click")
+        on_click = self.radio_on_click
         if on_click:
             on_click(selected_values)
 
@@ -553,7 +555,7 @@ class DropDownSelect(RadioButtons):
         identifier = await get(self.select.val())
         value = self.id2value[identifier]
         self.select_values(value)
-        on_click = self.on_click
+        on_click = self.radio_on_click
         if on_click:
             on_click(value)
 
@@ -1199,7 +1201,7 @@ class Plotter(jQueryImage):
             plt.savefig(figfile, format='png')
             figfile.seek(0)
             figbytes = figfile.getvalue()
-            self.change_content(figbytes)
+            self.change_content_url(figbytes, mime_type="image/png")
             plt.close()  # don't display the figure anywhere else (?)
             self.png_content = figbytes
 
