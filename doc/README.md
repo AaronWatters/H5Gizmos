@@ -108,6 +108,17 @@ Javascript child context and transferred to the Python parent process.
 
 # Sections
 
+The rest of the documentation is organized into the following sections:
+
+<h2>
+<a href="Tutorials/README.md">
+Tutorials
+</a>
+</h2>
+
+The tutorials provide examples to illustrate features of the H5Gizmos
+infrastructure.
+
 
 
 
