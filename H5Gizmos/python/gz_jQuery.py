@@ -420,6 +420,9 @@ class RadioButtons(jQueryComponent):
         self.options = options or {}
         self.id2value = None
 
+    def set_on_click(self, on_click):
+        self.radio_on_click = on_click
+
     def select_values(self, *values):
         selected_values = []
         for value in values:
