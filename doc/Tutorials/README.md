@@ -32,6 +32,6 @@ Hello 3
 </a>
 </h2>
 
-The `hello3.py` is similar to "hello2" the visual components are organized into
+The `hello3.py` is similar to "hello2" but the visual components are organized into
 a grid using a composite `Stack` component, and some random styling is added.
 

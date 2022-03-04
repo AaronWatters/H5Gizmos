@@ -54,3 +54,5 @@ And the time value updates when the user clicks the "Click me" button.
 
 ## Discussion
 
+
+<a href="README.md">Return to tutorial list.</a>
