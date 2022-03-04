@@ -40,24 +40,30 @@ async def task():
 
 serve(task())
 ```
-The following animation shows this script running from a VS code editor interface.
+The following animation shows this script started from a VS code editor interface.
 The Gizmo interface appears as a new tab in the browser below the editor.
 
 <img src="demo2.gif">
 
+The script can also be started using the command line:
+```bash
+% python hello_curves.py
+```
+
 This silly example illustrates some basic features of H5Gizmo interfaces.
 
-- The interface is controlled and created by a Python "parent" process which
-connects to a "child" Javascript web context in an HTML browser.
+- The script starts in a Python "parent" process which connects to
+a "child" Javascript context running in a web browser.  The graphical
+interface appears in the browser.
 
-- The "parent" component runs in an asynchronous 
+- The "parent" controller for the interface runs in an asynchronous 
 Python context like an `async` coroutine or a Jupyter code cell.
 In this case the interface is created in the `task` coroutine.
 
 - The `serve(task)` function call sets up the internal web server required
 for Gizmo interfaces and starts the `task` coroutine.
 
-- The interface is mediated by a controlling primary element which represents a link
+- The interface is mediated by a controlling primary element `G` which provides a link
 between an HTML document object model (DOM) element in the child and the parent process.
 In this case `G` refers to a Python object which corresponds to a checkbox group
 in the browser.
@@ -70,8 +76,7 @@ check box group and its styling.
 - The child Javascript context can call back to the parent in response to an event.
 In this case when the user clicks the checkboxes the child calls back to the `checked`
 Python function.  The parent process can also call-in to the child and optionally
-wait for a return value, but this feature is not illustrated in this example and
-is explained elsewhere.
+wait for a return value, as demonstrated in the following section.
 
 ## H5Gizmos in Jupyter Quickstart
 
@@ -86,9 +91,9 @@ a checkbox group for selecting Beatles embedded in an IPython notebook:
 
 <img src="ipython.png"/>
 
-Above the `G.show()` method automatically detected that the gizmo is running
+Above the `await G.show()` method automatically detected that the gizmo is running
 in the Jupyter environment and launched the gizmo in an `iframe`.  To override
-this behaviour launch a new tab from Jupyter using tne `G.browse()` method.
+this behaviour launch a new tab from Jupyter using tne `await G.browse()` method.
 
 The above Jupyter example also introduced some additional features as a teaser.
 The `feedback=G.add("...")` assignment attached a text component below the
@@ -99,6 +104,10 @@ The expression
 await get(feedback.element.text())
 ```
 evaluates to the currently displayed text from the feedback element, evaluated in the
-Javascript child context and transferred to the Python parent.
+Javascript child context and transferred to the Python parent process.
+
+# Sections
+
+
 
 
