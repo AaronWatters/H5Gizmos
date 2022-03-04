@@ -5,12 +5,13 @@ tools for building interactive graphical interfaces for applications using brows
 with a "parent" Python process using a web socket and other HTTP protocols.  H5Gizmos can load and
 use arbitrary Javascript resources to provide complex and advanced interactive graphical interfaces.
 
+The H5Gizmo mechanism is designed to facilitate the development of special purpose
+interactive graphical interfaces for scientific and technical workflows.
+
 The animation below shows a gizmo script displaying a matplotlib plot running from the VS code editor.
 The gizmo user interface appears as a new HTML frame in the browseer instance below the editor.
 
-<div style="background-color:green; padding:25;">
 <img src="doc/curves.gif">
-</div>
 
 # Documentation
 
