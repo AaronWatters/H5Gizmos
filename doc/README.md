@@ -20,10 +20,10 @@ to the child or from the child back to the parent. H5Gizmo implementations are u
 data explorers for large scale astrophysical simulations, 4 dimensional microscopy time sequences, or high dimensional data analysis,
 among other applications.
 
-# Quickstart
+# Gizmo Script Quickstart
 
 The following silly example allows the user to select their favorite Beatle(s)
-using a check box group.  It illustrates how to start a Gizmo interface.
+using a check box group.  It illustrates how to start a Gizmo interface as a stand alone script.
 
 ```Python
 from H5Gizmos import serve, CheckBoxes
@@ -72,3 +72,33 @@ In this case when the user clicks the checkboxes the child calls back to the `ch
 Python function.  The parent process can also call-in to the child and optionally
 wait for a return value, but this feature is not illustrated in this example and
 is explained elsewhere.
+
+## H5Gizmos in Jupyter Quickstart
+
+This section describes special options for displaying H5Gizmos in an 
+<a href="https://ipython.org/">
+IPython Jupyter notebook.</a>
+
+H5Gizmos can be launched
+from a Jupyter notebook into a separate browser tab or the interface can be
+embedded in a notebook using an embedded `iframe`.  The screenshot below shows
+a checkbox group for selecting Beatles embedded in an IPython notebook:
+
+<img src="ipython.png"/>
+
+Above the `G.show()` method automatically detected that the gizmo is running
+in the Jupyter environment and launched the gizmo in an `iframe`.  To override
+this behaviour launch a new tab from Jupyter using tne `G.browse()` method.
+
+The above Jupyter example also introduced some additional features as a teaser.
+The `feedback=G.add("...")` assignment attached a text component below the
+check box group and `feedback.text(...)` in the callback modifies the displayed text.
+
+The expression
+```Python
+await get(feedback.element.text())
+```
+evaluates to the currently displayed text from the feedback element, evaluated in the
+Javascript child context and transferred to the Python parent.
+
+
