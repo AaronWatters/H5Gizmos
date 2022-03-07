@@ -41,3 +41,9 @@ a grid using a composite `Stack` component, and some random styling is added.
 Hello Curves
 </a>
 </h2>
+
+<h2>
+<a href="sortable_epochs.md">
+Sortable Epochs
+</a>
+</h2>
