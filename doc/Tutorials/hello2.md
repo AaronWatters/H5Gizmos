@@ -21,7 +21,7 @@ greeting = Html("<h1>Hello</h1>")
 the_time = Text("No time like the present")
 count = 0
 
-def click_callback(*ignored):
+def click_callback(*event_ignored):
     global count
     count += 1
     greeting.html("<em>That tickles</em>")
@@ -55,7 +55,11 @@ And the time value updates when the user clicks the "Click me" button.
 ## Discussion
 
 This script is similar to `hello1.py` except that the user
-controls when the time display updates using the `clicker` button.
+controls when the time display updates using the `click me` button.
+
+This script creates three components -- a `greeting` header,
+a `the_time` text, and a `clicker` button with its click event
+bound to the `click_callback` function.
 
 The `task` coroutine establishes the `greeting` as the primary
 component and waits for the Javascript child to connect at
@@ -63,7 +67,8 @@ component and waits for the Javascript child to connect at
 adds the subsidiary components `the_time` and `clicker` 
 below `greeting`.
 At this point the set up of the for the interface is complete
-and the Python process waits for either a "shutdown" or a
+and the Python process 
+asynchronous event loop waits for either a "shutdown" or a
 "click" event from the Javascript child.
 
 When the user clicks the `clicker` button the `click_callback`
