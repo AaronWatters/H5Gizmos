@@ -82,7 +82,7 @@ keyword.
 
 The 
 <a href="hello_curves.md">hello_curves</a> script
- implements a more complex composite dashboard -- a `Stack` dashboard containing
-input sliders which control a parameters for a `matplotlib` curve visualization.
+implements a more complex composite dashboard -- a `Stack` dashboard containing
+input sliders which control parameters for a `matplotlib` curve visualization.
 
 <a href="README.md">Return to tutorial list.</a>
