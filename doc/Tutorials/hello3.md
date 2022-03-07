@@ -72,9 +72,9 @@ dashboard = Stack([
 stacks `greeting` at the top with `clicker` and `the_time` arranged horizontally below
 combined into a composite `dashboard` component.
 The `task` coroutine then uses the composite `dashboard` as the primary 
-(and only) component of the interface.
+component of the interface.
 
-The `greeting.css(color="salmon")` method sets the text color style of the greeting to
+The `greeting.css(color="salmon")` method sets the text color style of the `greeting` to
 salmon using a keyword argument convention.
 The `dashboard.css({"justify-content": "center"})` uses a dictionary argument
 convention for the style because `justify-content` cannot be used as a Python
