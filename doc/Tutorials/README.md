@@ -35,3 +35,9 @@ Hello 3
 The `hello3.py` is similar to "hello2" but the visual components are organized into
 a grid using a composite `Stack` component, and some random styling is added.
 
+
+<h2>
+<a href="hello_curves.md">
+Hello Curves
+</a>
+</h2>
