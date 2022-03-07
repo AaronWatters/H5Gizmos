@@ -1,21 +1,23 @@
 # H5Gizmos
 
 H5Gizmos provides
-tools for building interactive graphical interfaces for applications using browser technology and HTML5. Gizmo "child" interfaces run in standard web browsers such as Chrome and communicate
-with a "parent" Python process using a web socket and other HTTP protocols.  H5Gizmos can load and
-use arbitrary Javascript resources to provide complex and advanced interactive graphical interfaces.
+tools for building interactive graphical interfaces for applications using browser technology and HTML5. 
 
-The H5Gizmo mechanism is designed to facilitate the development of special purpose
+A Gizmo "child" interfaces runs in a standard web browser such as Chrome and communicates
+with a "parent" Python process using a web socket and other HTTP protocols.  H5Gizmos can load and
+use arbitrary Javascript resources to provide sophisticated interactive graphical interfaces.
+
+The H5Gizmo mechanism is designed to facilitate the development of "dashboards" and special purpose
 interactive graphical interfaces for scientific and technical workflows.
 
 The animation below shows a gizmo script displaying a matplotlib plot running from the VS code editor.
 The gizmo user interface appears as a new HTML frame in the browseer instance below the editor.
 
-<img src="doc/curves.gif">
+<img src="doc/curves.gif" width="50%">
 
 # Documentation
 
-The documentation for H5Gizmo starts at
+The documentation for H5Gizmos starts at
 
 <a href="doc/README.md">doc/README.md.</a>
 
