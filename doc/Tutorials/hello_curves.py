@@ -34,7 +34,7 @@ def plot_curve():
         xs.append(x)
         ys.append(y)
     plt.plot(xs, ys)
-    plt.title(r"$x = \sin(%s t), y = cos(%s t)$" % (a, b))
+    plt.title(r"$x = \sin(%s t), y = \cos(%s t)$" % (a, b))
     plt.xlabel("X")
     plt.ylabel("Y")
     #plt.show()

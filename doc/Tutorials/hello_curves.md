@@ -46,7 +46,7 @@ def plot_curve():
         xs.append(x)
         ys.append(y)
     plt.plot(xs, ys)
-    plt.title(r"$x = \sin(%s t), y = cos(%s t)$" % (a, b))
+    plt.title(r"$x = \sin(%s t), y = \cos(%s t)$" % (a, b))
     plt.xlabel("X")
     plt.ylabel("Y")
     #plt.show()
@@ -76,7 +76,12 @@ Run like so:
 % python hello_curves.py
 ```
 
-The script opens a new tab in a browser that looks like this.
+The script opens a new tab in a browser.
+
+The animation below shows the script started from the
+VS code editor interface.  The dashboard interface appears
+in a new browser tab in the browser running below the editor
+window.
 
 <img src="../curves.gif">
 
