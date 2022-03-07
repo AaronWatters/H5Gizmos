@@ -2,6 +2,10 @@
 
 # Tutorial `wavesurfer_poem.py`
 
+The `wavesurfer_poem.py` script controls an audio player implemented using
+an external Javascript library.  It demonstrates how to load Javascript functionality
+for a gizmo and how to attach external resources to a gizmo.
+
 ## The code
 
 ```Python

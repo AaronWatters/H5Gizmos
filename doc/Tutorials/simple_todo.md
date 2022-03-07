@@ -2,6 +2,11 @@
 
 # Tutorial `simple_todo.py`
 
+
+The `simple_todo.py` script implements a simple "to do list" reminder dashboard.
+It illustrates how to style a dashboard using the `Template` composite component
+and external CSS style sheets.
+
 ## The code
 
 ```Python

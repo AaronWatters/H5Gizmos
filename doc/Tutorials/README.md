@@ -61,11 +61,19 @@ Wavesurfer poem
 </a>
 </h2>
 
+The `wavesurfer_poem.py` script controls an audio player implemented using
+an external Javascript library.  It demonstrates how to load Javascript functionality
+for a gizmo and how to attach external resources to a gizmo.
+
 <h2>
 <a href="simple_todo.md">
 Simple to-do list
 </a>
 </h2>
+
+The `simple_todo.py` script implements a simple "to do list" reminder dashboard.
+It illustrates how to style a dashboard using the `Template` composite component
+and external CSS style sheets.
 
 
 <a href="../README.md">
