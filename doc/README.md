@@ -47,7 +47,7 @@ The Gizmo interface appears as a new tab in the browser below the editor.
 
 The script can also be started using the command line:
 ```bash
-% python hello_curves.py
+% python demo.py
 ```
 
 This silly example illustrates some basic features of H5Gizmo interfaces.
@@ -60,11 +60,11 @@ interface appears in the browser.
 Python context like an `async` coroutine or a Jupyter code cell.
 In this case the interface is created in the `task` coroutine.
 
-- The `serve(task)` function call sets up the internal web server required
+- The `serve(task())` function call sets up the internal web server required
 for Gizmo interfaces and starts the `task` coroutine.
 
 - The interface is mediated by a controlling primary element `G` which provides a link
-between an HTML document object model (DOM) element in the child and the parent process.
+between an HTML document object model (DOM) element in the child and a "proxy" object in the parent process.
 In this case `G` refers to a Python object which corresponds to a checkbox group
 in the browser.
 
