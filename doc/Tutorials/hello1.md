@@ -41,6 +41,20 @@ And the time value updates once a second until a minute has elapsed.
 
 ## Discussion
 
+This script creates two components `greeting` and `the_time`.
+
+The HTML interface is created when `serve(task())` schedules `task` for execution.
+The `serve` function also starts a number of other internal tasks required for
+communicating between the Python parent process and the Javascript child.
+The `task` coroutine sets up the `greeting` as the primary component of the interface
+using `await greeting.show()` -- and this await does not complete until a Javascript
+child context connects to the Python parent via a web socket connection.
+Once the child connects the script `add`s `the_time` as a subsidiary component to `greeting`.
+
+The subsequent `for` loop repeatedly waits 1 second and then updates `the_time` to show the current
+time.  Note that it is important to use an asynchronous `sleep` because the standard `time.sleep(...)`
+would block all asynchronous tasks, preventing communication between the Python parent
+and the Javascript child.
 
 
 <a href="README.md">Return to tutorial list.</a>

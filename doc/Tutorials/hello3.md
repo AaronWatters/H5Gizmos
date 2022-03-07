@@ -11,7 +11,6 @@ import asyncio, time
 
 greeting = Html("<h1>Hello</h1>")
 the_time = Text("No time like the present")
-clicker = Button("Click me!")
 count = 0
 
 def click_callback(*ignored):
@@ -54,5 +53,26 @@ And the time value updates when the user clicks the "Click me" button.
 
 ## Discussion
 
+This script is similar to `hello2.py` except that the visual components
+are organized into a rectangular dashboard using the composite `Stack` component.
+Also some colors and other style changes are added to the components.
+
+Here the code
+```python
+dashboard = Stack([
+    greeting,
+    [clicker, the_time]
+])
+```
+stacks `greeting` at the top with `clicker` and `the_time` arranged horizontally below
+combined into a composite component.
+The `task` coroutine then uses the composite `dashboard` as the primary 
+(and only) component of the interface.
+
+The `greeting.css(color="salmon")` method sets the text color style of the greeting to
+salmon using a keyword argument convention.
+The `dashboard.css({"justify-content": "center"})` uses a dictionary argument
+convention for the style because `justify-content` cannot be used as a Python
+keyword.
 
 <a href="README.md">Return to tutorial list.</a>
