@@ -43,7 +43,7 @@ serve(task())
 The following animation shows this script started from a VS code editor interface.
 The Gizmo interface appears as a new tab in the browser below the editor.
 
-<img src="demo2.gif">
+<img src="demo2.gif" width="50%">
 
 The script can also be started using the command line:
 ```bash
