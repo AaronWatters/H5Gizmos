@@ -62,5 +62,5 @@ Simple to-do list
 
 
 <a href="../README.md">
-Return to H6Gizmos documentation root.
+Return to H5Gizmos documentation root.
 </a>
