@@ -6,6 +6,9 @@ This documentation subsection provides a number of tutorials
 which walk through H5Gizmo implementations in order to illustrate
 and explain features of the infrastructure.
 
+The tutorials are roughly organized in order of increasing
+conceptual complexity.
+
 <h2>
 <a href="hello1.md">
 Hello 1
