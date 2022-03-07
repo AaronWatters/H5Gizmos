@@ -70,7 +70,7 @@ serve(task())
 Run like so:
 
 ```bash
-% python hello3.py
+% python hello_curves.py
 ```
 
 The script opens a new tab in a browser that looks like this.
