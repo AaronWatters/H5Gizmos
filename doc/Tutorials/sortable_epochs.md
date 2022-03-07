@@ -2,6 +2,10 @@
 
 # Tutorial `sortable_epochs.py`
 
+The `sortable_epochs.py` script asks the user to drag geological epochs into the correct
+time order.  It illustrates how to use ad-hoc Javascript in a Gizmo implementation and
+how to get a value from the Javascript child process transferred to the parent process.
+
 ## The code
 
 ```Python
