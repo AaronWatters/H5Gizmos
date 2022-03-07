@@ -1,4 +1,12 @@
 
+
+# Tutorial `wavesurfer_poem.py`
+
+## The code
+
+```Python
+# wavesurfer_poem.py
+
 from H5Gizmos import Html, Text, Button, Stack, serve, do
 
 # Here is a local audio data file we want to load
@@ -42,7 +50,7 @@ def attach(*ignored):
         // Load the audio file.
         element.wavesurfer.load(url);
 
-    """, url=poem_url) #, on_ready=on_ready)
+    """, url=poem_url) 
 
     # when the wavesurfer player is ready call the on_ready callback.
     do(wave.element.wavesurfer.on("ready", on_ready))
@@ -68,3 +76,22 @@ async def task():
     await Dashboard.show()
 
 serve(task())
+```
+
+## The interface
+
+Run like so:
+
+```bash
+% python wavesurfer_poem.py
+```
+
+The script opens a new tab in a browser that looks like this.
+
+<img src="song.png">
+
+
+## Discussion
+
+
+<a href="README.md">Return to tutorial list.</a>
