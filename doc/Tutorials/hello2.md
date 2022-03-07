@@ -2,6 +2,13 @@
 
 # Tutorial `hello2.py`
 
+
+The `hello2.py` is similar to 
+<a href="hello1.md">
+"hello1"</a>
+ but updates the time display in response to a button click,
+not automatically.
+
 ## The code
 
 ```Python
@@ -64,5 +71,11 @@ executes, changing the contents of `greeting` and `the_time`.
 The callback receives an event argument describing the Javascript
 event which triggered the callback, but this information is not
 used here.
+
+The 
+<a href="hello3.md">hello3</a> is similar to 
+hello2
+ but the visual components are organized into
+a grid using a composite `Stack` component, and some random styling is added.
 
 <a href="README.md">Return to tutorial list.</a>

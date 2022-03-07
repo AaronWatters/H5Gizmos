@@ -42,6 +42,9 @@ Hello Curves
 </a>
 </h2>
 
+The `hello_curves.py` script builds a `Stack` dashboard containing
+input sliders which control a parameters for a `matplotlib` curve visualization.
+
 <h2>
 <a href="sortable_epochs.md">
 Sortable Epochs

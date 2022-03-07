@@ -2,6 +2,11 @@
 
 # Tutorial `hello2.py`
 
+The `hello3.py` is similar to 
+<a href="hello2.md">hello2</a>
+ but the visual components are organized into
+a grid using a composite `Stack` component, and some random styling is added.
+
 ## The code
 
 ```Python
@@ -65,7 +70,7 @@ dashboard = Stack([
 ])
 ```
 stacks `greeting` at the top with `clicker` and `the_time` arranged horizontally below
-combined into a composite component.
+combined into a composite `dashboard` component.
 The `task` coroutine then uses the composite `dashboard` as the primary 
 (and only) component of the interface.
 
@@ -74,5 +79,10 @@ salmon using a keyword argument convention.
 The `dashboard.css({"justify-content": "center"})` uses a dictionary argument
 convention for the style because `justify-content` cannot be used as a Python
 keyword.
+
+The 
+<a href="hello_curves.md">hello_curves</a> script
+ implements a more complex composite dashboard -- a `Stack` dashboard containing
+input sliders which control a parameters for a `matplotlib` curve visualization.
 
 <a href="README.md">Return to tutorial list.</a>

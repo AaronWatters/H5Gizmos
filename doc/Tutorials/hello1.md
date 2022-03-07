@@ -2,6 +2,9 @@
 
 # Tutorial `hello1.py`
 
+The `hello1.py` script displays the current time and updates the display every second.
+It demonstrates starting an H5Gizmo interface with two components and updating displayed text.
+
 ## The code
 
 ```Python
@@ -55,6 +58,10 @@ The subsequent `for` loop repeatedly waits 1 second and then updates `the_time` 
 time.  Note that it is important to use an asynchronous `sleep` because the standard `time.sleep(...)`
 would block all asynchronous tasks, preventing communication between the Python parent
 and the Javascript child.
+
+The
+<a href="hello2.md">hello2</a>
+script updates the time in response to a button click instead of updating every second.
 
 
 <a href="README.md">Return to tutorial list.</a>

@@ -2,6 +2,9 @@
 
 # Tutorial `hello_curves.py`
 
+The `hello_curves.py` script builds a `Stack` dashboard containing
+input sliders which control a parameters for a `matplotlib` curve visualization.
+
 ## The code
 
 ```Python
