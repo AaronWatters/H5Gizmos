@@ -62,7 +62,7 @@ serve(task())
 Run like so:
 
 ```bash
-% python hello3.py
+% python sortable_epochs.py
 ```
 
 The script opens a new tab in a browser that looks like this.
