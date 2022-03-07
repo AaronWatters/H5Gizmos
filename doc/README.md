@@ -106,7 +106,7 @@ await get(feedback.element.text())
 evaluates to the currently displayed text from the feedback element, evaluated in the
 Javascript child context and transferred to the Python parent process.
 
-# Sections
+# Documentation Organization
 
 The rest of the documentation is organized into the following sections:
 
@@ -116,7 +116,11 @@ Tutorials
 </a>
 </h2>
 
-The tutorials provide examples to illustrate features of the H5Gizmos
+The 
+<a href="Tutorials/README.md">
+Tutorials
+</a>
+ walk through and explain examples to illustrate features of the H5Gizmos
 infrastructure.
 
 

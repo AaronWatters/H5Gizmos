@@ -59,3 +59,8 @@ Wavesurfer poem
 Simple to-do list
 </a>
 </h2>
+
+
+<a href="../README.md">
+Return to H6Gizmos documentation root.
+</a>
