@@ -76,5 +76,89 @@ The script opens a new tab in a browser that looks like this.
 
 ## Discussion
 
+This script mimicks <a href="hello2.md">hello2</a> by creating a header component as the primary component
+in the initial `task` coroutine
+and then attaching a number of other components using the `add` method.
+The `task` adds a `sorter` `Stack` component which lists some geological epochs
+in an incorrect time order.  The user is asked to put the epochs in the correct order
+from oldest to youngest, and is provided with a `check` button which validates the correct
+answer or gives hints for an incorrect answer.
+
+### Executing Javascript methods
+
+Most gizmo components in the gizmo parent process are associated with a `jQuery` container
+object in the child Javascript context.  In the function call
+```Python
+    do(sorter.element.sortable())
+```
+`sorter.element` refers to the `jQuery` element associated with the `sorter` `Stack` object.
+The expression `sorter.element.sortable()` refers to an unexecuted method call `sortable()` to be applied
+to that `jQuery` object reference, and the `do(...)` function call sends the method call to the child
+context to be executed.
+
+When the child receives the message corresponding to the
+```Python
+    do(sorter.element.sortable())
+```
+execution request the child context locates the object `x` associated with `sorter.element`
+and attempts to execute `x.sortable()`.  In this case the execution succeeds and
+jQueryUI makes the `sorter` DOM object
+<a href="https://jqueryui.com/sortable/">sortable</a> -- allowing the user
+to drag the members of the list to different positions.
+
+For completeness, note that a bad request like
+```Python
+    do(sorter.element.NO_SUCH_METHOD_EXISTS())
+```
+would fail to execute in the child and the child process would send an error message back to the parent asynchronously.
+
+### Injecting Javascript code text
+
+In order to check whether the user has arranged the epochs correctly
+the script needs to get the currently displayed order for the epoch list.
+The following `js_init` method call injects a small amount of Javascript
+into the child context to get the epoch order:
+```Python
+    sorter.js_init("""
+        element.child_order = function () {
+            var children = Array.from(element[0].children)
+            result = children.map(x => x.textContent);
+            return result;
+        };
+        """)
+```
+The string argument to `js_init` contains the Javascript code text to inject.
+```Javascript
+        element.child_order = function () {
+            var children = Array.from(element[0].children)
+            result = children.map(x => x.textContent);
+            return result;
+        };
+```
+The reference `element` in the Javascript text refers to the `jQuery` element
+associated with the `sorter` component.
+
+### Getting Javascript values in the parent
+
+The `check_order` coroutine uses the `get` method to execute `child_order`
+in the child context and transfer the list of epochs to the parent as follows:
+```Python
+    order = await get(sorter.element.child_order())
+```
+The `get` sends a message requesting the return value of the `child_order` function evaluated
+in the Javascript child and waits for the value to be transfered back to the parent.
+
+Note that a `get` cannot be awaited directly in the button click callback `check_click`
+because `check_click` is not a coroutine.  For this reason `check_click` launches the
+`check_task()` coroutine which can `await get(...)`:
+```Python
+def check_click(*ignored):
+    schedule_task(check_task())
+
+async def check_task():
+    ...
+    order = await get(sorter.element.child_order())
+    ...
+```
 
 <a href="README.md">Return to tutorial list.</a>
