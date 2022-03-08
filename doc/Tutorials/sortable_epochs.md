@@ -136,7 +136,9 @@ The string argument to `js_init` contains the Javascript code text to inject.
         };
 ```
 The reference `element` in the Javascript text refers to the `jQuery` element
-associated with the `sorter` component.
+associated with the `sorter` component.  The Javascript code fragment attaches
+the `element.child_order` function to the `element` where `element.child_order()`
+evaluates to the currenttly displayed sequence of epoch names.
 
 ### Getting Javascript values in the parent using `get`
 
@@ -145,8 +147,8 @@ in the child context and transfer the list of epochs to the parent as follows:
 ```Python
     order = await get(sorter.element.child_order())
 ```
-The `get` sends a message requesting the return value of the `child_order` function evaluated
-in the Javascript child and waits for the value to be transfered back to the parent.
+The `get` sends a message requesting the return value of the `element.child_order()` function evaluated
+in the Javascript child context and waits for the value to be transfered back to the parent.
 
 Note that a `get` cannot be awaited directly in the button click callback `check_click`
 because `check_click` is not a coroutine.  For this reason `check_click` launches the
