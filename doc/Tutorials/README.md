@@ -7,7 +7,10 @@ which walk through H5Gizmo implementations in order to illustrate
 and explain features of the infrastructure.
 
 The tutorials are roughly organized in order of increasing
-conceptual complexity.
+conceptual complexity.  The audience for these tutorials should have
+some knowledge of Python programming.  The more advanced Tutorials
+also use Javascript and concepts from HTML/CSS without explaining them
+in great detail.
 
 <h2>
 <a href="hello1.md">
