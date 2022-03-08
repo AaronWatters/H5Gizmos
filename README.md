@@ -8,7 +8,7 @@ with a "parent" Python process using a web socket and other HTTP protocols.  H5G
 use arbitrary Javascript resources to provide sophisticated interactive graphical interfaces.
 
 The H5Gizmo mechanism is designed to facilitate the development of "dashboards" and special purpose
-interactive graphical interfaces for scientific and technical workflows.
+tools for scientific and technical workflows.
 
 The animation below shows a gizmo script displaying a matplotlib plot running from the VS code editor.
 The gizmo user interface appears as a new HTML frame in the browseer instance below the editor.
