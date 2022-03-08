@@ -84,7 +84,7 @@ in an incorrect time order.  The user is asked to put the epochs in the correct 
 from oldest to youngest, and is provided with a `check` button which validates the correct
 answer or gives hints for an incorrect answer.
 
-### Executing Javascript methods
+### Executing Javascript methods using `do`
 
 Most gizmo components in the gizmo parent process are associated with a `jQuery` container
 object in the child Javascript context.  In the function call
@@ -112,7 +112,7 @@ For completeness, note that a bad request like
 ```
 would fail to execute in the child and the child process would send an error message back to the parent asynchronously.
 
-### Injecting Javascript code text
+### Injecting Javascript code text using `js_init`
 
 In order to check whether the user has arranged the epochs correctly
 the script needs to get the currently displayed order for the epoch list.
@@ -138,7 +138,7 @@ The string argument to `js_init` contains the Javascript code text to inject.
 The reference `element` in the Javascript text refers to the `jQuery` element
 associated with the `sorter` component.
 
-### Getting Javascript values in the parent
+### Getting Javascript values in the parent using `get`
 
 The `check_order` coroutine uses the `get` method to execute `child_order`
 in the child context and transfer the list of epochs to the parent as follows:
