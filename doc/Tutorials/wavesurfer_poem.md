@@ -131,7 +131,9 @@ wave.add_content(poem_path, "audio/mpeg", poem_url)
 
 The `attach` operation injects Javascript to configure the audio
 control using the `WaveSurfer` javascript function defined 
-in the remote script `"https://unpkg.com/wavesurfer.js"`
+in the remote script `"https://unpkg.com/wavesurfer.js"` following the
+methods described in the
+<a href="https://wavesurfer-js.org/docs/">wavesurfer library documentation</a>
 ```Python
 def attach(*ignored):
     wave.js_init("""
