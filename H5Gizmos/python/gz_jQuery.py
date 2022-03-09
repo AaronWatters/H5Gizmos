@@ -1,13 +1,13 @@
 
-from shelve import Shelf
 import numpy as np
 from H5Gizmos.python import gizmo_server
-from H5Gizmos.python.gz_resources import MISC_OPERATIONS_TEMPLATE
+#from H5Gizmos.python.gz_resources import MISC_OPERATIONS_TEMPLATE
 from . import gz_components
 from . import H5Gizmos
-from .H5Gizmos import do, get
+from .H5Gizmos import do, get, schedule_task
 import html
 import io
+import asyncio
 
 # add Markdown(...)
 # new method jqc.append(other_jqc)
@@ -625,6 +625,7 @@ class Slider(jQueryComponent):
         step=None, 
         orientation="horizontal",
         title=None,
+        delay=0.1,  # async delay in seconds for callback to avoid flooding
         ):
         assert maximum > minimum, "Bad slider range: " + repr((minimum, maximum))
         if value is None:
@@ -643,6 +644,8 @@ class Slider(jQueryComponent):
         self.value = value
         self.step = step
         self.orientation = orientation
+        self.change_pending = False
+        self.change_delay = delay
 
     def configure_jQuery_element(self, element):
         options = dict(
@@ -671,8 +674,30 @@ class Slider(jQueryComponent):
         self.last_ui = ui
         v = self.value = ui["value"]
         c = self.on_change
-        if c is not None:
-            c(v)
+        # only
+        if c is not None and not self.change_pending:
+            #c(v)
+            self.change_pending = True
+            schedule_task(self.delayed_callback())
+
+    async def delayed_callback(self):
+        "delay the change callback and ignore other change requests that arrive too quickly to prevent jitter"
+        # xxxx this method should probably be used for other callbacks too...
+        c = self.on_change
+        if c is None:
+            self.change_pending = False
+            return
+        self.change_pending = True  # redundant
+        try:
+            # sleep a little to prevent other changes coming in too quickly
+            await asyncio.sleep(self.change_delay)
+        finally:
+            # allow other changes to arrive while the callback executes
+            self.change_pending = False
+        # use the current value which may have changed during the sleep
+        v = self.value
+        c(v)
+
 
 class RangeSlider(jQueryComponent):
 
