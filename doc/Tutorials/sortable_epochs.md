@@ -112,6 +112,13 @@ For completeness, note that a bad request like
 ```
 would fail to execute in the child and the child process would send an error message back to the parent asynchronously.
 
+Python expressions like `sorter.element.sortable()[0]` map from the Python parent process to the Javascript child context
+using
+<a href="https://en.wikipedia.org/wiki/Type_introspection#Python">dynamic introspection</a>
+in Python and Javascript --
+attribute access, indexing, and method calls are captured in the Python parent and translated to the
+analogous access in the Javascript child.
+
 ### Injecting Javascript code text using `js_init`
 
 In order to check whether the user has arranged the epochs correctly
