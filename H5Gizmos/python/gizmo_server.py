@@ -11,6 +11,8 @@ import os
 import sys
 import contextlib
 import socket
+import traceback
+import sys
 
 # Max size for posts -- really big
 DEFAULT_MAX_SIZE = 1000 * 1000 * 1000 * 1000 * 100
@@ -42,7 +44,7 @@ def run(main_awaitable, server=None, run_forever=True, exit_on_disconnect=None, 
     if run_forever:
         get_or_create_event_loop().run_forever()
 
-def serve(task, verbose=False, delay=0.5):
+def serve(coroutine, verbose=False, delay=0.5):
     """
     Set up the global gizmo server and schedule the task, then run the event loop forever.
     """
@@ -50,8 +52,21 @@ def serve(task, verbose=False, delay=0.5):
     _check_server(None, verbose=verbose)
 
     async def deferred_task():
+        # gymnastics to avoid duplicate exceptions....
         await asyncio.sleep(delay)
-        await task
+        task = H5Gizmos.schedule_task(coroutine)
+        try:
+            await task
+        except Exception:
+            print("---- Exception in main gizmo task.  Terminating.")
+            #traceback.print_exc(file=sys.stdout)
+            #print("---- Terminating")
+            # prevent duplicate exception
+            #try:
+            #    task.result()
+            #except:
+            #    pass
+            sys.exit(1)
 
     H5Gizmos.schedule_task(deferred_task())
     get_or_create_event_loop().run_forever()
