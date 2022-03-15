@@ -15,6 +15,11 @@ The gizmo user interface appears as a new HTML frame in the browseer instance be
 
 <img src="doc/curves.gif" width="50%">
 
+Please see
+<a href="./doc/Tutorials/hello_curves.md">
+the "hello curves" tutorial</a> for a detailed discussion of this
+gizmo.
+
 # Documentation
 
 The documentation for H5Gizmos starts at
