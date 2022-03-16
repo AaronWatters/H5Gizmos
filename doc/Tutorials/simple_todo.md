@@ -7,6 +7,15 @@ The `simple_todo.py` script implements a simple "to do list" reminder dashboard.
 It illustrates how to style a dashboard using the `Template` composite component
 and external CSS style sheets.
 
+This tutorial example is closer to a "real" application than some of the other
+tutorial examples.  This discussion will not discuss in detail the following:
+
+- Object oriented structure with a container `TodoList` class which contains `Todo` members.
+- Command line usage options with embedded documentaion.
+- Simple data persistence of todo list elements to a `JSON` formatted file.
+
+The discussion below explains features more specific to the H5Gizmo platform.
+
 ## The code
 
 ```Python
@@ -166,5 +175,69 @@ The script opens a new tab in a browser that looks like this.
 
 ## Discussion
 
+This example reiterates a number of features described in the other tutorials:
+
+- Gizmo start up.
+- `Button` event callbacks.
+- Simple composite components like `Stack`.
+- Dynamic changes to displayed content.
+
+### The `dashboard` `Template`
+
+The `Template` composite component is designed to allow dynamic components
+to be placed inside an arbitrary HTML design layout.
+
+The gizmo uses a `Template` to allow components of the `dashboard` to be "mounted" into
+a somewhat complex HTML table structure.  For example in
+```Python
+        self.dashboard = (
+            Template("""
+            ...
+                            <div class="PENDING"/>
+            ...
+            """)
+            ...
+            .put(self.pending_stack, "PENDING")
+            ....
+        )
+```
+the `PENDING` `div` element is a "placeholder mount point" and the `put` operation appends
+the `pending_stack` component at that position.
+
+### CSS styling using external style sheets
+
+This example also illustrates how to use external CSS style sheets to
+specify the look of gizmo components.
+
+The declaration
+```Python
+        self.dashboard.css_file("./simple_todo.css")
+```
+loads the local file `./simple_todo.css` in the gizmo startup page.  This file defines
+styling for the CSS class `simple-todo`.
+The gizmo attaches this class to the `self.dashboard` primary component using the
+`addClass` method.
+```Python
+        self.dashboard.addClass("simple-todo")
+```
+
+### Changing members of composite components
+
+The `update_dashboard` method changes this displayed lists of `Todo` items
+when user actions add, move, or delete a `Todo` from the `TodoList`.  The
+`TodoList.update_dashboard` method changes the displayed lists using the
+`Stack.attach_children` method:
+```Python
+
+    def update_dashboard(self):
+        ...
+        for (stack, sequence) in [(self.pending_stack, pending), (self.done_stack, done)]:
+            if sequence:
+                stack.attach_children(sequence)
+            else:
+                stack.attach_children(["<em>No entries</em>"])
+        ...
+```
+This action discards and replaces the `Stack` children in the HTML document model.
 
 <a href="README.md">Return to tutorial list.</a>
