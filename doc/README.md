@@ -61,14 +61,19 @@ Python context like an `async` coroutine or a Jupyter code cell.
 In this case the interface is created in the `task` coroutine.
 
 - The `serve(task())` function call sets up the internal web server required
-for Gizmo interfaces and starts the `task` coroutine.
+for gizmo interfaces and starts the `task` coroutine.
 
-- The interface is mediated by a controlling primary element `G` which provides a link
+- The user interface becomes active when a browser loads the start page
+to create the "child" Javscript context
+for the gizmo.  The start page loads resources from the web server
+and connects a web socket for two-way communication between the parent and the child.
+
+- The interface is mediated by a controlling primary component `G` which provides a link
 between an HTML document object model (DOM) element in the child and a "proxy" object in the parent process.
 In this case `G` refers to a Python object which corresponds to a checkbox group
 in the browser.
 
-- The Gizmo interface can make use of Javascript libraries.  In this case
+- The Gizmo child context can make use of Javascript libraries.  In this case
 the `Checkboxes` implementation automatically loads and uses the
 <a href="https://jqueryui.com/">jQueryUI</a> library to implement the
 check box group and its styling.
