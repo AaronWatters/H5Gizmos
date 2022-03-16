@@ -128,6 +128,18 @@ Tutorials
  walk through and explain examples to illustrate features of the H5Gizmos
 infrastructure.
 
+<h2>
+<a href="Components/README.md">
+Components
+</a>
+</h2>
+
+The 
+<a href="Components/README.md">
+Components
+</a>
+ section describes standard components for building an H5Gizmos interface.
+
 
 
 
