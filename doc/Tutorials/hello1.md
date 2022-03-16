@@ -56,7 +56,11 @@ child context connects to the Python parent via a web socket connection.
 Once the child connects the script `add`s `the_time` as a subsidiary component to `greeting`.
 
 The subsequent `for` loop repeatedly waits 1 second and then updates `the_time` to show the current
-time.  Note that it is important to use the asynchronous `sleep`
+time by calling `the_time.text(...)`
+```Python
+        the_time.text("%s: the time is now %s" % (i, time.ctime()))
+```
+Note that it is important to use the asynchronous `sleep`
 instead of `time.sleep` here because the standard `time.sleep(...)`
 would block all asynchronous tasks, preventing communication between the Python parent
 and the Javascript child, and the time text would not update.
