@@ -12,6 +12,10 @@ some knowledge of Python programming.  The more advanced Tutorials
 also use Javascript and concepts from HTML/CSS without explaining them
 in great detail.
 
+The source code and support files for the tutorial examples are
+located with the tutorial text in the
+<a href=".">docs/Tutorial folder of the H5Gizmos repository</a>.
+
 <h2>
 <a href="hello1.md">
 Hello 1
