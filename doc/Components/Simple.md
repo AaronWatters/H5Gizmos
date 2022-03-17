@@ -97,7 +97,29 @@ H.html("<h1>Have a nice day!</h1>")
 
 ## `Input`
 
+```Python
+from H5Gizmos import Input
 
+answer = Input(initial_value="-11")
+await answer.show()
+answer.add("What is six times seven?")
+feedback = answer.add("Enter your answer in the box above, please.")
+answer.focus()
+
+def check(*ignored):
+    entered = answer.value
+    try:
+        assert int(entered) == 6 * 7
+    except Exception:
+        feedback.text("Sorry: please try again.")
+        answer.focus()
+    else:
+        feedback.text("Right!")
+        
+answer.on_enter(check)
+```
+
+<img src="Input.png"/>
 
 ## `LabelledInput`
 
