@@ -36,6 +36,7 @@ class jQueryComponent(gz_components.Component):
     init_text = "" # default for subclasses
     title_string = None
     on_click_depth = 1
+    radio_on_click = None
 
     def __init__(self, init_text="Uninitialized JQuery Gizmo.", tag="<div/>", title=None):
         if title:
@@ -150,7 +151,8 @@ class jQueryComponent(gz_components.Component):
         do(self.element.appendTo(self.container))
         self.configure_jQuery_element(self.element)
         # Set on_click after element has been configured -- order important for Button
-        self.set_on_click(self.on_click)
+        if self.radio_on_click is None:
+            self.set_on_click(self.on_click)
         result = self.container[0]
         self.cached_dom_element_reference = result
         return result
@@ -405,6 +407,7 @@ class RadioButtons(jQueryComponent):
         options,
         title
         ):
+        #( "on_click", on_click)
         tag = "<fieldset/>"
         super().__init__(init_text="", tag=tag, title=title)
         assert len(label_value_pairs) > 0, "please provide labels and values."
