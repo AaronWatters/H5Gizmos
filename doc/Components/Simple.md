@@ -193,7 +193,66 @@ r_slide_callback()
 
 ## `DropDownSelect`
 
+```Python
+from H5Gizmos import DropDownSelect
+
+pairs = [
+    ("Bacterium", "Monera"),
+    ("Single cell", "Protista"),
+    ("Plant", "Plantae"),
+    ("Animal", "Animalia"),
+    ("Fungus", "Fungi"),
+]
+
+def dropdown_callback(*ignored):
+    [kingdom_name] = D.selected_values
+    kingdom.text("Kingdom is " + kingdom_name)
+
+D = DropDownSelect(
+    label_value_pairs = pairs,
+    selected_value="Fungi",
+    legend="What are you? ",
+)
+D.resize(height=200)
+
+await D.show()
+kingdom = D.add("Kingdom here.")
+dropdown_callback()
+```
+
+<img src="DropDownSelect.png"/>
+
+
 ## `RadioButtons`
+
+```Python
+from H5Gizmos import RadioButtons
+
+pairs = [
+    ("Bacterium", "Monera"),
+    ("Single cell", "Protista"),
+    ("Plant", "Plantae"),
+    ("Animal", "Animalia"),
+    ("Fungus", "Fungi"),
+]
+
+def radio_callback(*ignored):
+    [kingdom_name] = RD.selected_values
+    rkingdom.text("Kingdom is " + kingdom_name)
+
+RD = RadioButtons(
+    label_value_pairs = pairs,
+    selected_value="Fungi",
+    legend="What are you? ",
+    on_click=radio_callback,
+)
+
+await RD.show()
+rkingdom = RD.add("Kingdom here.")
+radio_callback()
+```
+
+<img src="RadioButtons.png"/>
 
 ## `CheckBoxes`
 
