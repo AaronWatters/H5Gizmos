@@ -3,6 +3,10 @@
 
 This section describes standard components for building an H5Gizmos interface.
 
+Components are basic building blocks for creating H5Gizmo interfaces -- a gizmo is connected to a primary
+component which encapsulates the connection between the parent process and the child context.  Other components
+may be attached to the primary component or contained within the primary component.
+
 <h2>
 <a href="Simple.md">
 Simple components
@@ -25,7 +29,16 @@ Shared Features
 </a>
 </h2>
 
-All components share a number of common features.
+Components have a number of common features.
+
+<h2>
+<a href="Building.md">
+Building Components
+</a>
+</h2>
+
+You can build components to encapsulate additional functionality implemented in Javascript
+by subclassing one of the Component implementations.
 
 
 
