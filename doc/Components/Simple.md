@@ -123,9 +123,73 @@ answer.on_enter(check)
 
 ## `LabelledInput`
 
+```Python
+from H5Gizmos import LabelledInput
+
+LI = LabelledInput("What is your name? ")
+await LI.label_container.show()
+
+def on_response(*ignored):
+    name = LI.value
+    LI.label_container.add("Welcome " + repr(name))
+    
+LI.on_enter(on_response)
+LI.focus()
+```
+
+<img src="LabelledInput.png">
+
 ## `Slider`
 
+```Python
+from H5Gizmos import Slider
+
+def slide_callback(*ignored):
+    v = S.value
+    info.text("temperature = " + str(v))
+    
+S = Slider(
+    minimum=-100,
+    maximum=150.0,
+    value=88.6,
+    step=0.2,
+    orientation="horizontal", # or "vertical"
+    on_change=slide_callback,
+)
+S.resize(width=400)
+await S.show()
+info = S.add("temperature here...")
+slide_callback()
+```
+
+<img src="Slider.png">
+
 ## `RangeSlider`
+
+```Python
+from H5Gizmos import RangeSlider
+
+def r_slide_callback(*ignored):
+    low = RS.low_value
+    high = RS.high_value
+    rinfo.text("from %s to %s." % (low, high))
+    
+RS = RangeSlider(
+    minimum=-100,
+    maximum=150.0,
+    low_value=23.4,
+    high_value=88.6,
+    step=0.2,
+    orientation="horizontal", # or "vertical"
+    on_change=r_slide_callback,
+)
+RS.resize(width=400)
+await RS.show()
+rinfo = RS.add("temperature here...")
+r_slide_callback()
+```
+
+<img src="RangeSlider.png"/>
 
 ## `DropDownSelect`
 
