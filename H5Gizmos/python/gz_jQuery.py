@@ -58,7 +58,15 @@ class jQueryComponent(gz_components.Component):
         self.class_list = []
 
     def __repr__(self):
-        return self.__class__.__name__ + repr( (self.tag, self.init_text))
+        def truncate(x):
+            if x:
+                x = str(x)
+                if len(x) > 20:
+                    x = x[:20] + "..."
+            return x
+        t = truncate(self.tag)
+        i = truncate(self.init_text)
+        return self.__class__.__name__ + repr( (t, i))
 
     def set_on_click(self, on_click):
         self.on_click = on_click
