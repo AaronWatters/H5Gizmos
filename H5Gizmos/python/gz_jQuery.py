@@ -1141,8 +1141,8 @@ class jQueryImage(jQueryComponent):
 
     def __init__(
         self, 
-        filename,   # filename of None generates a fresh "don't care" name.
-        bytes_content, 
+        filename=None,   # filename of None generates a fresh "don't care" name.
+        bytes_content=None, 
         height=None, 
         width=None, 
         mime_type=None, 
