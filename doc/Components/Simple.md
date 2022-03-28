@@ -256,9 +256,96 @@ radio_callback()
 
 ## `CheckBoxes`
 
+```Python
+from H5Gizmos import CheckBoxes
+
+pairs = [
+    ("Bacterium", "Monera"),
+    ("Single cell", "Protista"),
+    ("Plant", "Plantae"),
+    ("Animal", "Animalia"),
+    ("Fungus", "Fungi"),
+]
+
+def check_callback(*ignored):
+    names = CB.selected_values
+    cbkingdom.text("Kingdoms: " + repr(names))
+
+CB = CheckBoxes(
+    label_value_pairs = pairs,
+    selected_values=["Fungi", "Plantae"],
+    legend="What are you? ",
+    on_click=check_callback,
+)
+
+await CB.show()
+cbkingdom = CB.add("Kingdom here.")
+check_callback()
+```
+
+<img src="Checkboxes.png">
+
 ## `Image`
 
+```Python
+from H5Gizmos import Image
+
+fn = "mandrill.png"
+mandrill_bytes = open(fn, "rb").read()
+Img = Image(fn, bytes_content=mandrill_bytes, height=100, width=100)
+await Img.show()
+```
+
+<img src="Image1.png">
+
+### Loading an array into a blank image
+
+```Python
+Blank = Image(height=100, width=200)
+await Blank.show()
+```
+
+then later
+
+```Python
+import numpy as np
+A = np.zeros((25,), dtype=np.ubyte) + 222
+B = A.reshape((5,5))
+B[4,:] = B[0,:] = B[:,4] = B[:,0] = 100
+A[::2] = 0
+Blank.change_array(B)
+Blank.css({"image-rendering": "pixelated"})
+```
+
+<img src="Image2.png">
+
 ## `Plotter`
+
+```Python
+from H5Gizmos import Plotter
+import matplotlib.pyplot as plt
+
+plot_region = Plotter()
+
+await plot_region.show()
+```
+
+then
+
+```Python
+import numpy as np
+import matplotlib.pyplot as plt
+
+theta = 6 * np.pi / 5
+xs = [ np.sin(theta * i) for i in range(6) ]
+ys = [ np.cos(theta * i) for i in range(6) ]
+
+with plot_region:
+    plt.plot(xs, ys)
+    plt.title("Twinkle Twinkle Little Star")
+```
+
+<img src="Plotter.png">
 
 <a href="./README.md">
 Return to Component categories.
