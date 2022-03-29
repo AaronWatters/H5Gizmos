@@ -87,6 +87,29 @@ await S.show()
 
 <img src="Shelf.png">
 
+## Implicit `Shelf` inside a `Stack`
+
+```Python
+# Implicit shelf in stack
+from H5Gizmos import Html, RadioButtons, Button, Stack
+
+title = Html("<h4>Entertainment</h4>")
+genre = RadioButtons("scifi action romance".split())
+duration = RadioButtons("half hour series".split())
+language = RadioButtons("Spanish French German".split())
+show_options = Button("Show options")
+
+S = Stack(
+    children=[
+        title, 
+        [genre, duration, language], 
+        show_options]
+)
+await S.show()
+```
+
+<img src="StackShelf.png"/>
+
 ## `Template`
 
 ```Python
