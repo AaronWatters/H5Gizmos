@@ -2,10 +2,21 @@
 # Simple Gizmo Components
 
 Simple components such as buttons and text do not contain other non-trivial components.
+This document illustrates
+and explains the use of some simple components.
+The example code is embedded in the
+<a href="./Demo%20Simple%20Components.ipynb">
+Demo Simple Components.ipynb</a>
+Jupyter notebook in this folder.
 
 ## `Text`
 
-Initially
+The text component displays a fragment of text
+which can be updated after initialization.
+For example the code below displays "Old text"
+in an embedded frame when run in a Jupyter notebook
+The `txt.css(color="green")` method call sets the CSS
+text color style for the component to green.
 
 ```Python
 from H5Gizmos import Text
@@ -17,7 +28,8 @@ await txt.show()
 
 <img src="Text0.png">
 
-Changed
+The code in the Jupyter notebook cell that follows
+modifies the text to "Old text" with text color red.
 
 ```Python
 txt.css(color="red")
@@ -27,6 +39,11 @@ txt.text("New Text")
 <img src="Text.png"/>
 
 ## `Button`
+
+The user can trigger the execution of a
+Python "callback" function by clicking on a `Button`
+component.  The code fragment below creates a button
+that updates a counter display when the button is clicked.
 
 ```Python
 from H5Gizmos import Button
@@ -43,10 +60,29 @@ await B.show()
 info = B.add("No clicks yet")
 ```
 
+Here the `info=B.add("No clicks yet")` method call appends a text
+area for displaying the count after the button.
+The callback changes the text of the `info` text when
+the user clicks the button.
+
 <img src="Button.png"/>
 
+The callback function receives an `event` object argument
+which can sometimes be useful for special purposes, but
+it is often not used in applications.
+
+A button with no `on_click` callback (or an `on_click` of `None`)
+will be disabled and shown greyed out.
+Set or change
+the callback for a button using the `B.set_on_click(callback)`
+method.
 
 ## `ClickableText`
+
+The user can also trigger a callback action by clicking
+a `ClickableText` component.  The following example
+demonstrates how to use a `ClickableText` element to update
+a counter.
 
 ```Python
 from H5Gizmos import ClickableText
@@ -67,6 +103,10 @@ CTinfo = CT.add("No clicks yet")
 <img src="ClickableText.png">
 
 ## `Html`
+
+The `Html` component displays an HTML tag text
+which may contain other tags.  The example below
+displays a `table` tag with a header row and two data rows.
 
 ```Python
 from H5Gizmos import Html
@@ -90,12 +130,27 @@ await H.show()
 
 <img src="Html0.png"/>
 
+
+The `H.html("...")` method changes the displayed tag content.
+
 ```Python
 H.html("<h1>Have a nice day!</h1>")
 ```
 <img src="Html1.png">
 
 ## `Input`
+
+The `Input` component displays a text input field.
+The example below shows an `Input`
+named `answer` with two text areas
+appended.  
+The `answer.focus()` method sets the keyboard focus
+to the `answer` input element.
+The `answer.on_enter(check)` method
+sets up the `check` callback to handle the `enter` event
+for the `answer` input element.  The `check` function
+checks to see whether the user entered the right value
+after the user hits the enter key.
 
 ```Python
 from H5Gizmos import Input
@@ -123,6 +178,9 @@ answer.on_enter(check)
 
 ## `LabelledInput`
 
+The `LabelledInput` convenience wraps an `Input` in a `Label`
+component to associate a text prompt with the `Input`.
+
 ```Python
 from H5Gizmos import LabelledInput
 
@@ -138,6 +196,10 @@ LI.focus()
 ```
 
 <img src="LabelledInput.png">
+
+Note that we do not `show` the `LI` component directly, but instead
+use the label wrapper `LI.label_container.show()`.
+
 
 ## `Slider`
 
