@@ -11,6 +11,11 @@ Jupyter notebook in this folder.
 
 ## `Label`
 
+A `Label` associates an explanatory text with another component.
+The label is displayed and can be interpreted by screen readers for
+people with vision difficulties.  The following code fragment
+associates a label with a clickable text.
+
 ```Python
 from H5Gizmos import ClickableText, Label
 
@@ -25,6 +30,10 @@ await L.show()
 <img src="Label.png">
 
 ## `Stack`
+
+A `Stack` arranges a sequence of child components in a vertical sequence.
+The following code arranges a header, three radio buttons, and push button
+vertically.
 
 ```Python
 from H5Gizmos import Html, RadioButtons, Button, Stack
@@ -45,6 +54,9 @@ S = Stack(
 )
 await S.show()
 ```
+
+The `S.attach_children(list)` replaces the child components for a `Stack` or a `Shelf`
+dynamically.
 
 <img src="Stack.png">
 
@@ -90,10 +102,8 @@ await S.show()
 ## Implicit `Shelf` inside a `Stack`
 
 ```Python
-# Implicit shelf in stack
 from H5Gizmos import Html, RadioButtons, Button, Stack
 
-title = Html("<h4>Entertainment</h4>")
 genre = RadioButtons("scifi action romance".split())
 duration = RadioButtons("half hour series".split())
 language = RadioButtons("Spanish French German".split())
@@ -101,7 +111,7 @@ show_options = Button("Show options")
 
 S = Stack(
     children=[
-        title, 
+        "<h4>Entertainment</h4>", 
         [genre, duration, language], 
         show_options]
 )
