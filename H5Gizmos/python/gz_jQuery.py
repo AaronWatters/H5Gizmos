@@ -880,10 +880,14 @@ class Template(ChildContainerSuper):
         classes = set(p[0] for p in pairs)
         ref_pairs = []
         class_to_ref = {}
+        # find all references first
         for (classname, c) in pairs:
             class_ref = element.find("." + classname)
-            child_ref = self.child_reference(c, gizmo)
             class_to_ref[classname] = class_ref
+        # then attach children later to avoid classname collision in sub-components
+        for (classname, c) in pairs:
+            class_ref = class_to_ref[classname]
+            child_ref = self.child_reference(c, gizmo)
             ref_pairs.append((class_ref, child_ref))
         if self.empty_targets:
             for class_ref in class_to_ref.values():
