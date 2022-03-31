@@ -55,13 +55,48 @@ S = Stack(
 await S.show()
 ```
 
-The `S.attach_children(list)` replaces the child components for a `Stack` or a `Shelf`
-dynamically.
-
 <img src="Stack.png">
 
 
+The "Show options" button is grey and disabled because it has no attached
+`on_click` event handler.
+
+The `S.attach_children(list)` replaces the child components for a `Stack` or a `Shelf`
+dynamically.
+
+Methods of child components can also modify the contents of the children,
+for example this changes the `title` content:
+
+```Python
+title.html("<h1> Make a selection </h1>")
+```
+
+and the following adds an `on_click` event handler `show_it` to the `show_options` button:
+
+```Python
+show_options.set_on_click(show_it)
+```
+
+If it is not important to use the `title` variable the child list can
+include the literal HTML to the same effect as above.
+
+```Python
+S = Stack(
+    children=[
+        "<h4>Entertainment</h4>",
+        genre, 
+        duration, 
+        language, 
+        show_options]
+)
+```
+
 ## `Shelf`
+
+A `Shelf` arranges a sequence of child components in a horizontal sequence.
+The following code places two text components to the left and right
+of a horizontal range slider.  The text widgets show the
+values of the range when the slider changes.
 
 ```Python
 from H5Gizmos import RangeSlider, Text, Shelf
@@ -101,6 +136,15 @@ await S.show()
 
 ## Implicit `Shelf` inside a `Stack`
 
+For both `Shelf` and `Stack` the child list can include
+other lists.  A sublist in a `Stack` converts to a `Shelf`
+and a sublist in a `Shelf` converts to a `Stack` and
+the lists can embed to any finite depth (but they cannot
+include loops or shared references).
+
+For example the following uses a sublist in a `Stack` to
+arrange three radio button groups horizontally.
+
 ```Python
 from H5Gizmos import Html, RadioButtons, Button, Stack
 
@@ -121,6 +165,11 @@ await S.show()
 <img src="StackShelf.png"/>
 
 ## `Template`
+
+A template component embeds child components into
+specified locations in an HTML fragment.  For example the
+following embeds components into a pre-formatted `table`
+element.
 
 ```Python
 from H5Gizmos import RadioButtons, Button, Template
@@ -160,6 +209,25 @@ def show(*ignored):
     
 show_options.set_on_click(show)
 ```
+
+Above, the `.put(duration, "DURATION")` method
+embeds the `duration` component at the element
+associated with the `DURATION` class name:
+```Python
+T = (Template("""
+...
+    <div class="DURATION"/>
+...
+""")...
+    .put(duration, "DURATION")
+    ...
+```
+The class names used as markers should only 
+appear once in the fragment and only one component
+should be `put` at each marked location in a `Template` instance.
+It is okay to embed a `Template` inside
+another `Template` that uses the same fragment marker name(s),
+however.
 
 <img src="Template.png"/>
 
