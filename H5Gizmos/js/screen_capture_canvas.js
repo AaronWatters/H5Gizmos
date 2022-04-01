@@ -71,6 +71,19 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
                 },
                 audio: false
             };
+            var media_getter;
+            try {
+                media_getter = navigator.mediaDevices.getDisplayMedia;
+            } catch (e) {
+                var warning = $(`<div style="color:red">
+                getDisplayMedia is not available.  Please see
+                <a href="https://stackoverflow.com/questions/56005165/navigator-getusermedia-and-navigator-webkitgetusermedia-undefined-after-updating">
+                https://stackoverflow.com/questions/56005165/navigator-getusermedia-and-navigator-webkitgetusermedia-undefined-after-updating</a>
+                for possible work-arounds.
+                </div>`);
+                warning.appendTo(this.element);
+                throw e;
+            }
             navigator.mediaDevices.getDisplayMedia(displayMediaOptions).then(success).catch(err);
             //navigator.mediaDevices.getUserMedia(constraints).then(success).catch(err);
             this.snapshot_list = null;

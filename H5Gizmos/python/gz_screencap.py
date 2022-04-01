@@ -133,7 +133,10 @@ class jQuerySnapSuperClass(gz_jQuery.Stack, ScreenAssemblyMixin):
 
     def configure_jQuery_element(self, element):
         result = super().configure_jQuery_element(element)
-        self.add("This screen capture gizmo is only known to work using recent version of the Chrome browser")
+        self.add("""
+        This screen capture gizmo is only known to work using recent version of the Chrome browser.
+        You may need to change the security settings to permit screen access.
+        """)
         self.attach_button.set_on_click(self.get_media_method_reference()) # xxxx
         self.postback = gz_get_blob.BytesPostBack()
         gizmo = self.gizmo
