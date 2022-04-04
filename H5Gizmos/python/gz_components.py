@@ -4,8 +4,8 @@ Composable gizmo factories.
 
 # run should work in jupyter -- delegate to browse when jupyter env detected.
 
-from time import time
-from numpy.lib.function_base import _ARGUMENT
+#from time import time
+#from numpy.lib.function_base import _ARGUMENT
 from H5Gizmos import do, get, name, run, get_gizmo
 from . import gizmo_server
 from . import H5Gizmos

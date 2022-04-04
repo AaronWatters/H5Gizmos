@@ -43,7 +43,7 @@ class BytesPostBack(gizmo_server.FileGetter):
             status = 404 # not found
         else:
             future.set_result(data)
-            text = "Unexpected POST of length %s" % ln
+            text = "Expected POST of length %s" % ln
             status = None  # use the default status.
         return (text, status)
 

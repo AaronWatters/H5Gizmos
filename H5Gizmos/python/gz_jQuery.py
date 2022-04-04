@@ -260,7 +260,7 @@ class jQueryComponent(gz_components.Component):
         """
         html_text = html.escape(string_text)
         return self.html(html_text)
-        return self
+        #return self
 
     def css(self, dict=None, **name_to_style):
         """
