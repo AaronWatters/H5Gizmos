@@ -344,6 +344,35 @@ class Component:
         # Pull the resource on the JS side.
         try:
             length = await get(gizmo.H5Gizmos.store_blob(url, object, cache_name, converter), timeout=timeout)
+            self._store_result = length # for debugging
+        finally:
+            # Remove the resource
+            gizmo._remove_getter(url)
+        return self.my(cache_name)
+
+    async def store_json(self, json_object, cache_name, timeout=60):
+        """
+        Transfer a JSON to Javascript and store it in the local cache using HTTP GET.
+        Return a reference to the cached index collection.
+
+        When done with the json object in JS, break the array reference with component.uncache(cache_name).
+        """
+        # XXX cut/paste/edit from store_array -- refactor?
+        import json
+        gizmo = self.gizmo
+        object = self.js_object_cache
+        # Set up the blob resource
+        url = H5Gizmos.new_identifier("json")
+        json_str = json.dumps(json_object)
+        # https://stackoverflow.com/questions/7585435/best-way-to-convert-string-to-bytes-in-python-3
+        json_bytes = str.encode(json_str)
+        content_type = "application/json"
+        getter = gizmo_server.BytesGetter(url, json_bytes, gizmo._manager, content_type )
+        gizmo._add_getter(url, getter)
+        # Pull the resource on the JS side.
+        try:
+            response = await get(gizmo.H5Gizmos.store_json(url, object, cache_name), timeout=timeout)
+            self._store_result = response # for debugging
         finally:
             # Remove the resource
             gizmo._remove_getter(url)

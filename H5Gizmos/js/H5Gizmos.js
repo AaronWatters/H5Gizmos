@@ -807,10 +807,13 @@ var H5Gizmos = {};
     H5Gizmos.PromisedValue = PromisedValue;
 
     class StoreBlob extends DeferredValue {
-        constructor(url, to_object, property_name, converter) {
+        constructor(url, to_object, property_name, converter, responseType) {
             super();  // call the silly super constructor!
-            //debugger;
+            this.init_local(url, to_object, property_name, converter, responseType);
+        }
+        init_local(url, to_object, property_name, converter, responseType) {
             var that = this;
+            responseType = responseType || "blob";
             that.url = url
             that.to_object = to_object;
             that.property_name = property_name;
@@ -819,7 +822,7 @@ var H5Gizmos = {};
             var request = new XMLHttpRequest();
             // async get
             request.open('GET', url, true);
-            request.responseType = 'blob';
+            request.responseType = responseType;
             request.onload = (function () { that.on_request_load(request); })
             request.send();
         };
@@ -851,6 +854,26 @@ var H5Gizmos = {};
 
     H5Gizmos.store_blob = function (url, to_object, property_name, converter) {
         return new StoreBlob(url, to_object, property_name, converter);
+    };
+
+    class StoreJSON extends StoreBlob {
+        constructor(url, to_object, property_name) {
+            super(url, to_object, property_name, null, "json");
+            this.json = null;
+        };
+        on_request_load(request) {
+            try {
+                this.json = request.response;
+                this.to_object[this.property_name] = this.json;
+                this.resolve(request.statusText);
+            } catch (err) {
+                this.reject(err);
+            }
+        };
+    };
+
+    H5Gizmos.store_json = function (url, to_object, property_name) {
+        return new StoreJSON(url, to_object, property_name);
     };
 
     H5Gizmos.make_array_buffer = function (array_buffer_name, binary_data) {
