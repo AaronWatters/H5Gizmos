@@ -142,4 +142,53 @@ Components
 
 
 
+<h2>
+<a href="Processes/README.md">
+Process Management
+</a>
+</h2>
+
+The 
+<a href="Processes/README.md">
+Process Management
+</a>
+ section provides information relating to tasks associated with Gizmos and how to manage those tasks.
+
+
+<h2>
+<a href="Running/README.md">
+Configuring, Starting, and Running a Gizmo
+</a>
+</h2>
+
+The 
+<a href="Running/README.md">
+Configuring, Starting, and Running a Gizmo
+</a>
+ section describes how to statically configure a Gizmo,
+how to start the primary component of a Gizmo,
+and how to interact with the Gizmo components while they are running.
+
+
+
+<h2>
+<a href="Javascript/README.md">
+Javascript Interface and Data Transfers
+</a>
+</h2>
+
+The 
+<a href="Javascript/README.md">
+Javascript Interface and Data Transfers
+</a>
+ section discusses communication between the Python parent process and the Javascript child
+process and introduces some special methods for large data transfers.
+
+
+
+
+<a href="https://github.com/AaronWatters/H5Gizmos">Go to the github.com/AaronWatters/H5Gizmos repository root.</a>
+
+
+
 
