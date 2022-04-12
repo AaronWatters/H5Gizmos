@@ -39,6 +39,8 @@ The following configurations may be specified before or after the main component
 
 ## `component.set_title`
 
+## `component.resize`
+
 ## `component.addClass` and `component.removeClass`
 
 ## `component.css`
