@@ -37,7 +37,17 @@ The following configurations must be specified before the main component starts.
 
 The following configurations may be specified before or after the main component starts.
 
+## `component.set_title`
 
+## `component.addClass` and `component.removeClass`
+
+## `component.css`
+
+## `component.set_on_click`
+
+## `component.on_timeout`
+
+## `component.add_content`
 
 <a href="./README.md">
 Return to introduction to running a Gizmo.

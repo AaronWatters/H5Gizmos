@@ -36,6 +36,6 @@ section describes methods for interacting with Gizmo components
 after they have started.
 
 
-<a href="ConfigE.md">
+<a href="../README.md">
 Return to H5Gizmos documentation root.
 </a>
