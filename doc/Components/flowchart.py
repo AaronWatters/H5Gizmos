@@ -1,20 +1,4 @@
 
-# Building Components
-
-You can build components to encapsulate additional functionality implemented in Javascript
-by subclassing one of the Component implementations.
-
-New component implementations often load external Javascript libraries and create interfaces
-to Javascript objects configured using the external libraries.
-The new component may also provide additional special methods that allow the gizmo which
-uses the component to interact with the Javascript functionality. 
-
-
-The following flowchart visualization implementation illustrates how to 
-build a new gizmo component using an existing Javascript library.
-
-```Python
-
 """
 A flow chart visualizer.
 Based on an example contributed by https://github.com/psychemedia.
@@ -34,7 +18,10 @@ class FlowChart(jQueryComponent):
     def add_dependencies(self, gizmo):
         super().add_dependencies(gizmo)
         # Load the libraries for the flowchart implementation.
+        #https://cdnjs.cloudflare.com/ajax/libs/raphael/2.3.0/raphael.min.js
         self.remote_js("https://cdnjs.cloudflare.com/ajax/libs/raphael/2.3.0/raphael.min.js")
+        #https://flowchart.js.org/flowchart-latest.js
+        #self.remote_js('https://cdnjs.cloudflare.com/ajax/libs/flowchart/1.13.0/flowchart.js')
         self.remote_js("https://flowchart.js.org/flowchart-latest.js")
         # Connect the 'flowchart' global javascript object to 'gizmo.flowchart'
         self.initial_reference("flowchart")
@@ -81,37 +68,3 @@ async def example_task():
 
 if __name__ == "__main__":
     serve(example_task())
-```
-
-When run as a script at the command line this visualization appears in a new browser frame:
-
-<img src="flowchart.png">
-
-### `H5Gizmos.jQueryComponent`
-
-### `component.add_dependancies`
-
-### `component.initial_reference`
-
-### `component.configure_jQuery_element`
-
-### `asyncio.sleep`
-
-## Some external examples
-
-### `jp_doodle dual_canvas`
-
-The `jp_doodle` repository includes an `H5Gizmo` wrapper implementation
-<a href="https://github.com/AaronWatters/jp_doodle/blob/master/jp_doodle/gz_doodle.py">
-https://github.com/AaronWatters/jp_doodle/blob/master/jp_doodle/gz_doodle.py
-</a> which embeds a `dual_canvas` in a gizmo container for drawing geometric diagrams.
-
-### `feedWeGL2` isosurface viewer
-
-The `feedWebGL2` repository wraps a three dimensional isosurface viewer as an H5Gizmo component:
-<a href="https://github.com/AaronWatters/feedWebGL2/blob/master/feedWebGL2/volume_gizmo.py">
-https://github.com/AaronWatters/feedWebGL2/blob/master/feedWebGL2/volume_gizmo.py</a>.
-
-<a href="./README.md">
-Return to Component categories.
-</a>
