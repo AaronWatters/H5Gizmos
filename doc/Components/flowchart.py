@@ -18,10 +18,7 @@ class FlowChart(jQueryComponent):
     def add_dependencies(self, gizmo):
         super().add_dependencies(gizmo)
         # Load the libraries for the flowchart implementation.
-        #https://cdnjs.cloudflare.com/ajax/libs/raphael/2.3.0/raphael.min.js
         self.remote_js("https://cdnjs.cloudflare.com/ajax/libs/raphael/2.3.0/raphael.min.js")
-        #https://flowchart.js.org/flowchart-latest.js
-        #self.remote_js('https://cdnjs.cloudflare.com/ajax/libs/flowchart/1.13.0/flowchart.js')
         self.remote_js("https://flowchart.js.org/flowchart-latest.js")
         # Connect the 'flowchart' global javascript object to 'gizmo.flowchart'
         self.initial_reference("flowchart")
