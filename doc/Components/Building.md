@@ -10,13 +10,17 @@ The new component may also provide additional special methods that allow the giz
 uses the component to interact with the Javascript functionality. 
 
 
-The following flowchart visualization implementation illustrates how to 
+The following 
+<a href="./flowchart.py">
+flowchart visualization implementation 
+</a>
+illustrates how to 
 build a new gizmo component using an existing Javascript library.
 See the discussion below the code listing and the screen shot for
 an explanation of the techniques used.
 
 ```Python
-
+# contents of ./flowchart.py
 """
 A flow chart visualizer.
 Based on an example contributed by https://github.com/psychemedia.
@@ -119,6 +123,28 @@ available from the parent process as `gizmo.flowchart`.
 
 The `initial_reference` method establishes a static reference
 to a Javascript object in the parent and child processes.
+
+### "View source" to examine static configuration
+
+To examine or debug the static gizmo configuration it is useful to "view source"
+on the gizmo tab.  In this case the
+HTML source generated for the gizmo frame shows the following declarations that
+reflect the component configuration:
+
+```html
+<script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.3.0/raphael.min.js"></script>
+<script src="https://flowchart.js.org/flowchart-latest.js"></script>
+...
+<script>
+...
+        tr.set_reference('flowchart', flowchart);
+...
+</script>
+```
+
+Examining the frame source also provides the experienced Javascript programmer
+some good hints about data structures in the Javascript child process to explore during
+debugging using the browser developer tools.
 
 ### `component.configure_jQuery_element`
 
