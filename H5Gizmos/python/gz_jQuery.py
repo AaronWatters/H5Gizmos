@@ -118,6 +118,7 @@ class jQueryComponent(gz_components.Component):
             do(self.jQuery(self.window.document).tooltip())
 
     def set_title(self, title_string):
+        # xxxx need to change title if executing...
         ty = type(title_string)
         assert ty is str, "Element title must be a string: " + repr(ty)
         self.title_string = title_string
