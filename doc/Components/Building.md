@@ -12,6 +12,8 @@ uses the component to interact with the Javascript functionality.
 
 The following flowchart visualization implementation illustrates how to 
 build a new gizmo component using an existing Javascript library.
+See the discussion below the code listing and the screen shot for
+an explanation of the techniques used.
 
 ```Python
 
@@ -87,17 +89,67 @@ When run as a script at the command line this visualization appears in a new bro
 
 <img src="flowchart.png">
 
+## Discussion
+
+This implementation is a subclass of the standard `jQueryComponent`
+which overrides methods to load the `flowchart` javascript libraries
+and to define how to configure the flowchart.
+
 ### `H5Gizmos.jQueryComponent`
+
+The components described in this documentation are subclasses
+of `jQueryComponent`.  All running `jQueryComponent` instances are associated
+with a jQuery container object in the child Javascript context,
+adorned with many useful methods and features provided by `jQuery` and `jQueryUI`
+libraries.
+
+The `FlowChart` implementation must specify how to load the functionality
+to draw a flowchart and how to use this functionality with the jQuery
+container object.
 
 ### `component.add_dependancies`
 
+The `add_dependancies` method must specify any static configuration
+required by the component implementation.  In this case the method
+instructs the gizmo to load two javascript libraries statically and
+to make a reference to the global `flowchart` javascript object
+available from the parent process as `gizmo.flowchart`.
+
 ### `component.initial_reference`
+
+The `initial_reference` method establishes a static reference
+to a Javascript object in the parent and child processes.
 
 ### `component.configure_jQuery_element`
 
+The `configure_jQuery_element` method must prepare the jQuery
+component for use in the application.  In this case we `cache`
+a reference to a `flowchart` object in the child and keep a reference
+to the cached object as `self.chart`.  For some reason (maybe a race
+condition) drawing the flowchart immediately doesn't work, so
+we provide a separate `draw` method so the flowchart will draw after
+a short delay.
+
 ### `asyncio.sleep`
 
+The `example_task` creates the `FlowChart` component `chart` and starts the
+component using `chart.show()`.  
+The start procedure executes `configure_jQuery_element` automatically,
+configuring the chart.
+
+After the component starts `example_task`
+waits a moment to avoid the draw anomaly mentioned above
+by allowing the chart to initialize before the draw using
+`asyncio.sleep()`.  It is important to use `asyncio.sleep()` instead of
+`time.sleep()` here because `time.sleep()` would block all communication
+between the parent and the child processes, so the anomaly would be delayed
+but not avoided.
+
 ## Some external examples
+
+It may be useful to examine some other examples of gizmo
+component implementations.  In addition to those available
+in the H5Gizmos source code please have a look at the following.
 
 ### `jp_doodle dual_canvas`
 
