@@ -6,6 +6,8 @@ process and introduces some special methods for large data transfers.
 
 # Sending and receiving commands
 
+## Javascript Reference Objects
+
 ## `H5Gizmos.do`
 
 ## `H5Gizmos.get`
