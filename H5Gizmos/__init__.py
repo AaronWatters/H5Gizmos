@@ -11,6 +11,7 @@ from .python.H5Gizmos import (
     get,
     name,
     DoAllMethods,
+    new_identifier,
 )
 
 from .python.hex_codec import (
