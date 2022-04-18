@@ -6,11 +6,12 @@ Composable gizmo factories.
 
 #from time import time
 #from numpy.lib.function_base import _ARGUMENT
-from H5Gizmos import do, get, name, run, get_gizmo
+from H5Gizmos import do, get, name, run, get_gizmo, schedule_task
 from . import gizmo_server
 from . import H5Gizmos
 from . import gz_get_blob
 import numpy as np
+import asyncio
 
 JS_COLLECTION_NAME_MAP = {
     # numpy dtype : name of analogous collection
@@ -416,8 +417,25 @@ class Component:
         
     def shutdown(self, *args):
         "Graceful shutdown"
+        #import sys
+        #print("shutting down.")
+        #sys.exit()
+        print("scheduling shutdown.")
+        schedule_task(self.shutdown_task())
+
+    async def shutdown_task(self, delay=2):
         import sys
+        import io
+        gizmo = self.gizmo
+        try:
+            await get(gizmo.H5GIZMO_INTERFACE.shutdown(), timeout=delay)
+        except Exception as e:
+            print ("Interface shutdown exception", e)
+        # sleep to allow delivery of shut down signal...
+        #asyncio.sleep(delay)
         print("shutting down.")
+        # ignore any error messages to stdio caused by exit
+        sys.stderr = self.stdio_redirect = io.StringIO()  # xxx this is hacky...
         sys.exit()
 
 class HelloComponent(Component):
