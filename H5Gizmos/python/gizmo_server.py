@@ -300,7 +300,7 @@ class GzServer:
         self.stopped = False
         self.cancelled = False
         self.identifier_to_manager = {}
-        self.counter = 0
+        #self.counter = 0
         self.out = out
         self.err = err
         self.captured_stdout = None
@@ -342,9 +342,11 @@ class GzServer:
         return result
 
     def get_new_manager(self, websocket_handler=None):
-        c = self.counter
-        self.counter = c + 1
-        identifier = "MGR" + str(c)
+        from H5Gizmos import new_identifier
+        #c = self.counter
+        #self.counter = c + 1
+        #identifier = "MGR" + str(c)
+        identifier = new_identifier("MGR")
         result = GizmoManager(identifier, self, websocket_handler)
         self.identifier_to_manager[identifier] = result
         return result
