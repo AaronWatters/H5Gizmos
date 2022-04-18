@@ -42,7 +42,8 @@ def run(main_awaitable, server=None, run_forever=True, exit_on_disconnect=None, 
     gizmo = server.gizmo(exit_on_disconnect=exit_on_disconnect, log_messages=log_messages)
     H5Gizmos.schedule_task(main_awaitable(gizmo))
     if run_forever:
-        get_or_create_event_loop().run_forever()
+        #get_or_create_event_loop().run_forever()
+        run_until_exit()
 
 def serve(coroutine, verbose=False, delay=0.5):
     """
@@ -69,7 +70,14 @@ def serve(coroutine, verbose=False, delay=0.5):
             sys.exit(1)
 
     H5Gizmos.schedule_task(deferred_task())
-    get_or_create_event_loop().run_forever()
+    #get_or_create_event_loop().run_forever()
+    run_until_exit()
+
+def run_until_exit():
+    try:
+        get_or_create_event_loop().run_forever()
+    except SystemExit as e:
+        print ("System exit:")
 
 async def get_gizmo(from_server=None, verbose=False, log_messages=False):
     """
