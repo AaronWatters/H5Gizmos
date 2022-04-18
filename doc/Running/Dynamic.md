@@ -23,8 +23,6 @@ after they have started.
 
 # Other Dynamic interactions
 
-## `component.shutdown`
-
 ## `component.enable_tooltip`
 
 ## `component.add_dialog`, `component.close_dialog`, `component.open_dialog`
@@ -34,6 +32,8 @@ after they have started.
 ## `component.add_pyplot`
 
 ## `component.get_info_div`
+
+## `component.shutdown_on_unload`
 
 <a href="./README.md">
 Return to introduction to running a Gizmo.

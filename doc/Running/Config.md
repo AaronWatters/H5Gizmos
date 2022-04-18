@@ -11,19 +11,73 @@ The following configurations must be specified before the main component starts.
 
 ## `component.serve_folder`
 
-## `component.add_std_icon`
+```Python
+from H5Gizmos import Html, serve
 
-## `component.shutdown_on_unload`
+async def task():
+    greeting = Html("<h1>Hello</h1>")
+    greeting.serve_folder("local_files", "./example_folder")
+    await greeting.show()
+    greeting.add(Html('<img src="local_files/dog.png"/>'))
+
+serve(task())
+```
+
+<img src="dog_gizmo.png" width="300">
+
+## `component.set_icon`
+
+```Python
+from H5Gizmos import Html, serve
+
+async def task():
+    greeting = Html("<h1>Hello</h1>")
+    greeting.set_icon("./example_folder/dog.png")
+    await greeting.show()
+
+serve(task())
+```
+
+<img src="dog_icon.png" width="500"/>
 
 ## `component.remote_css`
 
 ## `component.css_file`
 
+```Python
+from H5Gizmos import Html, serve
+
+async def task():
+    greeting = Html("""
+    <div>
+    <h1>This header should be green</h1>
+    But this plain text should be blue.
+    </div>
+    """)
+    greeting.css_file("./css_file_example.css")
+    await greeting.show()
+
+serve(task())
+```
+
+
+```CSS
+body {
+    color: blue;
+}
+
+h1 {
+    color: green;
+}
+```
+
+<img src="css_file.png"/>
+
 ## `component.relative_css`
 
 ## `component.embedded_css`
 
-## `compoent.insert_html`
+## `component.insert_html`
 
 ## `component.relative_js`
 

@@ -1,5 +1,5 @@
 
-# Configuring, Starting, and Running a Gizmo
+# Configuring and Running a Gizmo
 
 This document describes how to statically configure a Gizmo,
 how to start the primary component of a Gizmo,
