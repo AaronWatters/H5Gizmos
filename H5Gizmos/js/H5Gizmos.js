@@ -77,7 +77,12 @@ var H5Gizmos = {};
             this.reconnect_id = "" + Date.now();
             this.ws_error_message_callback = null;
             this.sending_keepalives = false;
+            this.halted = false;
         };
+        shutdown() {
+            console.log("Shutting down gizmo.")
+            this.halted = true;
+        }
         pipeline_websocket(ws_url, on_open) {
             var that = this;
             that.ws_url = ws_url;
@@ -96,6 +101,10 @@ var H5Gizmos = {};
         };
         web_socket_error(event) {
             console.error("Web socket error", event);
+            if (this.halted) {
+                console.error("Not reporting error -- gizmo is halted.");
+                throw new Error("Web socket error on halted gizmo.")
+            }
             var cb = this.ws_error_message_callback;
             if (cb) {
                 var message = "Web socket error."
@@ -136,6 +145,10 @@ var H5Gizmos = {};
         };
         send(json_object) {
             var that = this;
+            // need to send halt confirmation.
+            //if (this.halted) {
+            //    throw new Error("Send refused because gizmo is halted.");
+            //}
             var on_open = function() {
                 that.sender(json_object);
             };
@@ -167,11 +180,16 @@ var H5Gizmos = {};
                 oid = null; 
             }
             var json = [h5.EXCEPTION, "" + err, oid];
-            this.send(json);
+            if (!this.halted) {
+                this.send(json);
+            }
             throw err;
         };
         post_binary_data(end_point, binary_data, json_metadata) {
             var that = this
+            if (this.halted) {
+                throw new Error("Refusing to post binary data because gizmo is halted.")
+            }
             json_metadata = json_metadata || {};
             var json = JSON.stringify(json_metadata);
             var query_string = "?json=" + encodeURIComponent(json)
@@ -199,6 +217,9 @@ var H5Gizmos = {};
         send_keepalive() {
             // Send a keepalive message to force a reconnect if the connection drops.
             // The message should be ignored by the parent.
+            if (this.halted) {
+                throw new Error("Refusing to send keepalive because gizmo is halted.")
+            }
             this.send([h5.KEEPALIVE]);
         };
         send_keepalive_periodically (delay) {
@@ -210,6 +231,9 @@ var H5Gizmos = {};
             }
             var keep_sending = function () {
                 //console.log("DEBUG: sending keepalive.")
+                if (this.halted) {
+                    throw new Error("Erroring keepalive loop because gizmo is halted.")
+                }
                 that.sending_keepalives = true;
                 that.send_keepalive();
                 setTimeout(keep_sending, delay);
