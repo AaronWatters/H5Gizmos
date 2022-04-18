@@ -1,21 +1,21 @@
 
 from H5Gizmos import Html, serve
+import time
+import asyncio
 
 async def task():
-    greeting = Html("""
-    <div>
-    <h1>This header should be brown</h1>
-    But this plain text should be salmon.
-    </div>
+    the_time = Html("<h1>Time here</h1>")
+    the_time.insert_html("""
+    <h3>A timer.</h3>
+    <p>
+    The following header will show the current
+    time for 60 seconds
+    </p>
     """)
-    greeting.embedded_css("""
-        body {
-            color: salmon;
-        }
-        h1 {
-            color: brown;
-        }
-    """)
-    await greeting.show()
+    await the_time.show()
+    for i in range(60):
+        the_time.text("time is now: " + time.ctime())
+        await asyncio.sleep(1)
+    the_time.add("Finished!")
 
 serve(task())

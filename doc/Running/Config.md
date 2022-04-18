@@ -11,6 +11,12 @@ The following configurations must be specified before the main component starts.
 
 ## `component.serve_folder`
 
+The `serve_folder` directive configures the Gizmo HTTP server
+to recursively serve the files in a folder on the machine running
+the parent process.  In the example below the HTTP server serves
+the contents of `./example_folder` identified with the URL prefix
+`local_files`.
+
 ```Python
 from H5Gizmos import Html, serve
 
@@ -23,9 +29,33 @@ async def task():
 serve(task())
 ```
 
+The added HTML
+```Python
+    greeting.add(Html('<img src="local_files/dog.png"/>'))
+```
+refers to the server relative file `"local_files/dog.png"`
+which the server maps to the path `"./example_folder/dog.png"`
+in the file system.  The server attempts to assign an appropriate
+MIME type to the served file (in this case correctly guessing "img/png").
+
+The gizmo presents the following page including the mapped image:
+
 <img src="dog_gizmo.png" width="300">
 
+Served folders are useful for loading related files from complex
+Javascript functionality which may combine Javascript modules,
+CSS styles, images, and other sorts of data files.
+
 ## `component.set_icon`
+
+By default a stand alone gizmo presents a standard icon
+in the browser frame list bar.
+
+<img src="../../H5Gizmos/static/icon.png">
+
+A script may change the icon usin the `set_icon` method.
+The script below changes the icon to use the `dog.png` image
+shown above.
 
 ```Python
 from H5Gizmos import Html, serve
@@ -41,6 +71,10 @@ serve(task())
 <img src="dog_icon.png" width="500"/>
 
 ## `component.remote_css`
+
+The Gizmo infrastructure provides several methods for
+loading CSS style sheets statically before the main component
+starts.
 
 ## `component.css_file`
 
@@ -132,6 +166,31 @@ serve(task())
 <img src="embedded_css.png">
 
 ## `component.insert_html`
+
+```Python
+from H5Gizmos import Html, serve
+import time
+import asyncio
+
+async def task():
+    the_time = Html("<h1>Time here</h1>")
+    the_time.insert_html("""
+    <h3>A timer.</h3>
+    <p>
+    The following header will show the current
+    time for 60 seconds.
+    </p>
+    """)
+    await the_time.show()
+    for i in range(60):
+        the_time.text("time is now: " + time.ctime())
+        await asyncio.sleep(1)
+    the_time.add("Finished!")
+
+serve(task())
+```
+
+<img src="insert_html.png"/>
 
 ## `component.relative_js`
 
