@@ -78,9 +78,18 @@ class Component:
     def shutdown_on_unload(self, gizmo):
         do(gizmo.window.addEventListener("unload", self.shutdown_parent_only), to_depth=1)
 
+    _icon_path = "../static/icon.png"
+    _icon_content_type = "image/png"
+
+    def set_icon(self, path, content_type=None):
+        import os
+        assert os.path.isfile(path), "File not found: " + repr(path)
+        self._icon_path = path
+        self._icon_content_type = content_type
+
     def add_std_icon(self, gizmo):
         # https://www.w3.org/2005/10/howto-favicon
-        gizmo._add_content(os_path="../static/icon.png", content_type="image/png")
+        gizmo._add_content(os_path=self._icon_path, content_type=self._icon_content_type, url_path="icon.png")
         gizmo._insert_html('<link rel="icon" type="image/png" href="./icon.png"/>', in_body=False)
 
     async def show(self, verbose=False, log_messages=False):
