@@ -76,7 +76,7 @@ class Component:
             await task()
 
     def shutdown_on_unload(self, gizmo):
-        do(gizmo.window.addEventListener("unload", self.shutdown), to_depth=1)
+        do(gizmo.window.addEventListener("unload", self.shutdown_parent_only), to_depth=1)
 
     def add_std_icon(self, gizmo):
         # https://www.w3.org/2005/10/howto-favicon
@@ -414,6 +414,11 @@ class Component:
 
     def on_timeout(self, *ignored):
         raise TimeoutError("Operation timed out")
+
+    def shutdown_parent_only(self, *args):
+        import sys
+        print("shutting down.")
+        sys.exit()
         
     def shutdown(self, *args):
         "Graceful shutdown"
