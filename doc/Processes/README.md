@@ -129,7 +129,7 @@ Please see the discussion of `hello0.py` above for an example usage.
 ## `component.entry_url`
 
 Once a gizmo primary component has been configured in the parent in any of the above modes
-it has an `entry_url()`.  Connections to the `entry_url()` from a browser will establish
+it has an `entry_url()`.  The first connection to the `entry_url()` from a browser will establish
 a child context.  Only one connection is permitted -- any additional connection attempts will
 be rejected by the HTTP server end point handler.
 
@@ -152,7 +152,7 @@ async def start_task():
 schedule_task(start_task())
 ```
 
-When the sub task waits for the child connection the `greeting` component
+When the subtask waits for the child connection the `greeting` component
 has an assigned `url = greeting.entry_url()`:
 ```
 'http://192.168.1.173:8677/gizmo/http/MGR0/index.html'
