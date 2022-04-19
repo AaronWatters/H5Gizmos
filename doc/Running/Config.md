@@ -53,7 +53,7 @@ in the browser frame list bar.
 
 <img src="../../H5Gizmos/static/icon.png">
 
-A script may change the icon usin the `set_icon` method.
+A script may change the icon using the `set_icon` method.
 The script below changes the icon to use the `dog.png` image
 shown above.
 
@@ -68,7 +68,29 @@ async def task():
 serve(task())
 ```
 
+A run of 
+```bash
+% python dog_icon.py
+```
+Displays a small icon with the dog image above the
+browser frame
+
 <img src="dog_icon.png" width="500"/>
+
+It is also useful to "view source" on the browser frame
+to see the icon listed in the static HTML source.
+In this case the following line in the listing
+specifies the icon:
+
+```html
+<link rel="icon" type="image/png" href="./icon.png"/>
+```
+
+Clicking on the icon URL in the Chrome browser
+source display will show the full size image.
+
+Viewing source can be useful for other static
+configurations described here as well.
 
 ## `component.remote_css`
 
@@ -76,7 +98,43 @@ The Gizmo infrastructure provides several methods for
 loading CSS style sheets statically before the main component
 starts.
 
+The `remote_css` method loads a CSS stylesheet from a remote
+web server using a fully specified URL.
+
+For example the CSS style at this remote URL includes fancy
+styling for buttons
+```
+https://aaronwatters.github.io/visualization_prototypes/css/base.css
+```
+The following script uses this style sheet to style a button
+```Python
+from H5Gizmos import Button, serve
+
+async def task():
+    button = Button("Click Me")
+    def on_click(*ignored):
+        button.add("Hi there! Thanks!")
+    button.set_on_click(on_click)
+    button.remote_css(
+        "https://aaronwatters.github.io/visualization_prototypes/css/base.css"
+    )
+    await button.show()
+
+serve(task())
+```
+The resulting gizmo interface shows button text
+in all capital letters using a fancy font:
+
+<img src="remote_css.png">
+
+
 ## `component.css_file`
+
+The `css_file` method loads a CSS stylesheet from a file in
+the filesystem accessible to the parent process.
+
+The script below loads the CSS stylesheet at the path
+`"./css_file_example.css"` before the main component starts.
 
 ```Python
 from H5Gizmos import Html, serve
@@ -94,6 +152,8 @@ async def task():
 serve(task())
 ```
 
+The content of `"./css_file_example.css"`specifies
+colors for text as follows:
 
 ```CSS
 body {
@@ -104,6 +164,8 @@ h1 {
     color: green;
 }
 ```
+
+The stylized gizmo interface looks like this:
 
 <img src="css_file.png"/>
 
