@@ -157,13 +157,13 @@ Process Management
 
 <h2>
 <a href="Running/README.md">
-Configuring, Starting, and Running a Gizmo
+Configuring and Running a Gizmo
 </a>
 </h2>
 
 The 
 <a href="Running/README.md">
-Configuring, Starting, and Running a Gizmo
+Configuring and Running a Gizmo
 </a>
  section describes how to statically configure a Gizmo,
 how to start the primary component of a Gizmo,
