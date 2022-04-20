@@ -169,6 +169,9 @@ The stylized gizmo interface looks like this:
 
 <img src="css_file.png"/>
 
+The `css_file` method checks that the file
+exists and configures the HTTP server to serve the file.
+
 ## `component.relative_css`
 
 ```Python
@@ -199,6 +202,10 @@ h1 {
 ```
 
 <img src="relative_css.png">
+
+The `relative_css` method checks that the
+HTTP server is configured to serve the file.
+
 
 ## `component.embedded_css`
 
@@ -254,13 +261,129 @@ serve(task())
 
 <img src="insert_html.png"/>
 
+## `component.remote_js`
+
+The Gizmo infrastructure provides
+several methods similar to the CSS methods
+for loading static javascript modules
+before the main component starts.
+
+For example the
+<a href="../Tutorials/wavesurfer_poem.md">
+Wavesurfer poem tutorial
+</a>
+loads the wavesurfer module as follows
+```Python
+...
+wavesurfer_js = "https://unpkg.com/wavesurfer.js"
+wave = Html("<div>Wavesurfer not yet attached.</div>")
+# Load the wavesurfer library in the child javascript context.
+wave.remote_js(wavesurfer_js)
+...
+```
+Running `python wavesurfer_poem.py` and viewing the
+source of the resulting browser frame reveals the
+script tag that corresponds to the `remote_js` method
+call:
+```html
+<script src="https://unpkg.com/wavesurfer.js"></script>
+```
+
+## `component.js_file`
+
+The `js_file` method is essentially similar
+to `css_file` for javascript code files.  
+
+```Python
+from H5Gizmos import Html, serve
+
+async def task():
+    greeting = Html(
+        """
+        <p>
+        Please check the javascript console to see
+        the log message issued by the js_file_example.js
+        javascript module.
+        </p>
+        """
+    )
+    greeting.js_file("./js_file_example.js")
+    await greeting.show()
+
+serve(task())
+```
+
+```javascript
+console.log("js_file reporting for duty!")
+```
+
+```
+js_file reporting for duty!
+index.html:71 gizmo interface initialized
+```
+
 ## `component.relative_js`
+
+The `relative_js` method is essentially similar
+to `relative_css` for javascript code files.  
+
+```Python
+from H5Gizmos import Html, serve
+
+async def task():
+    greeting = Html(
+        """
+        <p>
+        Please check the javascript console to see
+        the log message issued by the example_folder/relative_js_example.js
+        javascript module.
+        </p>
+        """
+    )
+    greeting.serve_folder("local_files", "./example_folder")
+    greeting.relative_js("local_files/relative_js_example.js")
+    await greeting.show()
+
+serve(task())
+```
+
+```javascript
+console.log("js_remote reporting for duty!")
+```
+
+```
+js_remote reporting for duty!
+index.html:71 gizmo interface initialized
+```
 
 ## `component.embedded_script`
 
-## `component.remote_js`
+The `embedded_script` method is essentially similar
+to `embedded_css` for javascript code files.  
 
-## `component.js_file`
+```Python
+from H5Gizmos import Html, serve
+
+async def task():
+    greeting = Html(
+        """
+        <p>
+        Please check the javascript console to see
+        the log message issued by the js_file_example.js
+        javascript module.
+        </p>
+        """
+    )
+    greeting.js_file("./js_file_example.js")
+    await greeting.show()
+
+serve(task())
+```
+
+```
+embedded javascript reporting for duty!
+index.html:75 gizmo interface initialized
+```
 
 # Static and Dynamic configurations
 
