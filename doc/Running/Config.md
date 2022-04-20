@@ -365,19 +365,24 @@ to `embedded_css` for javascript code files.
 from H5Gizmos import Html, serve
 
 async def task():
-    greeting = Html(
-        """
+    greeting = Html("""
         <p>
         Please check the javascript console to see
-        the log message issued by the js_file_example.js
-        javascript module.
+        the log message issued by the embedded javascript.
         </p>
-        """
-    )
-    greeting.js_file("./js_file_example.js")
+    """)
+    greeting.embedded_script('console.log("embedded javascript reporting for duty!")')
     await greeting.show()
 
 serve(task())
+```
+
+```html
+...
+<script>
+console.log("embedded javascript reporting for duty!")
+</script>
+...
 ```
 
 ```
@@ -390,6 +395,24 @@ index.html:75 gizmo interface initialized
 The following configurations may be specified before or after the main component starts.
 
 ## `component.set_title`
+
+```Python
+from H5Gizmos import Html, serve
+
+async def task():
+    greeting = Html("""
+        <h1>
+        Hover over this header to see the title
+        </h2>
+    """)
+    greeting.set_title("This is the title for the header.")
+    await greeting.show()
+    greeting.enable_tooltips()
+
+serve(task())
+```
+
+<img src="tooltip.png"/>
 
 ## `component.resize`
 
