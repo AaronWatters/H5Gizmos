@@ -416,9 +416,87 @@ serve(task())
 
 ## `component.resize`
 
+```Python
+from H5Gizmos import Html, serve
+
+async def task():
+    greeting = Html("""
+        <div>
+        A tall thin division area with red text and a yellow background.
+        </div>
+    """)
+    greeting.resize(width=95, height=200)
+    greeting.css({"color": "red", "background-color": "yellow"})
+    await greeting.show()
+
+serve(task())
+```
+
+<img src="resize.png"/>
+
 ## `component.addClass` and `component.removeClass`
 
+```Python
+async def task():
+    greeting = Html("""
+        <h1>
+        Warning: This interface is annoying!
+        </h1>
+    """)
+    greeting.embedded_css("""
+    .normal {
+        color: blue;
+        background-color: cornsilk;
+    }
+    .highlight {
+        color: red;
+        background-color: yellow;
+    }
+    """)
+    await greeting.show()
+    greeting.addClass("normal")
+    greeting.add("sleeping 10 seconds")
+    await asyncio.sleep(10)
+    greeting.add('now highlignting')
+    greeting.removeClass("normal")
+    greeting.addClass("highlight")
+
+serve(task())
+```
+
+<img src="add_class_gizmo.png"/>
+
+
 ## `component.css`
+
+```Python
+
+from H5Gizmos import Html, serve
+import asyncio
+
+async def task():
+    greeting = Html("""
+        <h1>
+        Warning: This interface is also annoying!
+        </h1>
+    """)
+    await greeting.show()
+    info = greeting.add("info area placeholder text")
+    for i in range(60):
+        greeting.css(color="blue")
+        greeting.css({"background-color": "yellow"})
+        info.text("blue/yellow " + str(i))
+        await asyncio.sleep(1)
+        greeting.css(color="green")
+        greeting.css({"background-color": "magenta"})
+        info.text("green/magenta " + str(i))
+        await asyncio.sleep(1)
+    greeting.add("All done!")
+
+serve(task())
+```
+
+<img src="css.gif"/>
 
 ## `component.set_on_click`
 
