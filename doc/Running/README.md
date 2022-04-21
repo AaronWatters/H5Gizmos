@@ -10,7 +10,7 @@ and dynamic interactions with a running component.
 
 <h2>
 <a href="Config.md">
-Gizmo configurati0n
+Gizmo configuration
 </a>
 </h2>
 
