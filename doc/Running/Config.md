@@ -500,8 +500,6 @@ serve(task())
 
 ## `component.set_on_click`
 
-## `component.on_timeout`
-
 ## `component.add_content`
 
 <a href="./README.md">
