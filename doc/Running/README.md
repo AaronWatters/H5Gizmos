@@ -10,13 +10,13 @@ and dynamic interactions with a running component.
 
 <h2>
 <a href="Config.md">
-Gizmo configuratinn
+Gizmo configurati0n
 </a>
 </h2>
 
 The 
 <a href="Config.md">
-Gizmo configuratinn
+Gizmo configuration
 </a>
  section describes resource specifications and other configurations
 which either must or may be specified before the primary component
