@@ -92,7 +92,7 @@ class Component:
         gizmo._add_content(os_path=self._icon_path, content_type=self._icon_content_type, url_path="icon.png")
         gizmo._insert_html('<link rel="icon" type="image/png" href="./icon.png"/>', in_body=False)
 
-    async def show(self, verbose=False, log_messages=False):
+    async def show(self, verbose=False, log_messages=False, title="Gizmo"):
         """
         Try to guess the right way to display self as iframe, in browser tab, or default to link.
         """
@@ -101,9 +101,9 @@ class Component:
         try:
             H5Gizmos.check_browser()
         except Exception:
-            return await self.link(verbose=verbose, log_messages=log_messages)
+            return await self.link(verbose=verbose, log_messages=log_messages, title=title)
         else:
-            return await self.browse(verbose=verbose, log_messages=log_messages)
+            return await self.browse(verbose=verbose, log_messages=log_messages, title=title)
 
     async def iframe(self, height=20, verbose=False, log_messages=False):
         assert gizmo_server.isnotebook(), "iframe method only runs in IPython kernel."
@@ -113,6 +113,7 @@ class Component:
 
     async def browse(
         self, 
+        title="Gizmo",
         auto_start=True, 
         verbose=True, 
         log_messages=False, 
@@ -124,7 +125,7 @@ class Component:
         in_notebook = gizmo_server.isnotebook()
         if verbose:
             print("Displaying gizmo component in new browser window.")
-        gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages)
+        gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages, title=title)
         if close_button:
             gizmo._insert_html('<button onclick="self.close()">Close</button>')
         self.prepare_application(gizmo)
@@ -141,8 +142,9 @@ class Component:
             if await_start:
                 await gizmo._show_start_link()
 
-    async def link(self, verbose=False, log_messages=False, await_start=True):
+    async def link(self, title="Gizmo", verbose=False, log_messages=False, await_start=True):
         await self.browse(
+            title=title,
             auto_start=False, 
             verbose=verbose, 
             log_messages=log_messages,
@@ -259,7 +261,7 @@ class Component:
         "Load a CSS style sheet from a file at initialization."
         return self.dependency("_css_file", (os_path, url_path))
 
-    def add_content(self, os_path, content_type, url_path=None, dont_duplicate=True):
+    def add_content(self, os_path, content_type=None, url_path=None, dont_duplicate=True):
         "Configure a content resource from a file."
         if self.gizmo is None:
             return self.dependency("_add_content", (os_path, content_type, url_path, dont_duplicate))

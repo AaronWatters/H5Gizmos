@@ -79,12 +79,12 @@ def run_until_exit():
     except SystemExit as e:
         print ("System exit:")
 
-async def get_gizmo(from_server=None, verbose=False, log_messages=False):
+async def get_gizmo(from_server=None, verbose=False, log_messages=False, title="Gizmo"):
     """
     Get a gizmo (the official way).  Set up a server iff needed.
     """
     from_server = _check_server(from_server, verbose=verbose)
-    return from_server.gizmo(log_messages=log_messages)
+    return from_server.gizmo(log_messages=log_messages, title=title)
 
 def _check_server(server, verbose=False):
     "Make sure the gizmo server is set up."
