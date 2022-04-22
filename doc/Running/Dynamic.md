@@ -3,9 +3,14 @@
 # Gizmo dynamic interactions
 
 This document describes methods for interacting with Gizmo components
-after they have started.
+after they have started.  The dynamic interactions can be divided into
+those that change the parameters of a specific component and those that
+change the interface more generally.
 
 # Changing Component Parameters
+
+Some component methods change the way a component responds to events
+or how the component,
 
 ## Miscellaneous Document Object and jQuery Methods
 
@@ -22,6 +27,9 @@ after they have started.
 ## `component.focus`
 
 # Other Dynamic interactions
+
+Some component methods change the interface by
+enabling a feature or adding a new element to the interface.
 
 ## `component.enable_tooltip`
 
