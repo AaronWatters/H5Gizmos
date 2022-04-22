@@ -9,6 +9,32 @@ is started.
 
 The following configurations must be specified before the main component starts.
 
+## Setting the document title
+
+The `component.show`, `component.browse`, and `component.link`
+methods accept a keyword `title` argument which specifies the
+document title for the browser frame for the gizmo interface.
+
+For example the following script sets the document title to `PICO!'
+
+```python
+from H5Gizmos import Html, serve
+
+async def task():
+    greeting = Html("<h1>Hello</h1>")
+    greeting.serve_folder("local_files", "./example_folder")
+
+    await greeting.show(title="PICO!")
+
+    greeting.add(Html('<img src="local_files/dog.png"/>'))
+
+serve(task())
+```
+
+The document title appears in the frame toolbar
+
+<img src="doc_title.png"/>
+
 ## `component.serve_folder`
 
 The `serve_folder` directive configures the Gizmo HTTP server
