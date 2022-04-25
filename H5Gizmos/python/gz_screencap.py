@@ -240,7 +240,11 @@ class ScreenSnapShotAssembly(jQuerySnapSuperClass):
     def enable_capture(self):
         self.snap_button.set_on_click(self.snap_click)
 
+    currently_snapping = False
+
     def snap_click(self, *ignored):
+        if self.currently_snapping:
+            return # ignore dup
         delay = self.check_labelled_input(self.delay_input, 0, 100, 0)
         if delay is None:
             return
@@ -253,19 +257,22 @@ class ScreenSnapShotAssembly(jQuerySnapSuperClass):
         schedule_task(self.delay_snapshot(delay))
 
     async def delay_snapshot(self, delay):
-        counter = math.ceil(delay)
-        while counter > 0:
-            if self.stopped:
-                if self.aborted: 
-                    return
-                break
-            self.status("Delay Countdown: " + str(counter))
-            counter -= 1
+        try:
+            counter = math.ceil(delay)
+            while counter > 0:
+                if self.stopped:
+                    if self.aborted: 
+                        return
+                    break
+                self.status("Delay Countdown: " + str(counter))
+                counter -= 1
+                await asyncio.sleep(1)
+            await self.do_snapshot()
+            self.status("Snapshot saved.")
             await asyncio.sleep(1)
-        await self.do_snapshot()
-        self.status("Snapshot saved.")
-        await asyncio.sleep(1)
-        self.status_dialog.close_dialog()
+            self.status_dialog.close_dialog()
+        finally:
+            self.currently_snapping = False
 
     async def do_snapshot(self):
         C = self.capture
@@ -341,7 +348,13 @@ class ScreenAnimationAssembly(jQuerySnapSuperClass):
     def enable_capture(self):
         self.record_button.set_on_click(self.record_click)
 
+    currently_recording = False
+
     def record_click(self, *ignored):
+        #assert not self.currently_recording, "Rejecting duplicate record_click"
+        if self.currently_recording:
+            return # ignore duplicate click
+        self.currently_recording = True
         delay = self.check_labelled_input(self.delay_input, 0, 100, 0)
         limit = self.check_labelled_input(self.limit_input, 1, 999, 100)
         fps = self.check_labelled_input(self.fps_input, 1, 60, 30)
@@ -353,66 +366,70 @@ class ScreenAnimationAssembly(jQuerySnapSuperClass):
         schedule_task(self.get_frames(time_interval_seconds, delay, limit))
 
     async def get_frames(self, time_interval_seconds, delay, limit):
-        self.stopped = False
-        self.aborted = False
-        C = self.capture
-        do(C.element.screen_capture.reset_snapshot_list())
         try:
-            self.record_button.set_on_click(None)
-            self.image_arrays = []
-            counter = math.ceil(delay)
-            #self.stop_button.set_on_click(self.stop_click)
-            while counter > 0:
-                self.status("Delay Countdown: " + str(counter))
-                counter -= 1
-                await asyncio.sleep(1)
+            assert self.currently_recording
+            self.stopped = False
+            self.aborted = False
+            C = self.capture
+            do(C.element.screen_capture.reset_snapshot_list())
+            try:
+                self.record_button.set_on_click(None)
+                self.image_arrays = []
+                counter = math.ceil(delay)
+                #self.stop_button.set_on_click(self.stop_click)
+                while counter > 0:
+                    self.status("Delay Countdown: " + str(counter))
+                    counter -= 1
+                    await asyncio.sleep(1)
+                    if self.stopped:
+                        if self.aborted:
+                            return
+                        break
+                elapsed = 0
+                started = time.time()
+                count = 0
+                while not self.stopped and (elapsed < limit):
+                    self.status("Captured %s. Elapsed %s." % (count, elapsed))
+                    do(C.element.screen_capture.snapshot())
+                    await asyncio.sleep(time_interval_seconds)
+                    elapsed = time.time() - started
+                    count += 1
                 if self.stopped:
                     if self.aborted:
                         return
-                    break
-            elapsed = 0
-            started = time.time()
-            count = 0
-            while not self.stopped and (elapsed < limit):
-                self.status("Captured %s. Elapsed %s." % (count, elapsed))
-                do(C.element.screen_capture.snapshot())
-                await asyncio.sleep(time_interval_seconds)
-                elapsed = time.time() - started
-                count += 1
-            if self.stopped:
-                if self.aborted:
-                    return
+            finally:
+                #self.stop_click()
+                self.enable_capture()
+            # wait for a final capture -- force websocket to sync (?)
+            self.status("Final snapshot.")
+            await get(C.element.screen_capture.snapshot(True), timeout=None)
+            self.status("Preparing data transfer.")
+            error_message = await get(C.element.screen_capture.prepare_all_snapshots())
+            if error_message:
+                self.info(error_message)
+                self.status("Data transfer error: " + repr(error_message))
+                return
+            path = self.prepare_path()
+            self.status("Posting data to parent process.")
+            do(C.element.screen_capture.post_all_snapshots(self.end_point))
+            data = await self.postback.wait_for_post(timeout=self.timeout, on_timeout=self.on_timeout)
+            self.status("Got postback from parent process.")
+            (body, query) = data
+            info = query.copy()
+            info["data"] = body
+            self.status("Preparing snapshot arrays.")
+            self.image_arrays = get_snapshot_arrays(info)
+            self.info("Storing %s to %s. Elapsed %s." % (len(self.image_arrays), repr(path), (elapsed, limit, count)))
+            #return # DEBUGGING
+            self.status("Storing arrays to " + repr(path))
+            mimsave(path, self.image_arrays, format='GIF', duration=time_interval_seconds)
+            self.info("Saved %s to %s. Elapsed %s." % (len(self.image_arrays), repr(path), elapsed))
+            self.status("Store complete: " + repr(path))
+            print("wrote animated gif", path)
+            await asyncio.sleep(1)
+            self.status_dialog.close_dialog()
         finally:
-            #self.stop_click()
-            self.enable_capture()
-        # wait for a final capture -- force websocket to sync (?)
-        self.status("Final snapshot.")
-        await get(C.element.screen_capture.snapshot(True), timeout=None)
-        self.status("Preparing data transfer.")
-        error_message = await get(C.element.screen_capture.prepare_all_snapshots())
-        if error_message:
-            self.info(error_message)
-            self.status("Data transfer error: " + repr(error_message))
-            return
-        path = self.prepare_path()
-        self.status("Posting data to parent process.")
-        do(C.element.screen_capture.post_all_snapshots(self.end_point))
-        data = await self.postback.wait_for_post(timeout=self.timeout, on_timeout=self.on_timeout)
-        self.status("Got postback from parent process.")
-        (body, query) = data
-        info = query.copy()
-        info["data"] = body
-        self.status("Preparing snapshot arrays.")
-        self.image_arrays = get_snapshot_arrays(info)
-        self.info("Storing %s to %s. Elapsed %s." % (len(self.image_arrays), repr(path), (elapsed, limit, count)))
-        #return # DEBUGGING
-        self.status("Storing arrays to " + repr(path))
-        mimsave(path, self.image_arrays, format='GIF', duration=time_interval_seconds)
-        self.info("Saved %s to %s. Elapsed %s." % (len(self.image_arrays), repr(path), elapsed))
-        self.status("Store complete: " + repr(path))
-        print("wrote animated gif", path)
-        await asyncio.sleep(1)
-        self.status_dialog.close_dialog()
+            self.currently_recording = False
 
     #def stop_click(self, *ignored):
     #    self.stopped = True
