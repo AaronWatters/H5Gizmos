@@ -244,15 +244,100 @@ enabling a feature or adding a new element to the interface.
 
 ## `component.enable_tooltip`
 
+<a href="https://jqueryui.com/tooltip/">jQueryUI tooltip</a>
+
+```Python
+from H5Gizmos import Html, serve, LabelledInput
+
+async def task():
+    greeting = Html("<h1>Your information</h1>", title="Please tell us about yourself")
+    await greeting.show()
+    greeting.enable_tooltips()
+    greeting.add(
+        LabelledInput("Your name*: ", title="Required field")
+        .label_container)
+    greeting.add(Html("<br>"))
+    greeting.add(
+        LabelledInput("Your age:", title="Optional. We ask for you age only for statistical purposes.")
+        .label_container)
+
+serve(task())
+```
+
+<img src="tooltip.png"/>
+
 ## `component.add_dialog`, `component.close_dialog`, `component.open_dialog`
+
+<a href="https://jqueryui.com/dialog/">
+jQueryUI dialog
+</a>
+
+```Python
+from H5Gizmos import Html, serve, do, Button
+
+async def task():
+    greeting = Html("""
+    <div>
+        <h2>For Your Eyes Only</h2>
+        <h3>Sheena Easton</h3>
+        <p>
+            For your eyes only, can see me through the night <br>
+            For your eyes only, I never need to hide <br>
+            You can see so much in me, so much in me that's new <br>
+            I never felt until I looked at you...
+        </p>
+    </div>
+    """)
+    await greeting.show()
+    warning = Html("""
+    <div>
+        This page contains eyes-only sensitive information.<br>
+        Hit [Enter] to close this dialog.
+    </div>""")
+    options = dict(resizeable=False, height="auto", width=200, modal=True)
+    dialog = greeting.add_dialog(warning, dialog_options=options)
+    dialog.focus()
+
+    def close_on_enter(event):
+        if event["keyCode"] == 13:  # enter key
+            dialog.close_dialog()
+
+    do(dialog.element.keypress(close_on_enter), to_depth=1)
+
+    def reopen(*ignored):
+        dialog.open_dialog()
+        dialog.focus()
+
+    greeting.add(Button("Show warning", on_click=reopen))
+
+serve(task())
+```
+
+<img src="dialog.gif">
 
 ## `component.add`
 
+The `add` method for a component adds a subordinate component after the component.
+The argument to `add` may either be a component object or a text string
+which is automatically converted into a `Text` component.
+
+```Python
+from H5Gizmos import Html, serve
+
+async def task():
+    greeting = Html("<h1>Math facts</h1>")
+    await greeting.show()
+    greeting.add(Html("""
+    <div>The <em>circumference</em> of a circle with radius 1, 2 &times; &pi;, is between 6 and 7.</div>
+    """))
+    greeting.add("That is, 6<6.28... & 7>6.28...")
+
+serve(task())
+```
+
+<img src="add.png"/>
+
 ## `component.add_pyplot`
-
-## `component.get_info_div`
-
-## `component.shutdown_on_unload`
 
 <a href="./README.md">
 Return to introduction to running a Gizmo.
