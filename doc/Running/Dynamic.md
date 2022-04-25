@@ -339,6 +339,13 @@ serve(task())
 
 ## `component.add_pyplot`
 
+The `add_pyplot` method creates a component which functions as a context
+manager for capturing images from diagrams created using `matplotlib` or libraries based
+on `matplotlib`.  Please see the 
+<a href="../Tutorials/hello_curves.md">
+hello curves
+</a> tutorial for a detailed example usage of `add_pyplot`.
+
 <a href="./README.md">
 Return to introduction to running a Gizmo.
 </a>
