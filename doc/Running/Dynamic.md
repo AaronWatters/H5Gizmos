@@ -100,6 +100,8 @@ of the DOM Element object may be accessed and manipulated in this manner.
 
 # Parameter conveniences
 
+The following methods implement common component parameter configuration actions.
+
 ## `component.text` and `component.html`
 
 The `html` and `text` methods both dynamically replace the text
@@ -167,11 +169,73 @@ async def task():
 serve(task())
 ```
 
+The resulting interface looks like this:
+
 <img src="empty.gif"/>
 
 ## `component.on` and `component.off`
 
+<a href="https://www.tutorialspoint.com/html5/html5_events.htm">HTML5 events</a>...
+
+```Python
+from H5Gizmos import Html, CheckBoxes, serve
+
+event_count = 0
+greeting = Html("<div> EVENT AREA </div>")
+greeting.resize(width=400, height=200)
+greeting.css({"background-color": "yellow", "color": "green"})
+
+events = "mousedown mousemove mouseout mouseover mouseup".split()
+
+def select_callback(*ignored):
+    checked_events = event_selection.selected_values
+    for event in events:
+        info.text("Checked: " + repr(checked_events))
+        greeting.off(event)
+        if event in checked_events:
+            greeting.on(event, callback=event_callback)
+
+def event_callback(event_info):
+    global event_count
+    event_count += 1
+    event_name = event_info["type"]
+    info.text("Event fired: " + repr((event_name, event_count)))
+
+event_selection = CheckBoxes(events, legend="Check to enable events", on_click=select_callback)
+info = Html("<p>No events</p>")
+
+async def task():
+    await greeting.show()
+    greeting.add(event_selection)
+    greeting.add(info)
+    
+serve(task())
+```
+
+<img src="on_off.png"/>
+
 ## `component.focus`
+
+```Python
+from H5Gizmos import serve, LabelledInput, Html
+
+input = LabelledInput("Type stuff here: ")
+
+def on_text(*ignored):
+    txt = input.value
+    input.label_container.add(Html("<p><em>%s</em></p>" % txt))
+    input.set_value("")
+    input.focus()
+
+async def task():
+    await input.label_container.show()
+    input.on_enter(on_text)
+    input.focus()
+
+serve(task())
+```
+
+<img src="focus.png"/>
 
 # Other Dynamic interactions
 
