@@ -193,7 +193,7 @@ class jQueryComponent(gz_components.Component):
         P = Plotter()
         return self.add(P, title=title)
 
-    def add_dialog(self, text_or_component, dialog_options, title=None, to_depth=1):
+    def add_dialog(self, text_or_component, dialog_options=None, title=None, to_depth=1):
         """
         Add a JQueryUI dialog after the gizmo has started.
         Options should be a dictionary of jQueryUI dialog options.
@@ -201,6 +201,8 @@ class jQueryComponent(gz_components.Component):
         Return the dialog component.
         """
         assert self.gizmo is not None, "add dialog only to a component of a started gizmo."
+        if dialog_options is None:
+            dialog_options = {}
         component = self.add(text_or_component, title)
         do(component.element.dialog(dialog_options), to_depth=to_depth)
         component.is_dialog = True
