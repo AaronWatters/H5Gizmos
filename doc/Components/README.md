@@ -24,14 +24,6 @@ Composite Components
 Composite components such as `Template`s and `Stack`s build structures that include other components.
 
 <h2>
-<a href="Shared.md">
-Shared Features
-</a>
-</h2>
-
-Components have a number of common features.
-
-<h2>
 <a href="Building.md">
 Building Components
 </a>
