@@ -407,10 +407,37 @@ The resulting interface looks like this:
 The `add_pyplot` method creates and appends a 
 `Plotter` component which functions as a context
 manager for capturing images from diagrams created using `matplotlib` or libraries based
-on `matplotlib`.  Please see the 
+on `matplotlib`.
+
+The following example plots a simple spiral using `add_pyplot`:
+
+```Python
+from H5Gizmos import Html, serve
+import numpy as np
+import matplotlib.pyplot as plt
+
+T = np.arange(100)
+D = T * 0.2
+X = D * np.sin(D)
+Y = D * np.cos(D)
+
+async def task():
+    greeting = Html("<h1>A spiral</h1>")
+    await greeting.show()
+    plot = greeting.add_pyplot()
+    with plot:
+        plt.plot(X, Y)
+
+serve(task())
+```
+The resulting interface looks like this:
+
+<img src="add_pytplot.png"/>
+
+Please see the 
 <a href="../Tutorials/hello_curves.md">
 hello curves
-</a> tutorial for a detailed example usage of `add_pyplot`.
+</a> tutorial for a detailed interactive example usage of matplotlib in a Gizmo.
 
 <a href="./README.md">
 Return to introduction to running a Gizmo.
