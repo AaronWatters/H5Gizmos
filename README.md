@@ -1,3 +1,5 @@
+<img src="doc/lorenz.gif">
+
 # H5Gizmos
 
 H5Gizmos provides
