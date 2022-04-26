@@ -383,6 +383,13 @@ Blank.css({"image-rendering": "pixelated"})
 
 ## `Plotter`
 
+`Plotter` components serve as context managers for capturing
+and displaying images from a `matplotlib` plot or from other
+libraries based on `matplotlib`.
+
+In the example below the `plot_region` component displays
+the result of plotting a star shape using `matplotlib`.
+
 ```Python
 from H5Gizmos import Plotter
 import matplotlib.pyplot as plt
@@ -407,7 +414,15 @@ with plot_region:
     plt.title("Twinkle Twinkle Little Star")
 ```
 
+The result looks like this:
+
 <img src="Plotter.png">
+
+Aso please see the 
+<a href="../Tutorials/hello_curves.md">
+hello curves
+</a> tutorial for a detailed example usage of the `add_pyplot`
+which creates a `Plotter`.
 
 <a href="./README.md">
 Return to Component categories.
