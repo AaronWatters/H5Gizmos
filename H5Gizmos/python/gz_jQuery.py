@@ -1181,9 +1181,9 @@ class jQueryImage(jQueryComponent):
 
     def change_array(self, array, url=True, scale=False, epsilon=1e-12):
         from PIL import Image
+        m = array.min()
+        M = array.max()
         if scale:
-            m = array.min()
-            M = array.max()
             if (M - m) > epsilon:
                 A = array.astype(np.float)
                 scaled = 255 * (A - m) / (M - m)
@@ -1191,6 +1191,9 @@ class jQueryImage(jQueryComponent):
             else:
                 array = np.zeros(A.shape, dtype=np.uint8)
                 array[:] = 128  # arbitrary grey.
+        else:
+            assert m >= 0 and M < 256, "Array not in range 0..255 " + repr((m,M))
+            array = array.astype(np.uint8)
         im = Image.fromarray(array)
         f = io.BytesIO()
         im.save(f, format="PNG")
