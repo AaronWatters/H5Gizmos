@@ -48,25 +48,289 @@ Interface display...
 
 ### `component.element`
 
+```Python
+from H5Gizmos import Html, get, do
+greeting = Html("<div><p>Paragraph 1</p> <p>Paragraph 2</p><div>")
+await greeting.show()
+```
+
+```
+greeting.element
+```
+
+```
+_CACHE_['jQueryComponent_1651080401924_9'][V(L('element'))]
+```
+
+```Python
+greeting.element.children().length
+```
+
+```
+_CACHE_['jQueryComponent_1651080401924_9'][V(L('element'))][V(L('children'))]()[V(L('length'))]
+```
+
+```Python
+await get(greeting.element.children().length)
+```
+
+evaluates to `3`.
+
+```Python
+await get(greeting.element.children()[0].innerText)
+```
+
+```
+'Paragraph 1'
+```
+
 ### `component.window`
+
+```Python
+await get(greeting.window.clientInformation.vendor)
+```
+
+```
+'Google Inc.'
+```
 
 ### `component.document`
 
-### `componeent.jQuery`
+```Python
+await get(greeting.document.location.hostname)
+```
 
-### Reference expressions
+```
+'192.168.1.173'
+```
+
+### `component.jQuery`
+
+```Python
+await get(greeting.jQuery().jquery)
+```
+
+```
+'3.1.1'
+```
+
+```Python
+from H5Gizmos import Html, do
+
+div = Html("<div>The increment function</div>")
+await div.show()
+do(div.jQuery("<pre>lambda(x): x+1</pre>").appendTo(div.element))
+```
+
+<img src="increment.png"/>
+
+### Reference commands
 
 ## `H5Gizmos.do`
 
 ## `H5Gizmos.get`
 
-## Argument conversion
+## `H5Gizmos.name`
+
+```Python
+from H5Gizmos import Html, name, get
+greeting = Html("<h4>Hello</h4>")
+await greeting.show()
+
+location = name("location", greeting.document.location)
+```
+
+```Python
+await get(location.toString())
+```
+
+```
+'http://192.168.1.173:8675/gizmo/http/MGR_1651093175260_20/index.html'
+```
+
+## Parent argument conversion
+
+```Python
+import numpy as np
+from H5Gizmos import Html
+
+greeting = Html("<h3>Hello</h3>")
+await greeting.show()
+
+def callable_example(*arguments):
+    print("callback called with arguments: ", arguments)
+
+structure = {
+    "none": None,
+    "number": 3.1,
+    "string": "Bohemian Rhapsody",
+    "bool": False,
+    "dictionary": {"lie": "falsehood"},
+    "list": [1,2,"three"],
+    "bytearray": bytearray([0,5,211,6]),
+    "callable": callable_example,
+    "1d numeric array": np.arange(10),
+    "2d numeric array": np.arange(10).reshape(2,5),
+}
+do(greeting.window.console.log(structure))
+```
+
+<img src="console_argument.png"/>
+
+```Python
+from H5Gizmos.python.gz_components import JS_COLLECTION_NAME_MAP
+```
+
+```Python
+{numpy.int8: 'Int8Array',
+ numpy.uint8: 'Uint8Array',
+ numpy.int16: 'Uint16Array',
+ numpy.int32: 'Int32Array',
+ numpy.uint32: 'Uint32Array',
+ numpy.float32: 'Float32Array',
+ numpy.float64: 'Float64Array',
+ numpy.int64: 'BigInt64Array',
+ numpy.uint64: 'BigUint64Array',
+ dtype('int8'): 'Int8Array',
+ dtype('uint8'): 'Uint8Array',
+ dtype('int16'): 'Uint16Array',
+ dtype('int32'): 'Int32Array',
+ dtype('uint32'): 'Uint32Array',
+ dtype('float32'): 'Float32Array',
+ dtype('float64'): 'Float64Array',
+ dtype('int64'): 'BigInt64Array',
+ dtype('uint64'): 'BigUint64Array'}
+ ```
+
+
 
 ## Calling back to the parent
 
+```Python
+from H5Gizmos import Html, name, get
+greeting = Html("<h4>Hello</h4>")
+await greeting.show()
+
+greeting.js_init("""
+
+    element.send_value = function() {
+        return {
+            "null": null,
+            "number": 3.1,
+            "string": "Bohemian Rhapsody",
+            "bool": false,
+            "dictionary": {"lie": "falsehood"},
+            "list": [1,2,"three"],
+            "Uint8Array": new Uint8Array([0, 5, 211, 6]),
+            "callable": element.send_value,
+        }
+    };
+""")
+```
+
+```Python
+js_value = await get(greeting.element.send_value())
+js_value
+```
+
+```Python
+{'null': None,
+ 'number': 3.1,
+ 'string': 'Bohemian Rhapsody',
+ 'bool': False,
+ 'dictionary': {'lie': 'falsehood'},
+ 'list': [1, 2, 'three'],
+ 'Uint8Array': '0005d306',
+ 'callable': {}}
+```
+
+```Python
+from H5Gizmos import hex_to_bytearray
+B = hex_to_bytearray(js_value["Uint8Array"])
+B
+```
+
+`bytearray(b'\x00\x05\xd3\x06')`
+
+```Python
+[int(x) for x in B]
+```
+
+```Python
+[0, 5, 211, 6]
+```
+
 ## `to_depth`
 
+```Python
+greeting.js_init("""
+    var loop = {};
+    loop.name = "loop";
+    loop.reference = loop;
+    element.loop = loop;
+""")
+```
+
+```Python
+await get(greeting.element.loop, to_depth=2)
+```
+
+```Python
+{'name': 'loop', 'reference': {'name': 'loop', 'reference': None}}
+```
+
+```Python
+await get(greeting.element.loop, to_depth=4)
+```
+
+```Python
+{'name': 'loop',
+ 'reference': {'name': 'loop',
+  'reference': {'name': 'loop',
+   'reference': {'name': 'loop', 'reference': None}}}}
+```
+
 ## `timeout`
+
+```Python
+from H5Gizmos import Html, name, get
+greeting = Html("<h4>Hello</h4>")
+await greeting.show()
+
+greeting.js_init("""
+
+    element.value_never_resolves = function() {
+        return new H5Gizmos.DeferredValue();
+    };
+    
+""")
+```
+
+```Python
+await get(greeting.element.value_never_resolves(), timeout=13)
+```
+
+```python-traceback
+---------------------------------------------------------------------------
+FutureTimeout                             Traceback (most recent call last)
+<ipython-input-70-5f34819d9c7c> in async-def-wrapper()
+
+~/repos/H5Gizmos/H5Gizmos/python/H5Gizmos.py in get(link_action, to_depth, timeout)
+     37     "Run the link in javascript and return the result."
+     38     # command style convenience convenience accessor
+---> 39     return await link_action._get(to_depth=to_depth, timeout=timeout)
+     40 
+     41 def name(id, link_action, to_depth=None):
+
+~/repos/H5Gizmos/H5Gizmos/python/H5Gizmos.py in _get(self, to_depth, timeout, oid, future, test_result)
+    661         if test_result is not None:
+    662             return test_result  # only for code coverage...
+--> 663         await future
+    664         self._get_oid = None
+    665         self._get_future = None
+
+FutureTimeout: Timeout expired: 13
+```
 
 # Declaring Dynamic Javascript
 
@@ -75,6 +339,8 @@ Interface display...
 ## `component.function`
 
 ## `component.new`
+
+## `component.js_debug`
 
 # Caching Javascript Values
 
