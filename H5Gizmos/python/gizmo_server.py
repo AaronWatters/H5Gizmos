@@ -17,6 +17,9 @@ import sys
 # Max size for posts -- really big
 DEFAULT_MAX_SIZE = 1000 * 1000 * 1000 * 1000 * 100
 
+# Packet chunk size limit for both GET and web socket
+DEFAULT_PACKET_SIZE = 1000 * 1000 * 10
+
 PROCESS_SHARED_GIZMO_SERVER = None
 
 def get_or_create_event_loop():
@@ -324,7 +327,7 @@ class GzServer:
     def gizmo(
             self, 
             title="Gizmo",
-            packet_limit=1000000, 
+            packet_limit=DEFAULT_PACKET_SIZE, 
             auto_flush=True,
             entry_filename="index.html",
             poll_for_exceptions=True,
@@ -686,7 +689,7 @@ class BytesGetter(FileGetter):
     Serve bytes.
     """
 
-    def __init__(self, filename, byte_content, mgr, content_type, chunksize=10000000):
+    def __init__(self, filename, byte_content, mgr, content_type, chunksize=DEFAULT_PACKET_SIZE):
         self.chunksize = chunksize
         self.get_url_info(filename, mgr, content_type)  # xxxx remove mgr someday (only for testing?)
         self.set_content(byte_content)
@@ -735,7 +738,7 @@ class BytesGetter(FileGetter):
 
 class GizmoPipelineSocketHandler:
 
-    def __init__(self, gizmo, packet_limit=1000000, auto_flush=True):
+    def __init__(self, gizmo, packet_limit=DEFAULT_PACKET_SIZE, auto_flush=True):
         pipeline = H5Gizmos.GZPipeline(gizmo, packet_limit=packet_limit, auto_flush=auto_flush)
         self.pipeline = pipeline
         self.ws = None
