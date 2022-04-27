@@ -203,6 +203,10 @@ use the label wrapper `LI.label_container.show()`.
 
 ## `Slider`
 
+A `Slider` component allows the user to select a numeric value
+in a graphical manner.  The following example uses a `Slider` to
+to specify a temperature between -100 and 150.
+
 ```Python
 from H5Gizmos import Slider
 
@@ -223,10 +227,14 @@ await S.show()
 info = S.add("temperature here...")
 slide_callback()
 ```
+The generated interface looks like this:
 
 <img src="Slider.png">
 
 ## `RangeSlider`
+
+A `RangeSlider` component allows the user to specify a numeric
+range in a graphical manner, as illustrated in the following example:
 
 ```Python
 from H5Gizmos import RangeSlider
@@ -251,9 +259,14 @@ rinfo = RS.add("temperature here...")
 r_slide_callback()
 ```
 
+The generated interface looks like this:
+
 <img src="RangeSlider.png"/>
 
 ## `DropDownSelect`
+
+A `DropDownSelect` selects one of a number of options in a drop down list.
+The following example selects one of the five primary biological kingdoms:
 
 ```Python
 from H5Gizmos import DropDownSelect
@@ -287,6 +300,10 @@ dropdown_callback()
 
 ## `RadioButtons`
 
+The `RadioButtons` component also selects 
+one of a number of options using a button-like interface.
+The following example selects one of the five primary biological kingdoms:
+
 ```Python
 from H5Gizmos import RadioButtons
 
@@ -313,10 +330,17 @@ await RD.show()
 rkingdom = RD.add("Kingdom here.")
 radio_callback()
 ```
+The generated interface looks like this:
 
 <img src="RadioButtons.png"/>
 
 ## `CheckBoxes`
+
+The `Checkboxes` component creates a check box group
+that allows the user to select any number of selections from a list of options.
+
+The following interface allows the user to self-identify
+as a member of zero or more biological kingdoms.
 
 ```Python
 from H5Gizmos import CheckBoxes
@@ -345,9 +369,17 @@ cbkingdom = CB.add("Kingdom here.")
 check_callback()
 ```
 
+The resulting interface looks like this:
+
 <img src="Checkboxes.png">
 
 ## `Image`
+
+The `Image` component displays a byte stream that encodes
+an image.
+
+The following example reads an image byte sequence from a file
+and displays the image in the gizmo interface.
 
 ```Python
 from H5Gizmos import Image
@@ -357,17 +389,22 @@ mandrill_bytes = open(fn, "rb").read()
 Img = Image(fn, bytes_content=mandrill_bytes, height=100, width=100)
 await Img.show()
 ```
+The resulting interface looks like this:
 
 <img src="Image1.png">
 
 ### Loading an array into a blank image
+
+The `Image` implementation can also display
+numeric Python arrays as images.  First create a "blank"
+image:
 
 ```Python
 Blank = Image(height=100, width=200)
 await Blank.show()
 ```
 
-then later
+then later load the image using the `change_array` method.
 
 ```Python
 import numpy as np
@@ -379,7 +416,38 @@ Blank.change_array(B)
 Blank.css({"image-rendering": "pixelated"})
 ```
 
+The `pixelated` CSS setting suppresses interpolation across pixel boundaries.
+The resulting image looks like this.
+
 <img src="Image2.png">
+
+The array may be a gray scale array of shape `(width, height)` for greyscale
+images, or `(width, height, 3)` for red/green/blue images or 
+`(width, height, 4)` for red/green/blue/opacity images.  Array values should be
+in the range 0..255 unless the `scale` parameter is set to True.  If the `scale`
+parameter is set to true all array values will be rescaled so the minimum value
+maps to 0 and the maximum value maps to 255.
+
+For example the following `change_array` call loads and scales a red/green/blue
+image from an array:
+
+```Python
+import numpy as np
+A = np.zeros((25,3), dtype=float) + 500
+B = A.reshape((5,5,3))
+B[4,:,0] = B[0,:,0] = B[:,4,0] = B[:,0,0] = 300
+A[::2,0] = 0
+ramp = np.array([100,200,300,400,500])
+B[:,:,1] = ramp.reshape((1,5))
+B[:,:,2] = ramp.reshape((5,1))
+#B[:,:,0] = 0
+Blank.change_array(B, scale=True)
+Blank.css({"image-rendering": "pixelated"})
+```
+
+The resulting image looks like this:
+
+<img src="rgb_image.png"/>
 
 ## `Plotter`
 
