@@ -421,7 +421,7 @@ The resulting image looks like this.
 
 <img src="Image2.png">
 
-The array may be a gray scale array of shape `(width, height)` for greyscale
+The array may be an array of shape `(width, height)` for greyscale
 images, or `(width, height, 3)` for red/green/blue images or 
 `(width, height, 4)` for red/green/blue/opacity images.  Array values should be
 in the range 0..255 unless the `scale` parameter is set to True.  If the `scale`
