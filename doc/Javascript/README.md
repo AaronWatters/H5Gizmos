@@ -437,9 +437,34 @@ greeting.js_debug()
 
 ## `component.cache`
 
+```Python
+from H5Gizmos import Html, get
+greeting = Html("<h1>Hello</h1>")
+await greeting.show()
+
+import numpy as np
+A = np.sin(0.01 * np.arange(1000))
+reference = greeting.cache("Sines", A)
+do(greeting.window.console.log(reference))
+```
+
+<img src="cached_array.png"/>
+
 ## `component.my`
 
+```Python
+reference = greeting.my("Sines")
+do(greeting.window.console.log(reference))
+```
+
 ## `component.uncache`
+
+```Python
+greeting.uncache("Sines")
+print(await get(greeting.my("Sines")))
+```
+
+prints `None`.
 
 # Transferring binary data and large data
 
