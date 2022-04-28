@@ -470,11 +470,54 @@ prints `None`.
 
 ## `component.store_json`
 
+```Python
+json_structure = {
+    "none": None,
+    "number": 3.1,
+    "string": "Bohemian Rhapsody",
+    "bool": False,
+    "dictionary": {"lie": "falsehood"},
+    "list": [1,2,"three"],
+}
+
+from H5Gizmos import Html, do, get
+greeting = Html("<h1>Hello</h1>")
+await greeting.show()
+
+reference = await greeting.store_json(json_structure, "my_data")
+
+print("string value", await get(reference["string"]))
+```
+
+```
+string value Bohemian Rhapsody
+```
+
 ## `component.store_array`
+
+```Python
+import numpy as np
+
+A = (np.arange(1000) % 13 - 5).astype(np.float32)
+
+from H5Gizmos import Html, do, get
+greeting = Html("<h1>Hello</h1>")
+await greeting.show()
+
+reference = await greeting.store_array(A, "my_array")
+do(greeting.window.console.log(reference))
+```
+
+<img src="array32.png"/>
 
 ## `component.get_array_from_buffer`
 
-## `component.translate_1d_array`
+```Python
+B = await greeting.get_array_from_buffer(reference, dtype=np.float32)
+np.abs(A - B).max()
+```
+
+evaluates to `0.0`
 
 <a href="../README.md">
 Return to H5Gizmos documentation root.
