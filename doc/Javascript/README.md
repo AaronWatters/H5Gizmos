@@ -399,8 +399,6 @@ await get(greeting.element.get_font_properties(txt.element))
  'font-size': '16px'}
 ```
 
-## `component.function`
-
 ## `component.new`
 
 ## `component.js_debug`
