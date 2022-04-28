@@ -226,7 +226,7 @@ class jQueryComponent(gz_components.Component):
 
     def configure_jQuery_element(self, element):
         "For subclasses: configure the jQuery element by adding children or callbacks, etc."
-        pass  # do nothing herre.
+        pass  # do nothing here.
 
     def js_init(self, js_function_body, to_depth=3, **argument_names_to_values):
         assert self.element is not None, "Gizmo must be displayed for js_init evaluation."
@@ -235,6 +235,9 @@ class jQueryComponent(gz_components.Component):
         function = self.function(argument_names, js_function_body)
         function_call = function(*argument_values)
         do(function_call, to_depth=to_depth)
+
+    def js_debug(self):
+        self.js_init("debugger;")
 
     def get_info_div(self):
         "Attach a DIV to the surrounding container for displaying miscellaneous information."
