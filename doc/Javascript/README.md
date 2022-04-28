@@ -401,7 +401,37 @@ await get(greeting.element.get_font_properties(txt.element))
 
 ## `component.new`
 
+```Python
+from H5Gizmos import Html, do
+greeting = Html("<h1>Hello</h1>")
+await greeting.show()
+
+window = greeting.window
+new_uint = greeting.new(window.Uint8Array, [45, 254, 12, 9])
+do(window.console.log(new_uint))
+```
+
+equivalent of
+
+```javascript
+console.log( new Uint8Array([45, 254, 12, 9]))
+```
+
+<img src="new_uint.png"/>
+
 ## `component.js_debug`
+
+```Python
+from H5Gizmos import Html, do
+greeting = Html("<h1>Hello</h1>")
+await greeting.show()
+```
+
+```Python
+greeting.js_debug()
+```
+
+<img src="js_debug.png"/>
 
 # Caching Javascript Values
 
