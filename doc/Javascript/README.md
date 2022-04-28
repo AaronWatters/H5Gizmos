@@ -204,7 +204,9 @@ from H5Gizmos.python.gz_components import JS_COLLECTION_NAME_MAP
 
 
 
-## Calling back to the parent
+## Calling back to the parant
+
+## Call back child result value conversion
 
 ```Python
 from H5Gizmos import Html, name, get
@@ -299,21 +301,32 @@ await greeting.show()
 
 greeting.js_init("""
 
-    element.value_never_resolves = function() {
-        return new H5Gizmos.DeferredValue();
+    element.resolves_in_10_seconds = function() {
+        var result = new H5Gizmos.DeferredValue();
+        // Resolve the value to 42 after waiting 10 seconds.
+        setTimeout( (function() { result.resolve(42);}), 10 * 1000 );
+        return result;
     };
-    
+
 """)
 ```
 
+The following invocation produces the value `42` after a 10 second delay.
 ```Python
-await get(greeting.element.value_never_resolves(), timeout=13)
+await get(greeting.element.element.resolves_in_10_seconds(), timeout=13)
 ```
+
+But the following invocation
+```
+await get(greeting.element.resolves_in_10_seconds(), timeout=5)
+```
+
+generates the following exception traceback after waiting for 5 seconds:
 
 ```python-traceback
 ---------------------------------------------------------------------------
 FutureTimeout                             Traceback (most recent call last)
-<ipython-input-70-5f34819d9c7c> in async-def-wrapper()
+<ipython-input-3-6086988edda4> in async-def-wrapper()
 
 ~/repos/H5Gizmos/H5Gizmos/python/H5Gizmos.py in get(link_action, to_depth, timeout)
      37     "Run the link in javascript and return the result."
@@ -329,12 +342,62 @@ FutureTimeout                             Traceback (most recent call last)
     664         self._get_oid = None
     665         self._get_future = None
 
-FutureTimeout: Timeout expired: 13
+FutureTimeout: Timeout expired: 5
 ```
+
+The timeout argument for `do`, `name`, and `component.js_init` specify time out values
+for any callback functions created during the execution of the action.
 
 # Declaring Dynamic Javascript
 
 ## `component.js_init`
+
+```Python
+from H5Gizmos import Html, get
+greeting = Html("<h1>Hello</h1>")
+await greeting.show()
+txt = greeting.add("Welcome!")
+
+properties = "font-style font-weight font-family font-size".split()
+
+greeting.js_init(
+    """
+        element.get_font_properties = function(jquery_target) {
+        debugger;
+            jquery_target = jquery_target || element;
+            var style = window.getComputedStyle(jquery_target[0]);
+            result = {};
+            for (var i=0; i<properties.length; i++) {
+                var prop = properties[i];
+                result[prop] = style[prop];
+            }
+            return result
+        }
+    """, 
+    properties=properties)
+```
+
+```Python
+await get(greeting.element.get_font_properties())
+```
+
+```Python
+{'font-style': 'normal',
+ 'font-weight': '700',
+ 'font-family': 'Verdana, Arial, Helvetica, sans-serif',
+ 'font-size': '32px'}
+```
+
+```Python
+await get(greeting.element.get_font_properties(txt.element))
+```
+
+```Python
+{'font-style': 'normal',
+ 'font-weight': '400',
+ 'font-family': 'Verdana, Arial, Helvetica, sans-serif',
+ 'font-size': '16px'}
+```
 
 ## `component.function`
 
