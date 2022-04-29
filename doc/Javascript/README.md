@@ -347,7 +347,7 @@ using JSON conventions, except for the arrays and the callable function:
 
 The `callable_example` is converted to a callback function
 in the child context.  Calling the callback will send a message
-to the parent context to execute the `callable_example`.
+to the parent context to execute the `callable_example` function.
 
 The byte array is converted to a `UInt8Array`.
 
@@ -443,13 +443,19 @@ parent to some sort of event in the child context.  The return value
 for the callback is discarded and any exception from the callback
 is reported in the parent process, but not transferred to the child context.
 
+Please see the 
+<a href="../Tutorials/hello2.md">Hello 2</a>
+Tutorial for a simple example of a callback function.
+
 ## Child result value conversion
 
 Results from the `get` command coroutine and arguments
 to callbacks from the child to the parent are converted
 using a JSON-like convention and transmitted to the parent.
 
-For example the 
+For example the following code attaches a `send_value`
+function to the `greeting.element` which generates a
+mapping containing a collection of example values:
 
 ```Python
 from H5Gizmos import Html, name, get
@@ -473,10 +479,16 @@ greeting.js_init("""
 """)
 ```
 
+Evaluating the `send_value` function using a `get` command
+converts the return value mapping to corresponding data types
+in the parent process:
+
 ```Python
 js_value = await get(greeting.element.send_value())
 js_value
 ```
+
+generating the value:
 
 ```Python
 {'null': None,
@@ -488,6 +500,12 @@ js_value
  'Uint8Array': '0005d306',
  'callable': {}}
 ```
+
+The conversion follows JSON conventions except that
+the value is truncated at a recursive depth (see `to_depth` below)
+and the `Uint8Array` is converted to a hexidecimal encoded string.
+
+The following decodes the hex string into a Python byte array:
 
 ```Python
 from H5Gizmos import hex_to_bytearray
@@ -504,6 +522,9 @@ B
 ```Python
 [0, 5, 211, 6]
 ```
+
+See the section on binary data transfers below for alternative
+methods of transfering numeric data between the parent and child contexts.
 
 ## `to_depth`
 
