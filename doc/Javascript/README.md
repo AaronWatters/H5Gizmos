@@ -775,13 +775,25 @@ greeting.js_debug()
 ```
 
 The Javascript context will stop at a breakpoint in an anonymous
-function with the `compoent.element` bound to the variable `element`.
+function with the `component.element` bound to the variable `element`.
 
 <img src="js_debug.png"/>
 
 # Caching Javascript Values
 
+Components are equipped with look up tables in the child context
+for storing values which may be needed more than once.
+
 ## `component.cache`
+
+The `component.cache` method stores a value in the child
+context in the local cache for the component, using a specified name.
+The return value for the `cache` method is a link to the
+cache entry.
+
+The example below transmits a numeric array from the parent
+to the child and stores it in the cache for `greeting` using
+the name `Sines`.
 
 ```Python
 from H5Gizmos import Html, get
@@ -794,16 +806,29 @@ reference = greeting.cache("Sines", A)
 do(greeting.window.console.log(reference))
 ```
 
+The Javascript console reveals the cached value:
+
 <img src="cached_array.png"/>
 
 ## `component.my`
 
+The `my` method creates a link to a named cached entry
+in a component's local cache.
+
+For example the following code links to the previously cached
+`Sines` array and `get`s the third entry in the array from the child context:
+
 ```Python
-reference = greeting.my("Sines")
-do(greeting.window.console.log(reference))
+link = greeting.my("Sines")
+await get(link[3])
 ```
 
+which evaluates to `0.02999550020249566`.
+
 ## `component.uncache`
+
+The `uncache` method removes a cached entry.
+For example:
 
 ```Python
 greeting.uncache("Sines")
@@ -814,7 +839,22 @@ prints `None`.
 
 # Transferring binary data and large data
 
+The H5Gizmos infrastructure provides some special methods
+primarily intended for transferring large data quantities
+(multiple megabytes and up) between the child and parent context.
+Since these methods use the `GET` and `POST` methods
+which are intended for larger transfers than HTTP websockets
+they may provide better performance for large data transmission.
+
 ## `component.store_json`
+
+The `store_json` method uses the HTTP `GET` method to
+send JSON compatible values from the parent process to the
+child context.  The value is stored by name in the
+local cache for a running component.
+
+For example the following stores a JSON object in the 
+local cache for `greeting` using the name `my_data`
 
 ```Python
 json_structure = {
@@ -835,11 +875,24 @@ reference = await greeting.store_json(json_structure, "my_data")
 print("string value", await get(reference["string"]))
 ```
 
+The final `print` statement `get`s and prints the string stored in the JSON
+object:
+
 ```
 string value Bohemian Rhapsody
 ```
 
 ## `component.store_array`
+
+The `store_array` method transfers values from a numeric Python array
+to the child context and stores the values in an appropriate
+Javascript array buffer object using the HTTP `GET` method.
+The array is stored by name in the
+local cache for the component.
+If the array has more than one
+dimension it is "ravelled" into one dimension.
+
+The following transfers 32 bit floating point values to the child context:
 
 ```Python
 import numpy as np
@@ -854,16 +907,26 @@ reference = await greeting.store_array(A, "my_array")
 do(greeting.window.console.log(reference))
 ```
 
+The Javascript console reveals the array stored as a `float32Array`:
+
 <img src="array32.png"/>
 
 ## `component.get_array_from_buffer`
+
+The `get_array_from_buffer` method transfers values from a Javascript
+array buffer object in the child context to an analogous
+numeric Python array in the parent process.
+
+Continuing the last example the following transfers the values
+previously cached in `my_array` to the parent.
 
 ```Python
 B = await greeting.get_array_from_buffer(reference, dtype=np.float32)
 np.abs(A - B).max()
 ```
 
-evaluates to `0.0`
+Here `np.abs(A - B).max()`
+evaluates to `0.0`, verifying that the sent and received arrays match.
 
 <a href="../README.md">
 Return to H5Gizmos documentation root.
