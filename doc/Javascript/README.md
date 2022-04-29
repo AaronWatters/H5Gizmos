@@ -722,9 +722,13 @@ In this case generating the value:
  'font-size': '32px'}
 ```
 
+Applied to the `txt` component
+
 ```Python
 await get(greeting.element.get_font_properties(txt.element))
 ```
+
+reveals different font properties:
 
 ```Python
 {'font-style': 'normal',
