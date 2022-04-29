@@ -6,7 +6,15 @@ process and introduces some special methods for large data transfers.
 
 # Sending commands from parent to child
 
-In gizmo programs the parent process sends commands to the child process.
+In gizmo programs the parent process sends commands to the child process
+by executing a Javascript expression and possibly storing or retrieving
+the value of the expression.
+
+Javascript expressions are represented in the parent process
+by reference objects.  For example the following script
+retrieves the value for the reference `greeting.window.innerHeight`
+and executes the expression associated with the reference
+`greeting.element.text("Goodbye!")`.
 
 ```Python
 from H5Gizmos import Html, serve, do, get
@@ -28,7 +36,7 @@ async def task():
 serve(task())
 ```
 
-Command line output...
+The script prints the following to the command console:
 
 ```
 (base) C02XD1KGJGH8:Javascript awatters$ python do_get_gizmo.py 
@@ -36,17 +44,30 @@ The inner height is 1480
 The element height is 39
 ```
 
-Javascript console...
-
-<img src="console.png"/>
-
-Interface display...
+And opens the following interface in a browser tab:
 
 <img src="do_get.png">
 
-## Javascript Reference Objects
+Viewing the Javascript console for the browser tab reveals
+the following console log output:
+
+<img src="console.png"/>
+
+## Reference Objects
+
+References to Javascript expressions in the parent process
+are built from top level references by accessing attributes of
+the top level reference or by calling methods or function attached
+to top level references.
 
 ### `component.element`
+
+Every `component` is associated with an HTML object and the
+attribute `component.element` is a top level reference
+to a jQuery container for the HTML object.
+
+The following script creates a component `greeting` associated
+with an HTML DIV object in the HTML page for the interface.
 
 ```Python
 from H5Gizmos import Html, get, do
@@ -54,31 +75,47 @@ greeting = Html("<div><p>Paragraph 1</p> <p>Paragraph 2</p><div>")
 await greeting.show()
 ```
 
-```
-greeting.element
-```
+The `greeting.element` reference refers to a jQuery container
+containing the DIV element.  The reference itself is just an
+object which knows how to access the jQuery container in the
+child context.  References do not interact with the child
+process directly -- for example the expression `greeting.element`
+does not trigger any communication with the child process.
+Instead it evaluates to the following printable representation. 
 
 ```
 _CACHE_['jQueryComponent_1651080401924_9'][V(L('element'))]
 ```
 
-```Python
-greeting.element.children().length
-```
+and this representation is only useful for debugging.
+
+The more complex expression reference
+`greeting.element.children().length`
+prints as the following representation.
 
 ```
 _CACHE_['jQueryComponent_1651080401924_9'][V(L('element'))][V(L('children'))]()[V(L('length'))]
 ```
 
+Expression references are sent to the child process for evaluation using
+the commands `get`, `do`, or `name`.  For example the following
+evaluates `greeting.element.children().length` in the child process
+and returns the length of the child list for the element
+
 ```Python
 await get(greeting.element.children().length)
 ```
 
-evaluates to `3`.
+The result generated in this case is `3`.
+
+Similarly the following expression gets the inner text
+for the first child associated with the HTML DIV
 
 ```Python
 await get(greeting.element.children()[0].innerText)
 ```
+
+evaluating to
 
 ```
 'Paragraph 1'
@@ -86,9 +123,17 @@ await get(greeting.element.children()[0].innerText)
 
 ### `component.window`
 
+Every `component` also holds a reference to the global
+`window` object in the Javascript child context.
+
+For example for the `greeting` listed above the following
+retrieves the vendor that provided the browser implementation.
+
 ```Python
 await get(greeting.window.clientInformation.vendor)
 ```
+
+For the Chrome browser the result returned is
 
 ```
 'Google Inc.'
@@ -96,9 +141,16 @@ await get(greeting.window.clientInformation.vendor)
 
 ### `component.document`
 
+For convenience each `component` also stores a reference
+to the global `component.document` object for the HTML frame.
+For example, for the `greeting` above the following
+evaluates to the host name associated with the document:
+
 ```Python
 await get(greeting.document.location.hostname)
 ```
+
+which in may case evaluates to
 
 ```
 '192.168.1.173'
@@ -106,13 +158,20 @@ await get(greeting.document.location.hostname)
 
 ### `component.jQuery`
 
+Each `component` also stores a reference to the
+global `component.jQuery` object.  For the `greeting`
+above the following lists the `jQuery` version.
+
 ```Python
 await get(greeting.jQuery().jquery)
 ```
-
+which evaluates to 
 ```
 '3.1.1'
 ```
+
+The following script uses the `div.jQuery` reference
+to append a preformatted text.
 
 ```Python
 from H5Gizmos import Html, do
@@ -121,6 +180,8 @@ div = Html("<div>The increment function</div>")
 await div.show()
 do(div.jQuery("<pre>lambda(x): x+1</pre>").appendTo(div.element))
 ```
+
+The resulting interface looks like this:
 
 <img src="increment.png"/>
 
