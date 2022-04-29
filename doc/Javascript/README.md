@@ -504,6 +504,8 @@ generating the value:
 The conversion follows JSON conventions except that
 the value is truncated at a recursive depth (see `to_depth` below)
 and the `Uint8Array` is converted to a hexidecimal encoded string.
+The function `element.send_value` is not converted as a function
+but is translated to a trivial object representation `{}`.
 
 The following decodes the hex string into a Python byte array:
 
@@ -528,6 +530,16 @@ methods of transfering numeric data between the parent and child contexts.
 
 ## `to_depth`
 
+Javascript objects are often connected to very many other objects
+directly or indirectly, and these connection structures often includes
+loops.  As a simple expedient to prevent too-large data transfers
+and infinite recursions, Javascript child object representations are
+converted using simple recursive descent, truncated at a fixed
+recursion limit.
+
+For example the following code attaches a self-referential javascript
+object to the `greeting.element`.
+
 ```Python
 greeting.js_init("""
     var loop = {};
@@ -537,17 +549,27 @@ greeting.js_init("""
 """)
 ```
 
+An attempt to convert this object to JSON using simple recursive descent
+could result in an infinite recursion.  The following `get` command
+truncates the recursion at level 2:
+
 ```Python
 await get(greeting.element.loop, to_depth=2)
 ```
+
+This generates the following value in the parent:
 
 ```Python
 {'name': 'loop', 'reference': {'name': 'loop', 'reference': None}}
 ```
 
+The following truncates the value at level 4
+
 ```Python
 await get(greeting.element.loop, to_depth=4)
 ```
+
+generating the value:
 
 ```Python
 {'name': 'loop',
@@ -556,7 +578,29 @@ await get(greeting.element.loop, to_depth=4)
    'reference': {'name': 'loop', 'reference': None}}}}
 ```
 
+If not specified the default `to_depth` is 3.
+
+It is particularly important to truncate values such as
+the `window` or `document` or `event` objects in the Javascript
+context.  For example the `window` object is recursively connected
+to almost all of the other objects in the child context and
+even its truncated representation is quite large.
+
+```Python
+w = await get(greeting.window, to_depth=2)
+print(len(repr(w)))
+```
+The above code prints the string representation length 36328
+for the transferred window structure.
+
 ## `timeout`
+
+The `get` command accepts a `timeout` argument
+which sets a time limit on evaluating the Javascript expression.
+
+The following code attaches a function `greeting.element.resolves_in_10_seconds`
+which the internal gizmo javascript infrastructure interprets as a function
+that waits for 10 seconds and then evaluates to the value `42`.
 
 ```Python
 from H5Gizmos import Html, name, get
@@ -575,17 +619,20 @@ greeting.js_init("""
 """)
 ```
 
-The following invocation produces the value `42` after a 10 second delay.
+The following `get` invocation
+produces the value `42` after a 10 second delay because it has
+a 13 second timeout.
+
 ```Python
-await get(greeting.element.element.resolves_in_10_seconds(), timeout=13)
+await get(greeting.element.resolves_in_10_seconds(), timeout=13)
 ```
 
-But the following invocation
+But the following invocation has a 5 second timeout
 ```
 await get(greeting.element.resolves_in_10_seconds(), timeout=5)
 ```
 
-generates the following exception traceback after waiting for 5 seconds:
+It generates the following exception traceback after waiting for 5 seconds:
 
 ```python-traceback
 ---------------------------------------------------------------------------
@@ -609,12 +656,20 @@ FutureTimeout                             Traceback (most recent call last)
 FutureTimeout: Timeout expired: 5
 ```
 
-The timeout argument for `do`, `name`, and `component.js_init` specify time out values
-for any callback functions created during the execution of the action.
 
 # Declaring Dynamic Javascript
 
 ## `component.js_init`
+
+The `js_init` method executes a fragment of Javascript
+in the child context for a running component.
+
+The code body automatically has access to the jQuery `element`
+container for the component, and other values can be passed
+in to the evaluation using keyword parameters.
+
+The following example attaches a `get_font_properties` method
+to the `greeting.element`.
 
 ```Python
 from H5Gizmos import Html, get
@@ -641,9 +696,24 @@ greeting.js_init(
     properties=properties)
 ```
 
+In the code above the list of font property names are passed
+from the parent context to the javascript context using the keyword
+argument `properties` which appears as a variable in the Javascript code
+
+```Python
+greeting.js_init("...", properties=properties)
+```
+
+Any number of values may be transferred using this keyword convention.
+
+The following `get` command retrieves the font properties
+associated with `greeting.element`:
+
 ```Python
 await get(greeting.element.get_font_properties())
 ```
+
+In this case generating the value:
 
 ```Python
 {'font-style': 'normal',
@@ -663,7 +733,15 @@ await get(greeting.element.get_font_properties(txt.element))
  'font-size': '16px'}
 ```
 
+The `js_init` method also accepts a `to_depth` integer argument which
+specifies the recursive truncation level for callback functions contained
+in values passed to the code fragment.
+
 ## `component.new`
+
+The `new` method emulates the Javascript `new` keyword.
+For example the following code fragment creates a `Uint8Array`
+array buffer and displays it in the Javascript console.
 
 ```Python
 from H5Gizmos import Html, do
@@ -675,11 +753,13 @@ new_uint = greeting.new(window.Uint8Array, [45, 254, 12, 9])
 do(window.console.log(new_uint))
 ```
 
-equivalent of
+This code is essentially equivalent to the Javascript code:
 
 ```javascript
 console.log( new Uint8Array([45, 254, 12, 9]))
 ```
+
+When run inspecting the Javascript console reveals the logged value:
 
 <img src="new_uint.png"/>
 
