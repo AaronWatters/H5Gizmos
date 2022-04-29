@@ -11,9 +11,9 @@ by executing a Javascript expression and possibly storing or retrieving
 the value of the expression.
 
 Javascript expressions are represented in the parent process
-by reference objects.  For example the following script
-retrieves the value for the reference `greeting.window.innerHeight`
-and executes the expression associated with the reference
+by link objects.  For example the following script
+retrieves the value for the link `greeting.window.innerHeight`
+and executes the expression associated with the link
 `greeting.element.text("Goodbye!")`.
 
 ```Python
@@ -56,14 +56,14 @@ the following console log output:
 ## Reference Objects
 
 References to Javascript expressions in the parent process
-are built from top level references by accessing attributes of
-the top level reference or by calling methods or function attached
-to top level references.
+are built from top level links by accessing attributes of
+the top level link or by calling methods or function attached
+to top level links.
 
 ### `component.element`
 
 Every `component` is associated with an HTML object and the
-attribute `component.element` is a top level reference
+attribute `component.element` is a top level link
 to a jQuery container for the HTML object.
 
 The following script creates a component `greeting` associated
@@ -75,8 +75,8 @@ greeting = Html("<div><p>Paragraph 1</p> <p>Paragraph 2</p><div>")
 await greeting.show()
 ```
 
-The `greeting.element` reference refers to a jQuery container
-containing the DIV element.  The reference itself is just an
+The `greeting.element` link refers to a jQuery container
+containing the DIV element.  The link itself is just an
 object which knows how to access the jQuery container in the
 child context.  References do not interact with the child
 process directly -- for example the expression `greeting.element`
@@ -89,7 +89,7 @@ _CACHE_['jQueryComponent_1651080401924_9'][V(L('element'))]
 
 and this representation is only useful for debugging.
 
-The more complex expression reference
+The more complex expression link
 `greeting.element.children().length`
 prints as the following representation.
 
@@ -97,7 +97,7 @@ prints as the following representation.
 _CACHE_['jQueryComponent_1651080401924_9'][V(L('element'))][V(L('children'))]()[V(L('length'))]
 ```
 
-Expression references are sent to the child process for evaluation using
+Expression links are sent to the child process for evaluation using
 the commands `get`, `do`, or `name`.  For example the following
 evaluates `greeting.element.children().length` in the child process
 and returns the length of the child list for the element
@@ -123,7 +123,7 @@ evaluating to
 
 ### `component.window`
 
-Every `component` also holds a reference to the global
+Every `component` also holds a link to the global
 `window` object in the Javascript child context.
 
 For example for the `greeting` listed above the following
@@ -141,7 +141,7 @@ For the Chrome browser the result returned is
 
 ### `component.document`
 
-For convenience each `component` also stores a reference
+For convenience each `component` also stores a link
 to the global `component.document` object for the HTML frame.
 For example, for the `greeting` above the following
 evaluates to the host name associated with the document:
@@ -158,7 +158,7 @@ which in may case evaluates to
 
 ### `component.jQuery`
 
-Each `component` also stores a reference to the
+Each `component` also stores a link to the
 global `component.jQuery` object.  For the `greeting`
 above the following lists the `jQuery` version.
 
@@ -170,7 +170,7 @@ which evaluates to
 '3.1.1'
 ```
 
-The following script uses the `div.jQuery` reference
+The following script uses the `div.jQuery` link
 to append a preformatted text.
 
 ```Python
@@ -187,7 +187,36 @@ The resulting interface looks like this:
 
 ### Reference commands
 
+Reference commands transfer representations for Javascript expressions to the 
+child context where the child context attempts to execute the expression.
+
 ## `H5Gizmos.do`
+
+The `do` command executes a Javascript expression and discards the result of the
+expression.  
+
+In the example shown above the command
+```Python
+do(greeting.window.console.log("testing testing", [1, 2, 3]))
+```
+executes a Javascript expression which generates a log message in
+the Javascript console window.
+
+The `do` command accepts an optional `to_depth` argument which specifies
+a cut off level for arguments sent to any call back functions contained in
+the `link` expression:
+
+In the code below any arguments passed to the `callback` will be
+translated at most in the child 3 levels deep.
+```Python
+def callback(*args):
+    ...
+
+do(greeting.element.onUnload(callback), to_depth=3)
+```
+
+Any exception detected during the `do` evaluation is reported to the
+parent process asynchronously.
 
 ## `H5Gizmos.get`
 
