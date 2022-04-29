@@ -765,15 +765,17 @@ When run inspecting the Javascript console reveals the logged value:
 
 ## `component.js_debug`
 
-```Python
-from H5Gizmos import Html, do
-greeting = Html("<h1>Hello</h1>")
-await greeting.show()
-```
+The `js_debug` method is a programmer convenience for stopping
+the Javascript child context at a breakpoint.  To use `js_debug` in 
+the Chrome browser, first open the developer tools panels and then
+execute `js_debug` for a running component.
 
 ```Python
 greeting.js_debug()
 ```
+
+The Javascript context will stop at a breakpoint in an anonymous
+function with the `compoent.element` bound to the variable `element`.
 
 <img src="js_debug.png"/>
 
