@@ -457,6 +457,7 @@ libraries based on `matplotlib`.
 
 In the example below the `plot_region` component displays
 the result of plotting a star shape using `matplotlib`.
+First create and show a plot region object
 
 ```Python
 from H5Gizmos import Plotter
@@ -467,7 +468,7 @@ plot_region = Plotter()
 await plot_region.show()
 ```
 
-then
+then draw a `matplotlib` diagram into the region
 
 ```Python
 import numpy as np
@@ -489,8 +490,8 @@ The result looks like this:
 Aso please see the 
 <a href="../Tutorials/hello_curves.md">
 hello curves
-</a> tutorial for a detailed example usage of the `add_pyplot`
-which creates a `Plotter`.
+</a> tutorial for a detailed example usage of `Plotter` including
+dynamic interactions.
 
 <a href="./README.md">
 Return to Component categories.
