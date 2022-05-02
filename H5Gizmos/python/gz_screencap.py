@@ -1,5 +1,7 @@
 """
 Gizmo implementations for extracting images and animations from the screen.
+
+XXXX -- this is experimental and only works in some browsers under some security settings.
 """
 
 from ..python import gz_jQuery
@@ -9,7 +11,7 @@ from .gz_get_blob import BytesPostBack
 from . import H5Gizmos
 import numpy as np
 from imageio import imsave, mimsave
-import pyperclip
+#import pyperclip  -- problematic install!
 import os
 import html
 import asyncio
@@ -70,6 +72,11 @@ class ScreenAssemblyMixin:
 
     def copy_tag(self, *ignored):
         "copy tag button callback."
+        try:
+            import pyperclip
+        except Exception:
+            print("Please install pyperclip manually to enable this feture")
+            raise
         filename = self.filename
         tag = '<img src="%s"/>' % filename
         pyperclip.copy(tag)
@@ -78,6 +85,11 @@ class ScreenAssemblyMixin:
 
     def copy_path(self, *ignored):
         "copy path button callback."
+        try:
+            import pyperclip
+        except Exception:
+            print("Please install pyperclip manually to enable this feture")
+            raise
         path = self.path
         pyperclip.copy(path)
         self.info(repr(path) + " copied to clipboard.")
