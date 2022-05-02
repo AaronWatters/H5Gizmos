@@ -1,4 +1,4 @@
-<img src="https://github.com/AaronWatters/H5Gizmos/blob/main/doc/lorenz.gif" width="50%">
+<img src="https://github.com/AaronWatters/H5Gizmos/raw/main/doc/lorenz.gif" width="50%">
 
 # H5Gizmos
 
@@ -15,7 +15,7 @@ tools for scientific and technical workflows.
 The animation below shows a gizmo script displaying a matplotlib plot running from the VS code editor.
 The gizmo user interface appears as a new HTML frame in the browser instance below the editor.
 
-<img src="https://github.com/AaronWatters/H5Gizmos/blob/main/doc/curves.gif" width="50%">
+<img src="https://github.com/AaronWatters/H5Gizmos/raw/main/doc/curves.gif" width="50%">
 
 <a href="https://github.com/AaronWatters/H5Gizmos/blob/main/doc/curves.gif">[Link to image]</a>
 
