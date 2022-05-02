@@ -1,4 +1,4 @@
-<img src="doc/lorenz.gif">
+<img src="https://github.com/AaronWatters/H5Gizmos/blob/main/doc/lorenz.gif" width="50%">
 
 # H5Gizmos
 
@@ -13,12 +13,14 @@ The H5Gizmo mechanism is designed to facilitate the development of "dashboards" 
 tools for scientific and technical workflows.
 
 The animation below shows a gizmo script displaying a matplotlib plot running from the VS code editor.
-The gizmo user interface appears as a new HTML frame in the browseer instance below the editor.
+The gizmo user interface appears as a new HTML frame in the browser instance below the editor.
 
-<img src="doc/curves.gif" width="50%">
+<img src="https://github.com/AaronWatters/H5Gizmos/blob/main/doc/curves.gif" width="50%">
+
+<a href="https://github.com/AaronWatters/H5Gizmos/blob/main/doc/curves.gif">[Link to image]</a>
 
 Please see
-<a href="./doc/Tutorials/hello_curves.md">
+<a href="https://github.com/AaronWatters/H5Gizmos/blob/main/doc/Tutorials/hello_curves.md">
 the "hello curves" tutorial</a> for a detailed discussion of this
 gizmo.
 
@@ -26,13 +28,19 @@ gizmo.
 
 The documentation for H5Gizmos starts at
 
-<a href="doc/README.md">doc/README.md.</a>
+<a href="https://github.com/AaronWatters/H5Gizmos/blob/main/doc/README.md">doc/README.md.</a>
 
 The H5Gizmos documentation is provided using Github markdown for simplicity.
 If you wish to view the documentation locally from a clone of the repository,
 please use
 <a href="https://github.com/joeyespo/grip">https://github.com/joeyespo/grip</a>
 or a similar github emulator.
+
+# Installation
+
+```bash
+pip install H5Gizmos
+```
 
 # Development (or experimental) install
 
