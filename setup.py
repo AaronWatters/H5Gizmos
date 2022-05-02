@@ -1,10 +1,8 @@
 from setuptools import setup
 
-url = ""
-version = "0.1.0"
+url = "https://github.com/AaronWatters/H5Gizmos"
+version = "0.1.4"
 readme = open('README.md').read()
-
-# Note:  psutil is needed for demo purposes only.
 
 setup(
     name="H5Gizmos",
@@ -16,6 +14,7 @@ setup(
     version=version,
     description="Tools for building simple interactive graphical interfaces for applications using browser technology and HTML5",
     long_description=readme,
+    long_description_content_type="text/markdown",
     include_package_data=True,
     author="Aaron Watters",
     author_email="awatters@flatironinstitute.org",
@@ -24,7 +23,7 @@ setup(
         "numpy",
         "aiohttp",
         "imageio",
-        "pyperclip",
+        #"pyperclip", # must be installed manually if needed.
         #"ipython",  # You should only need this if you have it installed already???
         ],
     scripts = [
@@ -36,4 +35,5 @@ setup(
             'js/*.js'
             ],
         },
+    python_requires=">=3.6",
 )
