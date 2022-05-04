@@ -1,7 +1,7 @@
 from setuptools import setup
 
 url = "https://github.com/AaronWatters/H5Gizmos"
-version = "0.1.4"
+version = "0.1.5"
 readme = open('README.md').read()
 
 setup(
@@ -23,6 +23,7 @@ setup(
         "numpy",
         "aiohttp",
         "imageio",
+        'matplotlib>=2.0.0',
         #"pyperclip", # must be installed manually if needed.
         #"ipython",  # You should only need this if you have it installed already???
         ],
