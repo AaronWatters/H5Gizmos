@@ -5,7 +5,7 @@
 H5Gizmos provides
 tools for building interactive graphical interfaces for applications using browser technology and HTML5. 
 
-A Gizmo "child" interfaces runs in a standard web browser such as Chrome and communicates
+A Gizmo "child" interface displays in a standard web browser such as Chrome and communicates
 with a "parent" Python process using a web socket and other HTTP protocols.  H5Gizmos can load and
 use arbitrary Javascript resources to provide sophisticated interactive graphical interfaces.
 
