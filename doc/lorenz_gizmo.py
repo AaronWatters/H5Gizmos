@@ -69,7 +69,8 @@ def plot_curve():
 
     # Plot
     fig = plt.figure()
-    ax = fig.gca(projection='3d')
+    #ax = fig.gca(projection='3d')
+    ax = fig.add_subplot(projection='3d')
 
     ax.plot(xs, ys, zs, lw=0.5)
     ax.set_xlabel("X Axis")
