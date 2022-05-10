@@ -126,13 +126,27 @@ def get_local_ip():
         local_ip = socket.gethostbyname("localhost")
     return local_ip
 
-def choose_port(limit=1000):
+def choose_port0(limit=1000):
+    "old version"
     for i in range(limit):
         port = DEFAULT_PORT + i
         if not is_port_in_use(port):
             return port
     raise ValueError("Could not find open port: " + repr(
         (DEFAULT_PORT, DEFAULT_PORT+limit)))
+
+
+def choose_port():
+    """
+    Copied from repo2docker...
+    Hacky method to get a free random port on local host
+    """
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(("", 0))
+    port = s.getsockname()[1]
+    s.close()
+    return port
 
 
 def get_file_bytes(path):
