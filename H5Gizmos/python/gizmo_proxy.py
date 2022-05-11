@@ -18,7 +18,7 @@ http://localhost:GPORT/gizmo/SOME_PATH
 
 And the gizmo listening on GPORT handles the request.
 
-Jupyter Server Proxy Use Case:
+Jupyter Server Proxy Notebook Use Case:
 ==============================
 
 The following describes how a Jupyter server running remotely using Docker
@@ -42,21 +42,21 @@ Proxy awaits connections of form:
 
 The Proxy allows server relative URLs to connect to Gizmos as follows:
 
-when a Gizmo starts it allocates a random GPORT and awaits connections of form:
+when a Gizmo starts in a notebook it allocates a random GPORT and awaits connections of form:
 
    http://localhost:GPORT/gizmo/SOME_PATH
 
 The gizmo advertises a server relative connection URL in the Jupyter user interface of form:
 
-    /gizmo_proxy/GPORT/SOME_PATH
+    /gizmo_proxy/connect/GPORT/SOME_PATH
 
 When the browser accesses the advertised URL within the Jupyter interface the URL expands to
 
-    https://JUPYTER_SERVER:JPORT/gizmo_proxy/GPORT/SOME_PATH
+    https://JUPYTER_SERVER:JPORT/gizmo_proxy/connect/GPORT/SOME_PATH
 
 When the Jupyter server handles that request it forwards the request to the proxy port
 
-    http://localhost:PPORT/gizmo_proxy/GPORT/SOME_PATH
+    http://localhost:PPORT/gizmo_proxy/connect/GPORT/SOME_PATH
 
 The Proxy forwards the above request to
 
@@ -64,6 +64,39 @@ The Proxy forwards the above request to
 
 The gizmo that advertised the link then handles the request
 and any requests with similar relative URLs derived from the request.
+
+Jupyter Shell Command Line Use Case
+===================================
+
+A command line gizmo program starts in a shell interface and prints a connection link with a random GPORT like
+
+    http://localhost:GPORT/gizmo/SOME_PATH"
+
+The user pastes this link into the proxy HTML form on the main proxy page at
+
+    https://JUPYTER_SERVER:JPORT/gizmo_proxy/
+
+The form submit triggers the URL
+
+    https://JUPYTER_SERVER:JPORT/gizmo_proxy/redirect?url=http://localhost:GPORT/gizmo/SOME_PATH"
+
+The handler for `redirect` issues a server relative redirect to
+
+    /gizmo_proxy/connect/GPORT/SOME_PATH
+
+This forwards to the command line gizmo as described above.
+
+Entry Points
+============
+
+Main Page "gizmo_proxy/": 
+    General information and "Proxy and Url" form.
+
+Proxy connect: "gizmo_proxy/connect/GPORT/SOME_PATH"
+    Proxy GET, POST, and web socket connections to internal ports "http://localhost:GPORT/gizmo/SOME_PATH"
+
+Redirect: "gizmo_proxy/redirect?url=http://localhost:GPORT/gizmo/SOME_PATH"
+    Redirect the connection to "/gizmo_proxy/connect/GPORT/SOME_PATH"
 """
 
 # References:
