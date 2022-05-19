@@ -110,7 +110,7 @@ class Gizmo:
         self._server = None
         self._port = None
         #self._entry_url = None
-        self._ws_url = None
+        #self._ws_url = None
         self._html_page = None
         self.print_callback_exception = True
         self._filename = None
@@ -157,10 +157,10 @@ class Gizmo:
         self._filename = filename
         mgr = self._manager
         assert mgr is not None, "manager must be set before page configuration."
-        ws_url = mgr.local_url(for_gizmo=self, method="ws", filename=None)
-        if ws_url.startswith("http:"):
-            ws_url = "ws:" + ws_url[5:]
-        self._ws_url = ws_url
+        #ws_url = mgr.local_url(for_gizmo=self, method="ws", filename=None)
+        #if ws_url.startswith("http:"):
+        #    ws_url = "ws:" + ws_url[5:]
+        #self._ws_url = ws_url
         handler = self._html_page = gz_resources.HTMLPage(
             #ws_url=self._ws_url, 
             title=title,
