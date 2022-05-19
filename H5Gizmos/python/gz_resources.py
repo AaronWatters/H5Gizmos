@@ -55,7 +55,7 @@ class HTMLPage(DelegatePOSTtoGETMixin):
 
     def __init__(
         self, 
-        ws_url, 
+        #ws_url, 
         title="Gizmo", 
         log_messages=False,
         embed_gizmo=True, 
@@ -66,7 +66,7 @@ class HTMLPage(DelegatePOSTtoGETMixin):
         self.identifier = identifier or title
         self.message_delay = message_delay
         self.log_messages = log_messages
-        self.ws_url = ws_url
+        #self.ws_url = ws_url
         if template is None:
             template = STD_HTML_PAGE_TEMPLATE
         self.embed_gizmo = embed_gizmo

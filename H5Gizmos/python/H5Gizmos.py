@@ -162,7 +162,7 @@ class Gizmo:
             ws_url = "ws:" + ws_url[5:]
         self._ws_url = ws_url
         handler = self._html_page = gz_resources.HTMLPage(
-            ws_url=self._ws_url, 
+            #ws_url=self._ws_url, 
             title=title,
             identifier=self._identifier,
             log_messages=self._log_messages,
