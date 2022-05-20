@@ -233,11 +233,33 @@ class GizmoLink:
     async def connect_post(self, request):
         "Connect HTTP POST to underlying gizmo"
         self.verbose_check("connect_post", request)
-        return await self.test(request)
+        (prefix, port, protocol, target_path) = self.parse_connect_path(request)
+        assert prefix == "connect", "bad prefix: " + repr(prefix)
+        target_url = "http://localhost:%s/%s" % (port, target_path)
+        if self.verbose:
+            print("forwarding POST to target", repr(target_url))
+        if protocol == "http":
+            # post request
+            # xxxx kiss for now.
+            post_bytes = await request.read()
+            async with aiohttp.ClientSession() as session:
+                # xxxx should stream post data (?)
+                async with session.post(target_url, data=post_bytes) as resp:
+                    status = resp.status
+                    content_type = resp.content_type
+                    # xxxx should probably stream this?
+                    bytes = await resp.read()
+                    # forward....
+                    # xxxx should use streaming?
+                    return self.respond_bytes(bytes, content_type, status)
+        else:
+            assert protocol == "http", "POST expects 'http' protocol marker: " + repr(protocol)
+        #return await self.test(request)
 
     def parse_connect_path(self, request):
         try:
-            path = request.path
+            # use the path with query string to pass on parameters...
+            path = request.path_qs
             spath = path.split("/")
             assert spath[0] == "", "path should start with slash: " + repr(path)
             prefix = spath[1]
