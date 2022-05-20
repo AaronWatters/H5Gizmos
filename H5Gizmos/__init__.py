@@ -39,3 +39,5 @@ from .python.gz_jQuery import (
     Plotter,
     Label,
 )
+
+from .python.gizmo_link import setup_gizmo_link
