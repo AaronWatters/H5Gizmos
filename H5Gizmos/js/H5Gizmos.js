@@ -128,15 +128,16 @@ var H5Gizmos = {};
             }
             var ws_path = ws_path_split.join("/");
             var reconnect_parameter = "?" + h5.RECONNECT_ID + "=" + this.reconnect_id;
-            var protocol = window.protocol;
+            var protocol = window.location.protocol;
+            console.log("location protocol is", protocol)
             // https://stackoverflow.com/questions/10406930/how-to-construct-a-websocket-uri-relative-to-the-page-uri
             var wsprotocol = "ws:";
-            if (protocol == "https:") {
+            if (protocol.startsWith("https")) {
                 // use secure connection if main page is secure.
                 wsprotocol = "wss:"
             }
             var url = wsprotocol + "//" + location.host + ws_path + reconnect_parameter;
-            //console.log("ws url", url)
+            console.log("ws url", url)
             return url;
         };
         get_reference(id_string) {
