@@ -105,11 +105,11 @@ class Component:
         else:
             return await self.browse(verbose=verbose, log_messages=log_messages, title=title)
 
-    async def iframe(self, height=20, verbose=False, log_messages=False):
+    async def iframe(self, height=20, verbose=False, log_messages=False, proxy=False):
         assert gizmo_server.isnotebook(), "iframe method only runs in IPython kernel."
         gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages)
         self.prepare_application(gizmo)
-        await gizmo.start_in_iframe(height=height)
+        await gizmo.start_in_iframe(height=height, proxy=proxy)
 
     async def browse(
         self, 

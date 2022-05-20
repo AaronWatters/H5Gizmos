@@ -245,9 +245,15 @@ IFRAME_TEMPLATE = """
 
 STD_ALLOW_LIST = 'allow="camera;microphone;display-capture;autoplay"'
 
-async def display_gizmo_jupyter_iframe(gizmo, min_height=20, delay=0.1, allow_list=STD_ALLOW_LIST, **args):
+async def display_gizmo_jupyter_iframe(
+    gizmo, 
+    min_height=20, 
+    delay=0.1, 
+    allow_list=STD_ALLOW_LIST,
+    proxy=False,
+    ):
     identifier = gizmo._identifier
-    url = gizmo._entry_url()
+    url = gizmo._entry_url(proxy=proxy)
     D = dict(
         IDENTIFIER = identifier,
         TITLE = identifier,
