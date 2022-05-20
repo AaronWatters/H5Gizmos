@@ -181,7 +181,7 @@ var H5Gizmos = {};
                         throw new Error("Not reconnecting after too many reconnect attempts")
                     }
                 }
-                console.log("attempting to reconnect ws:", ws.readyState, self.reconnect_count)
+                console.log("attempting to reconnect ws:", ws.readyState, this.reconnect_count)
                 this.pipeline_websocket(this.ws_url, on_open);
             } else {
                 this.reconnect_count = 0;
