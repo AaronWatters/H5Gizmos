@@ -600,6 +600,8 @@ class GizmoManager:
             prefix=None,
             identifier=None,
             filename=None,
+            gizmo_link_reference=False,
+            gizmo_link=None,
             ):
         assert method in ("http", "ws"), "method should be http or ws: " + repr(method)
         server = server or for_gizmo._server
@@ -610,6 +612,26 @@ class GizmoManager:
         if filename is not None:
             path_components.append(filename)
         path = "/".join(path_components)
+        if gizmo_link_reference:
+            # Return the port and path info only for proxy redirect logic of form
+            # /PORT/SOME_PATH
+            link_reference = "%s/%s" % (port, path)
+            return link_reference
+        if gizmo_link is not None:
+            # Try to make a relative link like:
+            #   BASEURL/GizmoLink/connect/PORT/SOME_PATH
+            # for use in Jupyter servers.  This will only work if there
+            # is only one Jupyter server running on the local machine.
+            from notebook.notebookapp import list_running_servers
+            L = list(list_running_servers())
+            if len(L) == 1:
+                server_info = L[0]
+                base_url = server_info["base_url"]
+                relative_url = "%s%s/connect/%s/%s" % (base_url, gizmo_link, port, path)
+                print ("relative_url is", relative_url)
+                return relative_url
+            # xxxx otherwise fall back to fully specified local url?
+        # default or fallback: fully specified local url.
         url = "%s://%s:%s/%s" % (protocol, server, port, path)
         return url
 
