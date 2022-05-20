@@ -634,7 +634,7 @@ class GizmoManager:
                 server_info = L[0]
                 base_url = server_info["base_url"]
                 relative_url = "%s%s/connect/%s/%s" % (base_url, gizmo_link, port, path)
-                print ("relative_url is", relative_url)
+                #print ("relative_url is", relative_url)
                 return relative_url
             # xxxx otherwise fall back to fully specified local url?
         # default or fallback: fully specified local url.
