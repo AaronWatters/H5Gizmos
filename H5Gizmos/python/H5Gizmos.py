@@ -171,8 +171,16 @@ class Gizmo:
         self._js_file("../../H5Gizmos/js/H5Gizmos.js")
         #self._entry_url = mgr.local_url(for_gizmo=self, method="http", filename=filename)
 
-    def _entry_url(self):
-        return self._manager.local_url(for_gizmo=self, method="http", filename=self._filename)
+    def _entry_url(self, proxy=False):
+        gizmo_link = None
+        if proxy:
+            gizmo_link = "GizmoLink"
+        return self._manager.local_url(
+            for_gizmo=self, 
+            method="http", 
+            filename=self._filename,
+            gizmo_link=gizmo_link,
+            )
 
     #def __call__(self, new_page=True):
     #    return self.open_in_browser(server, new_page=new_page)
@@ -180,7 +188,6 @@ class Gizmo:
     async def start_in_browser(self, new_page=True):
         self._open_in_browser(new_page=new_page)
         await self._has_started()
-
 
     async def start_in_iframe(self, height=20):
         assert gizmo_server.isnotebook(), "Iframe interface only runs in a Jupyter IPython notebook."
@@ -256,15 +263,16 @@ class Gizmo:
     def _confirm_start(self):
         self._start_confirm_future.set_result(True)
 
-    async def _show_start_link(self):
+    async def _show_start_link(self, proxy=False):
         #from IPython.display import HTML, display
-        url = self._entry_url()
+        url = self._entry_url(proxy=proxy)
         link = '<a href="%s" target="_blank">gizmo link.</a> \n (%s)' % (url, url)
         if gizmo_server.isnotebook():
             msg = "<h4>Open gizmo using link</h4>\n" + link
             #display(HTML(msg))
             self._display_html_in_ipython(msg)
         else:
+            assert not proxy, "Proxy start link is not supported outside of notebook context."
             OKGREEN = '\033[92m'
             ENDC = '\033[0m'
             msg = "Open gizmo using link (control-click / open link)\n\n" + link + "\n\n"

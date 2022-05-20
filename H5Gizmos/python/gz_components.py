@@ -119,6 +119,7 @@ class Component:
         log_messages=False, 
         close_button=True,
         await_start=True,
+        proxy=False,
         ):
         if auto_start:
             H5Gizmos.check_browser()
@@ -137,18 +138,20 @@ class Component:
             self.shutdown_on_unload(gizmo)
         self.add_std_icon(gizmo)
         if auto_start:
+            assert not proxy, "start in browser for proxy is not yet implemented."
             await gizmo.start_in_browser()
         else:
             if await_start:
-                await gizmo._show_start_link()
+                await gizmo._show_start_link(proxy=proxy)
 
-    async def link(self, title="Gizmo", verbose=False, log_messages=False, await_start=True):
+    async def link(self, title="Gizmo", verbose=False, log_messages=False, await_start=True, proxy=False):
         await self.browse(
             title=title,
             auto_start=False, 
             verbose=verbose, 
             log_messages=log_messages,
             await_start=await_start,
+            proxy=proxy,
             )
 
     async def has_started(self):
