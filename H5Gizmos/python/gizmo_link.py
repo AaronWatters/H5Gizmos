@@ -218,8 +218,17 @@ class GizmoLink:
                     # xxxx should use streaming?
                     return self.respond_bytes(bytes, content_type, status)
         else:
-            raise NotImplementedError
-        return await self.test(request)
+            assert protocol == "ws", (
+                "For GET protocol must be ws or http: " + repr(protocol))
+            # ws connection
+            ws = web.WebSocketResponse()
+            await ws.prepare(request)
+            if self.verbose:
+                print("ws attached.")
+            connector = WebSocketConnector(ws, port, target_path, self.verbose)
+            await connector.get_server_ws()
+            connector.start_listener_tasks()
+            await connector.server_listener_task
 
     async def connect_post(self, request):
         "Connect HTTP POST to underlying gizmo"
@@ -284,12 +293,13 @@ class WebSocketConnector:
     def __init__(self, ws, server_port, server_path, verbose=False):
         self.from_client_ws = ws
         self.from_server_ws = None
+        self.session = None
         self.server_port = server_port
         self.server_path = server_path
         self.verbose = verbose
 
     async def get_server_ws(self):
-        session = aiohttp.ClientSession()
+        session = self.session = aiohttp.ClientSession()
         server_url = "http://localhost:%s/%s" % (self.server_port, self.server_path)
         if self.verbose:
             print ("Connecting session to server URL", server_url)
@@ -308,24 +318,32 @@ class WebSocketConnector:
             if typ == aiohttp.WSMsgType.text:
                 # pass the message on the the client
                 txt = msg.data
-                print ("got", repr(txt), "from websocket", from_ws)
+                #print ("got", repr(txt), "from websocket", from_ws)
                 await to_ws.send_str(txt)
             else:
-                print("unexpected message type", typ)
+                #print("unexpected message type", typ)
                 break
-        print("Server listener stopping.")
+        if self.verbose:
+            print("Server listener stopping.")
         schedule_task(self.terminate_listeners())
 
     async def listen_to_client(self):
         return await self.listen_to_server(self.from_client_ws, self.from_server_ws)
     
     async def terminate_listeners(self):
-        print("terminating listeners.")
+        if self.verbose:
+            print("terminating listeners.")
         for ws in [self.from_client_ws, self.from_server_ws]:
             try:
                 await ws.close()
             except Exception:
                 pass
+        try:
+            if self.verbose:
+                print("closing session", self.session)
+            await self.session.close()
+        except Exception:
+            pass
         for task in [self.server_listener_task, self.client_listener_task]:
             if not task.done():
                 print("cancelling task", task)
