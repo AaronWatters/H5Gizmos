@@ -78,6 +78,8 @@ var H5Gizmos = {};
             this.ws_error_message_callback = null;
             this.sending_keepalives = false;
             this.halted = false;
+            this.reconnect_count = 0;
+            this.reconnect_limit = 10;
         };
         shutdown() {
             console.log("Shutting down gizmo.")
@@ -172,9 +174,17 @@ var H5Gizmos = {};
             }
             if (ws.readyState != ws_open) {
                 // always log reconnect attempts?
-                console.log("attempting to reconnect ws:", ws.readyState)
+                this.reconnect_count += 1;
+                if (this.reconnect_limit > 0) {
+                    if (this.reconnect_count > this.reconnect_limit) {
+                        console.error("Not attempting to reconnect, limit exceeded", this.reconnect_count)
+                        throw new Error("Not reconnecting after too many reconnect attempts")
+                    }
+                }
+                console.log("attempting to reconnect ws:", ws.readyState, self.reconnect_count)
                 this.pipeline_websocket(this.ws_url, on_open);
             } else {
+                this.reconnect_count = 0;
                 on_open();
             }
         }
