@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+
+usage = """
+% gizmo_link port base_url
+"""
+
+try:
+    from H5Gizmos.python.gizmo_link import start_script
+    start_script()
+except Exception as e:
+    print("Exception", e)
+    print(usage)
+    raise

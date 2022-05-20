@@ -24,12 +24,14 @@ setup(
         "aiohttp",
         "imageio",
         'matplotlib>=2.0.0',
+        'jupyter-server-proxy',
         #"pyperclip", # must be installed manually if needed.
         #"ipython",  # You should only need this if you have it installed already???
         ],
     scripts = [
         "bin/snap_gizmo",
         "bin/gif_gizmo",
+        "bin/gizmo_link",
     ],
     package_data={
         "H5Gizmos": [
@@ -37,4 +39,9 @@ setup(
             ],
         },
     python_requires=">=3.6",
+    entry_points={
+        'jupyter_serverproxy_servers': [
+            'GizmoLink = H5Gizmos:setup_gizmo_link'
+        ]
+    },
 )
