@@ -129,6 +129,8 @@ SVG_ICON
         <input type="submit" value="Attach to gizmo"/>
     </form>
 
+    HEADERS
+
 </body>
 </html>
 """
@@ -136,6 +138,7 @@ SVG_ICON
 icon_path = os.path.join(static_folder, "logo.svg")
 
 def setup_gizmo_link():
+    "Jupyter server plugin setup callback."
     assert os.path.isfile(icon_path)
     return {
         'command': ['gizmo_link', '{port}', '{base_url}', "GizmoLink"],
@@ -148,6 +151,7 @@ def setup_gizmo_link():
 
 
 def start_script():
+    "Start link web server."
     import sys
     port = int(sys.argv[1])
     base_url = sys.argv[2]
@@ -190,6 +194,12 @@ class GizmoLink:
         txt = txt.replace("SVG_ICON", svg)
         action = self.make_url("redirect")
         txt = txt.replace("FORM_ACTION", action)
+        headers = request.headers
+        headerlist = []
+        for (name, value) in headers.items():
+            headerlist.append( "<div>%s :: %s</div>" % (name, value))
+        headerstr = "\n".join(headerlist)
+        txt = txt.replace("HEADERS", headerstr)
         return self.respond_bytes(txt)
 
     async def redirect(self, request):
