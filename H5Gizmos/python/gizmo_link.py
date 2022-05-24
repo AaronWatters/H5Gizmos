@@ -114,13 +114,17 @@ START_PAGE_HTML = """
     }
 
 </style>
+
+<link rel="icon" type="image/svg+xml" href="./icon"/>
+
 </head>
+
+
+<body id="GIZMO_BODY" class="gizmobody">
 
 SVG_ICON
 
 <h2> Gizmo link starter </h2>
-
-<body id="GIZMO_BODY" class="gizmobody">
 
     <form action="FORM_ACTION"/>
         <p><label for="convert_text">Attach to gizmo text:</label></p>
@@ -129,7 +133,9 @@ SVG_ICON
         <input type="submit" value="Attach to gizmo"/>
     </form>
 
+<!--
     HEADERS
+    -->
 
 </body>
 </html>
@@ -160,7 +166,6 @@ def start_script():
     app = server.get_app()
     return web.run_app(app, port=port)
 
-
 PROTOCOLS = ("http", "ws")
 
 class GizmoLink:
@@ -182,9 +187,14 @@ class GizmoLink:
         app.router.add_route('POST', '/connect/{tail:.*}', self.connect_post)
         app.router.add_route('GET', '/demo', self.demo)
         app.router.add_route('GET', '/test', self.test)
+        app.router.add_route('GET', '/icon', self.icon)
         if self.verbose:
             print("GizmoLink app created.")
         return app
+
+    async def icon(self, request):
+        bytes = open(icon_path, "rb").read()
+        return self.respond_bytes(bytes, content_type="image/svg+xml")
 
     async def start(self, request):
         "Top level entry page.  Show gizmo starter form."
