@@ -94,6 +94,8 @@ Main Page "gizmo_proxy/":
 
 Proxy connect: "gizmo_proxy/connect/GPORT/SOME_PATH"
     Proxy GET, POST, and web socket connections to internal ports "http://localhost:GPORT/gizmo/SOME_PATH"
+    Specifically GET and POST for http://localhost:GPORT/gizmo/http/
+    Web socket only for http://localhost:GPORT/gizmo/ws/
 
 Redirect: "gizmo_proxy/redirect?url=http://localhost:GPORT/gizmo/SOME_PATH"
     Redirect the connection to "/gizmo_proxy/connect/GPORT/SOME_PATH"
@@ -103,6 +105,9 @@ Redirect: "gizmo_proxy/redirect?url=http://localhost:GPORT/gizmo/SOME_PATH"
 
 # Jupyter server proxy
 # https://jupyter-server-proxy.readthedocs.io/en/latest/index.html
+
+# Relative web socket urls
+# https://stackoverflow.com/questions/10406930/how-to-construct-a-websocket-uri-relative-to-the-page-uri
 
 # openrefine example proxy:
 # https://github.com/innovationOUtside/nb_serverproxy_openrefine/
