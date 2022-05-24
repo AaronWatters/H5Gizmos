@@ -637,7 +637,7 @@ class GizmoManager:
             filename=None,
             gizmo_link_reference=False,
             gizmo_link=None,
-            verbose=True,
+            verbose=False,
             ):
         assert method in ("http", "ws"), "method should be http or ws: " + repr(method)
         server = server or for_gizmo._server
