@@ -131,15 +131,14 @@ class Component:
             gizmo._insert_html('<button onclick="self.close()">Close</button>')
         self.prepare_application(gizmo)
         if verbose:
-            print("   entry_url=", gizmo._entry_url())
+            print("   entry_url=", gizmo._entry_url(proxy=proxy))
         #if close_button:
         #    gizmo._insert_html('<button onclick="self.close()">Close</button>')
         if not in_notebook:
             self.shutdown_on_unload(gizmo)
         self.add_std_icon(gizmo)
         if auto_start:
-            assert not proxy, "start in browser for proxy is not yet implemented."
-            await gizmo.start_in_browser()
+            await gizmo.start_in_browser(proxy=proxy)
         else:
             if await_start:
                 await gizmo._show_start_link(proxy=proxy)

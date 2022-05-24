@@ -97,7 +97,8 @@ class Gizmo:
         self._identifier = self._new_identifier_string()
         self._pipeline = pipeline
         self._sender = sender
-        self._server = server
+        #self._server = server
+        self._url_prefix = None
         self._default_depth = default_depth
         self._call_backs = {}
         self._callable_to_oid = {}
@@ -107,7 +108,7 @@ class Gizmo:
         self._on_exception = None
         self._last_exception_payload = None
         self._manager = None
-        self._server = None
+        self._server = None  # server string like "192.168.1.173"
         self._port = None
         #self._entry_url = None
         #self._ws_url = None
@@ -185,8 +186,8 @@ class Gizmo:
     #def __call__(self, new_page=True):
     #    return self.open_in_browser(server, new_page=new_page)
 
-    async def start_in_browser(self, new_page=True):
-        self._open_in_browser(new_page=new_page)
+    async def start_in_browser(self, new_page=True, proxy=False):
+        await self._open_in_browser(new_page=new_page, proxy=proxy)
         await self._has_started()
 
     async def start_in_iframe(self, height=20, proxy=False):
@@ -284,10 +285,12 @@ class Gizmo:
         from IPython.display import HTML, display
         display(HTML(msg))
 
-    def _open_in_browser(self, new_page=True):
+    async def _open_in_browser(self, new_page=True, proxy=False):
         import webbrowser
-        url = self._entry_url()
-        if new_page:
+        url = self._entry_url(proxy=proxy)
+        if gizmo_server.isnotebook():
+            return await gizmo_server.display_gizmo_in_jupyter_new_tab(url)
+        elif new_page:
             webbrowser.open_new(url)
         else:
             webbrowser.open_new_tab(url)
@@ -427,6 +430,7 @@ class Gizmo:
     def _set_manager(self, gz_server, mgr):
         self._manager = mgr
         self._server = gz_server.server
+        self._url_prefix = gz_server.url_prefix
         self._port = gz_server.port
         self._out = self._out or gz_server.out
         self._err = self._err or gz_server.err

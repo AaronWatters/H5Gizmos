@@ -2,7 +2,7 @@
 from . import H5Gizmos
 #from . import gz_resources
 
-from aiohttp import content_disposition_filename, web
+from aiohttp import web
 #import aiohttp
 import asyncio
 #import weakref
@@ -11,7 +11,7 @@ import os
 import sys
 import contextlib
 import socket
-import traceback
+#import traceback
 import sys
 
 # Max size for posts -- really big
@@ -105,6 +105,14 @@ def _check_server(server, verbose=False):
             server.run_in_task()
     return server
 
+def set_url_prefix(proxy_prefix, server=None):
+    """
+    Specify the proxy prefix the server should use.
+
+    This overrides localhost URLs and relative links.
+    """
+    server = _check_server(server)
+    server.set_url_prefix(proxy_prefix)
 
 DEFAULT_PORT = 8675 # 309 https://en.wikipedia.org/wiki/867-5309/Jenny
 GET = "GET"
@@ -212,6 +220,20 @@ def isnotebook():
     except NameError:
         return False      # Probably standard Python interpreter
 
+TAB_OPENER_TEMPLATE = """
+<script>
+window.open("{URL}", "_blank").focus();
+</script>
+"""
+
+async def display_gizmo_in_jupyter_new_tab(url, delay=0.1):
+    from IPython.display import HTML, display
+    D = dict(URL=url)
+    script = TAB_OPENER_TEMPLATE.format(**D)
+    print("using script", script)
+    await asyncio.sleep(delay)
+    display(HTML(script))
+
 # https://blog.addpipe.com/camera-and-microphone-access-in-cross-oirigin-iframes-with-feature-policy/
 # https://stackoverflow.com/questions/9162933/make-iframe-height-dynamic-based-on-content-inside-jquery-javascript
 # https://stackoverflow.com/questions/22086722/resize-cross-domain-iframe-height
@@ -264,16 +286,13 @@ async def display_gizmo_jupyter_iframe(
         DELAY = 10000,
         MIN_HEIGHT = min_height,
     )
+    from IPython.display import HTML, display
     iframe_html = IFRAME_TEMPLATE.format(**D)
     #server_task = server.run_in_task(**args)
-    async def start_gizmo():
-        from IPython.display import HTML, display
-        await asyncio.sleep(delay)
-        #print("displaying", url)
-        #print(iframe_html)
-        display(HTML(iframe_html))
-    start_task = H5Gizmos.schedule_task(start_gizmo())
-    await start_task
+    await asyncio.sleep(delay)
+    #print("displaying", url)
+    #print(iframe_html)
+    display(HTML(iframe_html))
 
 '''
 async def embed(gizmo, allow_list='allow="camera;microphone"', delay=0.1):
@@ -301,6 +320,13 @@ class GzServer:
 
     verbose = False
 
+    # The URL prefix to use for fully specified links. If set this overrides other options.
+    # should be of form:
+    #   http://127.0.0.1:60327/GizmoLink/
+    #   https://notebooks.gesis.org/binder/jupyter/user/aaronwatters-h5gizmos-6f2q3jdf/GizmoLink/
+    # 
+    url_prefix = None
+
     def __init__(
             self, 
             prefix="gizmo", 
@@ -327,6 +353,9 @@ class GzServer:
         self.out = out
         self.err = err
         self.captured_stdout = None
+
+    def set_url_prefix(self, url_prefix):
+        self.url_prefix = url_prefix
 
     def capture_stdout(self):
         import contextlib
@@ -608,9 +637,11 @@ class GizmoManager:
             filename=None,
             gizmo_link_reference=False,
             gizmo_link=None,
+            verbose=True,
             ):
         assert method in ("http", "ws"), "method should be http or ws: " + repr(method)
         server = server or for_gizmo._server
+        url_prefix = for_gizmo._url_prefix
         port = port or for_gizmo._port
         prefix = prefix or self.prefix
         identifier = identifier or self.identifier
@@ -618,10 +649,24 @@ class GizmoManager:
         if filename is not None:
             path_components.append(filename)
         path = "/".join(path_components)
+        # if the server url_prefix is provided, use it to make a fully specified URL
+        if url_prefix is not None:
+            # for example
+            #    url_prefix = "http://127.0.0.1:60327/GizmoLink/""
+            #    port = 50109
+            #    path = gizmo/http/MGR_1653322541609_2/index.html
+            # fully_specified_url =
+            #  "http://127.0.0.1:60327/GizmoLink/connect/50109/gizmo/http/MGR_1653322541609_2/index.html"
+            fully_specified_url = "%sconnect/%s/%s" % (url_prefix, port, path)
+            if verbose:
+                print("using full url from prefix", (url_prefix, fully_specified_url))
+            return fully_specified_url
         if gizmo_link_reference:
             # Return the port and path info only for proxy redirect logic of form
             # /PORT/SOME_PATH
             link_reference = "%s/%s" % (port, path)
+            if verbose:
+                print("using link reference", link_reference)
             return link_reference
         if gizmo_link is not None:
             # Try to make a relative link like:
@@ -635,10 +680,17 @@ class GizmoManager:
                 base_url = server_info["base_url"]
                 relative_url = "%s%s/connect/%s/%s" % (base_url, gizmo_link, port, path)
                 #print ("relative_url is", relative_url)
+                if verbose:
+                    print("using relative url", relative_url)
                 return relative_url
+            else:
+                if verbose:
+                    print("Too many notebook servers for relative proxy link", len(L))
             # xxxx otherwise fall back to fully specified local url?
         # default or fallback: fully specified local url.
         url = "%s://%s:%s/%s" % (protocol, server, port, path)
+        if verbose:
+            print ("fallback fully specified url", url)
         return url
 
 class NoSuchRelativePath(ValueError):
