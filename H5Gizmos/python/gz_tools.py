@@ -37,7 +37,7 @@ def get_snapshot_array(pixel_info, invert=False):
 async def use_proxy():
     "Harden proxy URL paths in a Jupyter notebook, for example inside Binder."
     from .gz_jQuery import Html
-    from .gizmo_server import set_url_prefix
+    from .gizmo_server import set_url_prefix, PREFIX_ENV_VAR
     from .H5Gizmos import get
     msg = Html("<h4>Hardening GizmoLink proxy access</h4>")
     await msg.iframe(proxy=True)
@@ -46,5 +46,7 @@ async def use_proxy():
     split_href = href.split("/")
     prefix = "/".join(split_href[:-6]) + "/"
     msg.add("Proxy prefix:")
-    msg.add(Html('<textarea rows="1" cols="80">export GIZMO_LINK_PREFIX=%s</textarea>' % prefix))
+    msg.add(Html(
+        '<textarea rows="1" cols="80">export %s=%s</textarea>' 
+        % (PREFIX_ENV_VAR, prefix)))
     set_url_prefix(prefix)

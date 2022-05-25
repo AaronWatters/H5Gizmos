@@ -22,6 +22,9 @@ DEFAULT_PACKET_SIZE = 1000 * 1000 * 10
 
 PROCESS_SHARED_GIZMO_SERVER = None
 
+# Environment variable used to construct proxied urls.
+PREFIX_ENV_VAR = "GIZMO_LINK_PREFIX"
+
 def get_or_create_event_loop():
     try:
         # xxxx this is deprecated in python 3.10 -- need a workaround that gets an unstarted event loop(?) or something
