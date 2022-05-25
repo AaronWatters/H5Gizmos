@@ -3,6 +3,7 @@ from .python.gizmo_server import (
     run,
     serve,
     get_gizmo,
+    set_url_prefix,
 )
 
 from .python.H5Gizmos import (
@@ -38,6 +39,10 @@ from .python.gz_jQuery import (
     Template,
     Plotter,
     Label,
+)
+
+from .python.gz_tools import (
+    use_proxy,
 )
 
 from .python.gizmo_link import setup_gizmo_link

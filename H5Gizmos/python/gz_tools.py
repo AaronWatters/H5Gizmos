@@ -33,3 +33,18 @@ def get_snapshot_array(pixel_info, invert=False):
     arrays = get_snapshot_arrays(pixel_info, invert)
     assert len(arrays) == 1, "too many arrays: " + repr(len(arrays))
     return arrays[0]
+
+async def use_proxy():
+    "Harden proxy URL paths in a Jupyter notebook, for example inside Binder."
+    from .gz_jQuery import Html
+    from .gizmo_server import set_url_prefix
+    from .H5Gizmos import get
+    msg = Html("<h4>Hardening GizmoLink proxy access</h4>")
+    await msg.iframe(proxy=True)
+    href = await get(msg.gizmo.window.location.href)
+    msg.add("window location: " + href)
+    split_href = href.split("/")
+    prefix = "/".join(split_href[:-6]) + "/"
+    msg.add("Proxy prefix:")
+    msg.add(Html('<textarea rows="1" cols="80">export GIZMO_LINK_PREFIX=%s</textarea>' % prefix))
+    set_url_prefix(prefix)
