@@ -6,11 +6,8 @@ See js/H5Gizmos.js for protocol JSON formats.
 
 """
 
-from asyncio.tasks import sleep
 import os
-from textwrap import wrap
 import time
-from attr import attr, attrib
 import numpy as np
 import json
 import asyncio
@@ -267,7 +264,7 @@ class Gizmo:
     async def _show_start_link(self, proxy=False):
         #from IPython.display import HTML, display
         url = self._entry_url(proxy=proxy)
-        link = '<a href="%s" target="_blank">gizmo link.</a> \n (%s)' % (url, url)
+        link = '<a href="%s" target="_blank">gizmo link.</a> \n GIZMO_LINK: %s \n' % (url, url)
         if gizmo_server.isnotebook():
             msg = "<h4>Open gizmo using link</h4>\n" + link
             #display(HTML(msg))
@@ -278,7 +275,7 @@ class Gizmo:
             ENDC = '\033[0m'
             msg = "Open gizmo using link (control-click / open link)\n\n" + link + "\n\n"
             txt = "%s\n%s\n%s" % (OKGREEN, msg, ENDC)
-            print (txt)
+            print (txt, flush=True)
         await self._has_started()
 
     def _display_html_in_ipython(self, msg):
