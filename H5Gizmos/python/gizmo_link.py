@@ -91,10 +91,8 @@ The gizmo script subprocess runs to termination via an asynchronous subtask in t
 GizmoLink server.
 """
 
-from pickle import PROTO
 from aiohttp import web
 import aiohttp
-from matplotlib.pyplot import text
 from .H5Gizmos import schedule_task
 import os
 
