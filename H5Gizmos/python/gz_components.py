@@ -98,11 +98,21 @@ class Component:
         """
         if gizmo_server.isnotebook():
             return await self.iframe(verbose=verbose, log_messages=log_messages)
-        try:
-            H5Gizmos.check_browser()
-        except Exception:
+        use_link = False
+        # Use a link if local guis are not supported.
+        if gizmo_server.use_local_gui():
+            use_link = True
+        # Use a link if the browser check fails.
+        if not use_link:
+            try:
+                H5Gizmos.check_browser()
+            except Exception:
+                use_link = True
+        if use_link:
+            # Show a link and hope the reader will know what to do with it...
             return await self.link(verbose=verbose, log_messages=log_messages, title=title)
         else:
+            # Try to launch a new browser tab automatically.
             return await self.browse(verbose=verbose, log_messages=log_messages, title=title)
 
     async def iframe(self, height=20, verbose=False, log_messages=False, proxy=False):
@@ -121,6 +131,7 @@ class Component:
         await_start=True,
         proxy=False,
         ):
+        # xxxx this currently won't work using the jupyter proxy mechanism...
         if auto_start:
             H5Gizmos.check_browser()
         in_notebook = gizmo_server.isnotebook()
