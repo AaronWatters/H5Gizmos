@@ -3,10 +3,8 @@ Special methods for getting large BLOB data
 from a gizmo child process.
 """
 
-from numpy.lib.stride_tricks import broadcast_arrays
 from . import gizmo_server
 from . import H5Gizmos
-from aiohttp import web
 import json
 import urllib.parse
 
