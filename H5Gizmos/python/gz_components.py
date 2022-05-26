@@ -100,7 +100,7 @@ class Component:
             return await self.iframe(verbose=verbose, log_messages=log_messages)
         use_link = False
         # Use a link if local guis are not supported.
-        if gizmo_server.use_local_gui():
+        if not gizmo_server.use_local_gui():
             use_link = True
         # Use a link if the browser check fails.
         if not use_link:
