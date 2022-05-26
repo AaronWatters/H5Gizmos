@@ -41,9 +41,12 @@ async def use_proxy():
     from .H5Gizmos import get
     msg = Html("<h4>Hardening GizmoLink proxy access</h4>")
     await msg.iframe(proxy=True)
+    # eg:
+    # http://localhost:8888/GizmoLink/connect/61735/gizmo/http/MGR_1653507873775_2/index.html
     href = await get(msg.gizmo.window.location.href)
     msg.add("window location: " + href)
     split_href = href.split("/")
+    # eg: http://localhost:8888/GizmoLink/
     prefix = "/".join(split_href[:-6]) + "/"
     msg.add("Proxy prefix:")
     msg.add(Html(
