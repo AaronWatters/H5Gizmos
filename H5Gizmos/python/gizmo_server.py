@@ -1,5 +1,4 @@
 
-from telnetlib import DET
 from . import H5Gizmos
 #from . import gz_resources
 
