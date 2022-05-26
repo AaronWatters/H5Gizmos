@@ -1,4 +1,5 @@
 
+from telnetlib import DET
 from . import H5Gizmos
 #from . import gz_resources
 
@@ -24,6 +25,9 @@ PROCESS_SHARED_GIZMO_SERVER = None
 
 # Environment variable used to construct proxied urls.
 PREFIX_ENV_VAR = "GIZMO_LINK_PREFIX"
+
+# set/unset to enable/disable auto detection of prefix
+DETECT_PREFIX_ENV_VAR = True
 
 def get_or_create_event_loop():
     try:
@@ -92,7 +96,7 @@ async def get_gizmo(from_server=None, verbose=False, log_messages=False, title="
     from_server = _check_server(from_server, verbose=verbose)
     return from_server.gizmo(log_messages=log_messages, title=title)
 
-def _check_server(server, verbose=False):
+def _check_server(server=None, verbose=False):
     "Make sure the gizmo server is set up."
     global PROCESS_SHARED_GIZMO_SERVER
     out = None  # xxxx
@@ -104,8 +108,17 @@ def _check_server(server, verbose=False):
             server = PROCESS_SHARED_GIZMO_SERVER = GzServer(out=out, err=err)
             if not verbose:
                 server.capture_stdout()
+            else:
+                print("Created verbose GzServer")
             # schedule the server task
             server.run_in_task()
+        if DETECT_PREFIX_ENV_VAR:
+            prefix = os.environ.get(PREFIX_ENV_VAR)
+            if prefix is not None:
+                # xxxx could sanity check the prefix?
+                if verbose:
+                    print("setting server prefix", [PREFIX_ENV_VAR, prefix])
+                set_url_prefix(prefix, server=server)
     return server
 
 def set_url_prefix(proxy_prefix, server=None):
