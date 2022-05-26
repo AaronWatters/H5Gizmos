@@ -130,6 +130,11 @@ def set_url_prefix(proxy_prefix, server=None):
     server = _check_server(server)
     server.set_url_prefix(proxy_prefix)
 
+def use_local_gui(server=None):
+    "Test whether to try to launch a web browser (gui app) using the local operating system."
+    server = _check_server(server)
+    return server.use_local_gui()
+
 DEFAULT_PORT = 8675 # 309 https://en.wikipedia.org/wiki/867-5309/Jenny
 GET = "GET"
 POST = "POST"
@@ -372,6 +377,13 @@ class GzServer:
 
     def set_url_prefix(self, url_prefix):
         self.url_prefix = url_prefix
+
+    def use_local_gui(self):
+        "Test whether to try to launch a web browser (gui app) using the local operating system."
+        # If the url prefix is set then only launch via browser link mechanisms
+        if self.url_prefix is not None:
+            return False
+        return True
 
     def capture_stdout(self):
         import contextlib
