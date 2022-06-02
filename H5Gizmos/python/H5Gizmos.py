@@ -262,9 +262,11 @@ class Gizmo:
         self._start_confirm_future.set_result(True)
 
     async def _show_start_link(self, proxy=False):
+        from .gizmo_link import LINK_PREFIX
         #from IPython.display import HTML, display
         url = self._entry_url(proxy=proxy)
-        link = '<a href="%s" target="_blank">gizmo link.</a> \n GIZMO_LINK: %s \n' % (url, url)
+        link = '<a href="%s" target="_blank">Click to open</a> <br> \n %s %s \n' % (
+            url, LINK_PREFIX, url)
         if gizmo_server.isnotebook():
             msg = "<h4>Open gizmo using link</h4>\n" + link
             #display(HTML(msg))

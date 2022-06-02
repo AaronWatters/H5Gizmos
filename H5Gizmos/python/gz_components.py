@@ -101,6 +101,8 @@ class Component:
         use_link = False
         # Use a link if local guis are not supported.
         if not gizmo_server.use_local_gui():
+            if verbose:
+                print("Server prefix does not allow opening a local browser window. Please use link.")
             use_link = True
         # Use a link if the browser check fails.
         if not use_link:
@@ -136,7 +138,7 @@ class Component:
             H5Gizmos.check_browser()
         in_notebook = gizmo_server.isnotebook()
         if verbose:
-            print("Displaying gizmo component in new browser window.")
+            print("Display gizmo component in new browser window.")
         gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages, title=title)
         if close_button:
             gizmo._insert_html('<button onclick="self.close()">Close</button>')
