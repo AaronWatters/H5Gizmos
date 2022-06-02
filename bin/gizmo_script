@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+
+usage = """
+List modules with gizmo scripts:
+
+% gizmo_script
+
+List gizmo scripts for a module:
+
+% gizmo_script module_name
+
+Start a named script associated with a module:
+
+% gizmo_script module_name/script_name
+"""
+
+try:
+    from H5Gizmos.python.gizmo_script_support import main
+    main()
+except Exception as e:
+    print("Exception", e)
+    print(usage)
+    raise

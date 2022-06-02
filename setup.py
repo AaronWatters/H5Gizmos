@@ -10,9 +10,10 @@ setup(
         "H5Gizmos", 
         "H5Gizmos.python",
         "H5Gizmos.python.test",
+        "H5Gizmos.python.scripts",
         ],
     version=version,
-    description="Tools for building simple interactive graphical interfaces for applications using browser technology and HTML5",
+    description="Tools for building interactive graphical interfaces for applications using browser technology and HTML5",
     long_description=readme,
     long_description_content_type="text/markdown",
     include_package_data=True,
@@ -32,6 +33,7 @@ setup(
         "bin/snap_gizmo",
         "bin/gif_gizmo",
         "bin/gizmo_link",
+        "bin/gizmo_script",
     ],
     package_data={
         "H5Gizmos": [
@@ -41,7 +43,10 @@ setup(
     python_requires=">=3.6",
     entry_points={
         'jupyter_serverproxy_servers': [
-            'GizmoLink = H5Gizmos:setup_gizmo_link'
+            'GizmoLink = H5Gizmos:setup_gizmo_link',
+        ],
+        "H5Gizmos.scripts": [
+            "Lorenz_Attractor = H5Gizmos.python.scripts.lorenz:main",
         ]
     },
 )
