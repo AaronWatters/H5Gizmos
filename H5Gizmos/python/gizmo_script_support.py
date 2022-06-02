@@ -7,6 +7,8 @@ import pkg_resources
 
 ENTRY_POINT_GROUP_NAME = "H5Gizmos.scripts"
 
+GIZMO_SCRIPT = "gizmo_script"
+
 module_to_name_to_entry = {}
 
 def find_entry_points():
@@ -30,7 +32,7 @@ def main():
         print("The following modules advertise", ENTRY_POINT_GROUP_NAME, "entry points")
         print()
         for module_name in sorted(module_to_name_to_entry.keys()):
-            print("gizmo_script", module_name)
+            print(GIZMO_SCRIPT, module_name)
         return
     else:
         assert nargs == 2, "Only one argument expected: " + repr(args)
@@ -59,7 +61,7 @@ def list_entry_points(module_name):
     for name in sorted(name_to_entry.keys()):
         entry = name_to_entry[name]
         print()
-        print("gizmo_script", module_name + "/" + name)
+        print(GIZMO_SCRIPT, module_name + "/" + name)
         loaded = entry.load()
         if hasattr(loaded, "__doc__"):
             entry_doc = loaded.__doc__
@@ -73,3 +75,4 @@ def start_entry_point(module_name, script_name):
     entry = name_to_entry[script_name]
     loaded = entry.load()
     return loaded()
+
