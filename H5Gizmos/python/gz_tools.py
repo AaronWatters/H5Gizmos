@@ -50,6 +50,6 @@ async def use_proxy():
     prefix = "/".join(split_href[:-6]) + "/"
     msg.add("Proxy prefix:")
     msg.add(Html(
-        '<textarea rows="1" cols="80">export %s=%s</textarea>' 
+        '<textarea rows="4" cols="80">export %s=%s</textarea>' 
         % (PREFIX_ENV_VAR, prefix)))
     set_url_prefix(prefix)
