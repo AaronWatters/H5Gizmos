@@ -38,57 +38,69 @@ http://localhost:PORT/some_path
 
 The above path is received and handled by the listening gizmo G.
 
-# Other process connection use case via user cut/paste
+# Other process connection use case via environment variable
 
-When a process starts a Gizmo using the link method it prints an output line
-of form:
+When a gizmo server starts in a process it looks for a `GIZMO_LINK_PREFIX`
+environment variable.  If `GIZMO_LINK_PREFIX` is set for example to
 ```
-GizmoLink: /PORT/SOME_PATH
+    http://127.0.0.1:60327/GizmoLink/
 ```
-The user cuts and pastes the line into a form in the GizmoLink server at location
-
+Then the process uses the proxy connection URL
 ```
-https://external_notebook_address:/BASEURL/GizmoLink/start
+    http://127.0.0.1:60327/GizmoLink/connect/PORT/some_path
 ```
-
-The form submit triggers
-
+which proxies the internal link
 ```
-https://external_notebook_address:/BASEURL/GizmoLink/redirect?Line=/PORT/SOME_PATH
+    http://localhost:PORT/some_path
 ```
 
-Which redirects to
+# Gizmo script use case
 
+User goes to main page
+
+```
+https://external_notebook_address:/BASEURL/GizmoLink/
+```
+
+Main page presents user with a list of modules with "H5Gizmos.script"
+entry points.  User selects one of the modules, with URL (URL_PREFIX added by javascript)
+
+```
+https://external_notebook_address:/BASEURL/GizmoLink/select_script/MODULE?prefix=URL_PREFIX
+```
+
+where URL_PREFIX is `https://external_notebook_address:/BASEURL/`.
+Selection page lists the "H5Gizmos.scripts" entry points for MODULE.
+User selects entry point NAME with URL
+
+```
+https://external_notebook_address:/BASEURL/GizmoLink/launch_script/MODULE/NAME?prefix=URL_PREFIX
+```
+
+launch_script looks for a registered entry point EP with that NAME with group "H5Gizmos.script"
+and module_name MODULE.  Launch_script launches
+
+```
+gizmo_script MODULE/NAME
+```
+
+with env variable
+
+```
+GIZMO_LINK_PREFIX = URL_PREFIX (= `https://external_notebook_address:/BASEURL/`)
+```
+
+And awaits a stdout line of form 
+```
+GIZMO_LINK: START_URL
+```
+where START_URL is a connect URL of form:
 ```
 https://external_notebook_address:/BASEURL/GizmoLink/connect/PORT/some_path
 ```
+Launch_script redirects to START_URL (?or opens?) the start_url and awaits gizmo_script subprocess
+completion in a subtask.
 
-which is handled as described above.
-
-# Demo connection use case
-
-When the GizmoLink server receives a request of form:
-
-```
-https://external_notebook_address:/BASEURL/GizmoLink/demo?name=DEMONAME
-```
-
-The GizmoLink server looks up a gizmo implementation script associated with the DEMONAME
-and executes the script in a subprocess.  The GizmoLink server monitors
-the script STDOUT for the line
-
-```
-GizmoLink: /PORT/SOME_PATH
-```
-
-When the line is detected the GizmoLink server issues a redirect to
-```
-https://external_notebook_address:/BASEURL/GizmoLink/connect/PORT/some_path
-```
-which is handled as described above.
-
-The gizmo script subprocess runs to termination via an asynchronous subtask in the 
-GizmoLink server.
 """
 
 from aiohttp import web
@@ -96,9 +108,16 @@ import aiohttp
 from .H5Gizmos import schedule_task
 import os
 
+# refs
+# https://stackoverflow.com/questions/62355732/python-package-discovery-for-entry-points-subgroups
+# https://docs.python.org/3/library/asyncio-subprocess.html#asyncio-subprocess
+# 
+
 static_folder =  os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), '../static')
 )
+
+LINK_PREFIX = "GIZMO_LINK:"
 
 START_PAGE_HTML = """
 
