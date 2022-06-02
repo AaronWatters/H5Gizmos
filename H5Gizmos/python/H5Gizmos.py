@@ -604,8 +604,8 @@ def make_future(timeout=None, on_timeout=None):
             if not future.done():
                 exc = FutureTimeout("Timeout expired: "+ repr(timeout))
                 future.set_exception(exc)
-            if on_timeout is not None:
-                on_timeout()
+                if on_timeout is not None:
+                    on_timeout()
         schedule_task(timeout_check())
     return future
 
