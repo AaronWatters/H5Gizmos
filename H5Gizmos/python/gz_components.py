@@ -133,7 +133,6 @@ class Component:
         await_start=True,
         proxy=False,
         ):
-        # xxxx this currently won't work using the jupyter proxy mechanism...
         if auto_start:
             H5Gizmos.check_browser()
         in_notebook = gizmo_server.isnotebook()
