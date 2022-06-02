@@ -105,7 +105,9 @@ completion in a subtask.
 
 from aiohttp import web
 import aiohttp
+import asyncio
 from .H5Gizmos import schedule_task
+from .gizmo_script_support import GIZMO_SCRIPT
 import os
 
 # refs
@@ -408,6 +410,107 @@ class WebSocketConnector:
                 print("cancelling task", task)
                 task.cancel()
 
+class LinkNotFound(ValueError):
+
+    "The link line was not found in the subprocess."
+
+class ScriptWatcher:
+
+    def __init__(
+        self, 
+        module_name, 
+        script_name,
+        server_prefix,
+        starter=GIZMO_SCRIPT,
+        look_for=b"GIZMO_LINK:",
+        capture=True,
+        link_timeout=10,
+        verbose=True,
+        ):
+        from .H5Gizmos import make_future
+        self.module_name = module_name
+        self.script_name = script_name
+        self.server_prefix = server_prefix
+        self.starter = starter
+        self.look_for = look_for
+        self.link_timeout = link_timeout
+        self.capture = capture
+        self.verbose = verbose
+        self.captured_stdout = []
+        self.captured_stderr = []
+        self.link_future = make_future(link_timeout, on_timeout=self.on_timeout)
+        self.process = None
+        self.command = "%s %s/%s" % (self.starter, self.module_name, self.script_name)
+
+    def html(self):
+        from cgi import escape
+        L = ["<pre>\n"]
+        def add(t):
+            r = repr(t)
+            e = escape(r) + "\n"
+            L.append(e)
+        L.append("    Standard input:\n")
+        for x in self.captured_stdout:
+            add(x)
+        L.append("\n    Standard error:\n")
+        for x in self.captured_stderr:
+            add(x)
+        L.append("\n</pre>\n")
+        return "".join(L)
+
+    async def run_script(self):
+        from .H5Gizmos import schedule_task
+        from .gizmo_server import PREFIX_ENV_VAR
+        env = os.environ.copy()
+        env[PREFIX_ENV_VAR] = self.server_prefix
+        verbose = self.verbose
+        if self.verbose:
+            print("starting command", repr(self.command))
+        self.process = await asyncio.create_subprocess_shell(
+            self.command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env=env,
+        )
+        # read stderr in other task
+        schedule_task(self.readall(self.process.stderr, self.captured_stderr))
+        # look for pattern in stdout line
+        found = False
+        while not found:
+            line = await self.process.stdout.readline()
+            if len(line) < 1:
+                break
+            #print("got line", repr(line))
+            self.captured_stdout.append(line)
+            sline = line.strip()
+            if sline.startswith(self.look_for):
+                if verbose:
+                    print("Found pattern:", repr(sline))
+                remainder = sline[len(self.look_for):]
+                remainder = remainder.strip()
+                print("Setting value", remainder)
+                self.link_future.set_result(remainder)
+                found = True
+            else:
+                if verbose:
+                    print("pattern not found in line", repr(sline))
+        # read the rest of stdout
+        await self.readall(self.process.stdout, self.captured_stdout)
+        if not self.link_future.done():
+            self.link_future.set_exception(LinkNotFound("Did not find %s in stdout." % repr(self.look_for)))
+
+    async def readall(self, reader, accumulator, blocksize=20):
+        while True:
+            block = await reader.read(blocksize)
+            #print("got block", repr(block))
+            accumulator.append(block)
+            if len(block) < 1:
+                break
+
+    def on_timeout(self):
+        if self.verbose:
+            print("process timeout")
+        self.process.terminate()
 
 if __name__ == "__main__":
     start_script()
