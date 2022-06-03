@@ -207,6 +207,7 @@ class GizmoLink:
         app.router.add_route('GET', '/demo', self.demo)
         app.router.add_route('GET', '/test', self.test)
         app.router.add_route('GET', '/icon', self.icon)
+        app.router.add_static("/static", static_folder, show_index=True)
         if self.verbose:
             print("GizmoLink app created.")
         return app
@@ -416,6 +417,12 @@ class LinkNotFound(ValueError):
 
 class ScriptWatcher:
 
+    """
+    Manage a gizmo script as a subprocess.
+    Identify the "GIZMO_LINK:" start URL when the script is ready
+    to handle the start page access.
+    """
+
     def __init__(
         self, 
         module_name, 
@@ -442,6 +449,17 @@ class ScriptWatcher:
         self.process = None
         self.command = "%s %s/%s" % (self.starter, self.module_name, self.script_name)
 
+    async def start_script_and_get_start_url(self, delay=0.1):
+        """
+        Start the script and await/return the start url after a short delay to make sure the script is ready.
+        """
+        from .H5Gizmos import schedule_task
+        schedule_task(self.run_script())
+        url = await self.link_future
+        if delay is not None:
+            await asyncio.sleep(delay)
+        return url
+
     def html(self):
         from cgi import escape
         L = ["<pre>\n"]
@@ -449,10 +467,10 @@ class ScriptWatcher:
             r = repr(t)
             e = escape(r) + "\n"
             L.append(e)
-        L.append("    Standard input:\n")
+        L.append("    Standard input captured:\n")
         for x in self.captured_stdout:
             add(x)
-        L.append("\n    Standard error:\n")
+        L.append("\n    Standard error captured:\n")
         for x in self.captured_stderr:
             add(x)
         L.append("\n</pre>\n")
@@ -481,7 +499,8 @@ class ScriptWatcher:
             if len(line) < 1:
                 break
             #print("got line", repr(line))
-            self.captured_stdout.append(line)
+            if self.capture:
+                self.captured_stdout.append(line)
             sline = line.strip()
             if sline.startswith(self.look_for):
                 if verbose:
@@ -503,7 +522,8 @@ class ScriptWatcher:
         while True:
             block = await reader.read(blocksize)
             #print("got block", repr(block))
-            accumulator.append(block)
+            if self.capture:
+                accumulator.append(block)
             if len(block) < 1:
                 break
 
