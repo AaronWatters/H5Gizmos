@@ -109,6 +109,7 @@ import asyncio
 from .H5Gizmos import schedule_task
 from .gizmo_script_support import GIZMO_SCRIPT
 import os
+import json
 
 # refs
 # https://stackoverflow.com/questions/62355732/python-package-discovery-for-entry-points-subgroups
@@ -161,6 +162,7 @@ SVG_ICON
 """
 
 icon_path = os.path.join(static_folder, "logo.svg")
+start_html_path = os.path.join(static_folder, "gizmo_link_start.html")
 
 def setup_gizmo_link():
     "Jupyter server plugin setup callback."
@@ -197,6 +199,13 @@ class GizmoLink:
         if self.verbose:
             print("GizmoLink created.")
 
+    def json_parameters(self):
+        return dict(
+            port=self.port,
+            base_url=self.base_url,
+            prefix=self.prefix,
+        )
+
     def get_app(self):
         app = web.Application()
         app.router.add_route('GET', '/', self.start)
@@ -219,18 +228,19 @@ class GizmoLink:
     async def start(self, request):
         "Top level entry page.  Show gizmo starter form."
         self.verbose_check("start", request)
-        txt = START_PAGE_HTML
-        svg = open(icon_path).read()
-        txt = txt.replace("SVG_ICON", svg)
-        action = self.make_url("redirect")
-        txt = txt.replace("FORM_ACTION", action)
+        template = open(start_html_path).read()
         headers = request.headers
         headerlist = []
         for (name, value) in headers.items():
             headerlist.append( "<div>%s :: %s</div>" % (name, value))
         headerstr = "\n".join(headerlist)
-        txt = txt.replace("HEADERS", headerstr)
-        return self.respond_bytes(txt)
+        json_parameters = self.json_parameters()
+        json_parameter_str = json.dumps(json_parameters, indent=4)
+        formatted = template.format(
+            JSON_PARAMETERS=json_parameter_str,
+            HEADERS=headerstr
+        )
+        return self.respond_bytes(formatted)
 
     async def redirect(self, request):
         "Redirect Line to a connecting page."
