@@ -161,20 +161,22 @@ class GizmoLink:
         if self.verbose:
             print("GizmoLink created.")
 
-    def json_parameters(self, module_name=None, script_name=None):
+    def json_parameters(self, module_name=None, script_name=None, prefix=None):
         result = dict(
             port=self.port,
             base_url=self.base_url,
             prefix=self.prefix,
+            launch=False, # default
         )
         result["module_name"] = module_name
         result["script_name"] = script_name
+        result["prefix"] = prefix
         if module_name is None:
             result["modules_and_scripts"] = gizmo_script_support.modules_and_scripts_json()
         elif script_name is None:
             result["module_detail"] = gizmo_script_support.module_detail_json(module_name)
         else:
-            pass
+            result["launch"] = (prefix is not None)
         return result
 
     def get_app(self):
@@ -208,7 +210,16 @@ class GizmoLink:
         query = request.rel_url.query
         module = query.get("module")
         script = query.get("script")
-        json_parameters = self.json_parameters(module_name=module, script_name=script)
+        prefix = query.get("prefix")
+        json_parameters = self.json_parameters(module_name=module, script_name=script, prefix=prefix)
+        if json_parameters["launch"]:
+            watcher = ScriptWatcher(module, script, prefix)
+            try:
+                link_url = await watcher.start_script_and_get_start_url()
+            except Exception as e:
+                json_parameters["launch_exception"] = repr(e)
+            else:
+                json_parameters["link_url"] = link_url
         json_parameter_str = json.dumps(json_parameters, indent=4)
         formatted = template.format(
             JSON_PARAMETERS=json_parameter_str,
@@ -442,7 +453,8 @@ class ScriptWatcher:
         url = await self.link_future
         if delay is not None:
             await asyncio.sleep(delay)
-        return url
+        # return url encoded as string (not bytes)
+        return url.decode("utf-8") 
 
     def html(self):
         from cgi import escape
