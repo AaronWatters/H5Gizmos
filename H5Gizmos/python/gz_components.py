@@ -39,7 +39,7 @@ class Component:
     js_object_cache = None
     cache_name = None
     auto_start = True  # start browser page automatically.
-    close_button = True
+    close_button = False
     gizmo_configured = False
 
     def attach_gizmo(self, gizmo):
@@ -50,7 +50,7 @@ class Component:
         gizmo._translate_1d_array = self.translate_1d_array
         self.gizmo_configured = True
 
-    def run(self, task=None, auto_start=True, verbose=True, log_messages=False, close_button=True):
+    def run(self, task=None, auto_start=True, verbose=True, log_messages=False, close_button=False):
         self.task = task
         self.auto_start = auto_start
         self.close_button = close_button
@@ -129,7 +129,7 @@ class Component:
         auto_start=True, 
         verbose=True, 
         log_messages=False, 
-        close_button=True,
+        close_button=False,
         await_start=True,
         proxy=False,
         ):
