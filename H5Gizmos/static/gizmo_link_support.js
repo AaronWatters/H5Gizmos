@@ -28,7 +28,8 @@ function setup_start_page(json_parameters) {
                 $(module_tag).appendTo(list_area);
                 for (var j=0; j<scripts.length; j++) {
                     script_name = scripts[j];
-                    slink = `${mlink}&script=${script_name}`
+                    var escript = encodeURIComponent(script_name);
+                    slink = `${mlink}&script=${escript}`
                     var script_tag = `<h4 title="start script"> <a href="${slink}">${script_name}</a> </h4>`;
                     $(script_tag).appendTo(list_area);
                 }
@@ -38,7 +39,24 @@ function setup_start_page(json_parameters) {
         }
     } else if (!script_name) {
         // list details for module
-        list_area.html(`module=${module_name}`);
+        //list_area.html(`module=${module_name}`);
+        module_detail = json_parameters.module_detail;
+        $(`<h2>Gizmo scripts in ${module_name}</h2>`).appendTo(list_area);
+        var script_info = module_detail.script_info;
+        var script_list = module_detail.script_list;
+        $(`<blockquote><em>${script_info}</em></blockquote>`).appendTo(list_area);
+        for (var i=0; i<script_list.length; i++) {
+            var script_detail = script_list[i];
+            var script_name = script_detail.name;
+            var script_doc = script_detail.doc;
+            var emodule = encodeURIComponent(module_name);
+            var escript = encodeURIComponent(script_name);
+            var script_link = `${url_prefix}?module=${emodule}&script=${escript}`
+            $(`<h4><a href="${script_link}">${script_name}</a></h4>`).appendTo(list_area);
+            if (script_doc) {
+                $(`<blockquote>${script_doc}</blockquote>`).appendTo(list_area);
+            }
+        }
     } else {
         // redirect to start script
         list_area.html(`module=${module_name}; script=${script_name}`);

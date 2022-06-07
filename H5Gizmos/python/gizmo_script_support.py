@@ -79,6 +79,36 @@ def modules_and_scripts_json():
         result.append([module_name, script_names])
     return result
 
+def module_detail_json(module_name):
+    import importlib
+    # xxx refactor above...
+    find_entry_points()
+    result = dict(name=module_name)
+    script_list = result["script_list"] = []
+    result["script_info"] = "Module %s has no registered gizmo entry points." % repr(module_name)
+    try:
+        the_module = importlib.import_module(module_name)
+    except Exception as e:
+        result["module_doc"] = "Could not import %s: %s" % (module_name, e)
+    else:
+        result["module_doc"] = the_module.__doc__
+        name_to_entry = module_to_name_to_entry.get(module_name, None)
+        if name_to_entry:
+            result["script_info"] = (
+                "Module %s has %s registered gizmo entry points." 
+                % (repr(module_name), len(name_to_entry))
+            )
+            for name in sorted(name_to_entry.keys()):
+                entry = name_to_entry[name]
+                loaded = entry.load()
+                doc = getattr(loaded, "__doc__", None)
+                script_info = dict(
+                    name=name,
+                    doc=doc,
+                )
+                script_list.append(script_info)
+    return result
+
 def start_entry_point(module_name, script_name):
     find_entry_points()
     name_to_entry = module_to_name_to_entry[module_name]

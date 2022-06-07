@@ -172,7 +172,7 @@ class GizmoLink:
         if module_name is None:
             result["modules_and_scripts"] = gizmo_script_support.modules_and_scripts_json()
         elif script_name is None:
-            pass
+            result["module_detail"] = gizmo_script_support.module_detail_json(module_name)
         else:
             pass
         return result
