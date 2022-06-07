@@ -110,6 +110,7 @@ from .H5Gizmos import schedule_task
 from .gizmo_script_support import GIZMO_SCRIPT
 import os
 import json
+from . import gizmo_script_support
 
 # refs
 # https://stackoverflow.com/questions/62355732/python-package-discovery-for-entry-points-subgroups
@@ -121,45 +122,6 @@ static_folder =  os.path.abspath(
 )
 
 LINK_PREFIX = "GIZMO_LINK:"
-
-START_PAGE_HTML = """
-
-<!DOCTYPE html>
-<html>
-<head>
-<style>
-
-.gizmobody {
-    font-family:Verdana, Arial, Helvetica, sans-serif;
-    }
-
-</style>
-
-<link rel="icon" type="image/svg+xml" href="./icon"/>
-
-</head>
-
-
-<body id="GIZMO_BODY" class="gizmobody">
-
-SVG_ICON
-
-<h2> Gizmo link starter </h2>
-
-    <form action="FORM_ACTION"/>
-        <p><label for="convert_text">Attach to gizmo text:</label></p>
-        <textarea id="convert_text" name="convert_text" rows="4" cols="50">CONVERT_TEXT</textarea>
-        <br/>
-        <input type="submit" value="Attach to gizmo"/>
-    </form>
-
-<!--
-    HEADERS
-    -->
-
-</body>
-</html>
-"""
 
 icon_path = os.path.join(static_folder, "logo.svg")
 start_html_path = os.path.join(static_folder, "gizmo_link_start.html")
@@ -199,21 +161,30 @@ class GizmoLink:
         if self.verbose:
             print("GizmoLink created.")
 
-    def json_parameters(self):
-        return dict(
+    def json_parameters(self, module_name=None, script_name=None):
+        result = dict(
             port=self.port,
             base_url=self.base_url,
             prefix=self.prefix,
         )
+        result["module_name"] = module_name
+        result["script_name"] = script_name
+        if module_name is None:
+            result["modules_and_scripts"] = gizmo_script_support.modules_and_scripts_json()
+        elif script_name is None:
+            pass
+        else:
+            pass
+        return result
 
     def get_app(self):
         app = web.Application()
         app.router.add_route('GET', '/', self.start)
-        app.router.add_route('GET', '/start', self.start)
-        app.router.add_route('GET', '/redirect', self.redirect)
+        #app.router.add_route('GET', '/start', self.start)
+        #app.router.add_route('GET', '/redirect', self.redirect)
         app.router.add_route('GET', '/connect/{tail:.*}', self.connect_get)
         app.router.add_route('POST', '/connect/{tail:.*}', self.connect_post)
-        app.router.add_route('GET', '/demo', self.demo)
+        #app.router.add_route('GET', '/demo', self.demo)
         app.router.add_route('GET', '/test', self.test)
         app.router.add_route('GET', '/icon', self.icon)
         app.router.add_static("/static", static_folder, show_index=True)
@@ -234,7 +205,10 @@ class GizmoLink:
         for (name, value) in headers.items():
             headerlist.append( "<div>%s :: %s</div>" % (name, value))
         headerstr = "\n".join(headerlist)
-        json_parameters = self.json_parameters()
+        query = request.rel_url.query
+        module = query.get("module")
+        script = query.get("script")
+        json_parameters = self.json_parameters(module_name=module, script_name=script)
         json_parameter_str = json.dumps(json_parameters, indent=4)
         formatted = template.format(
             JSON_PARAMETERS=json_parameter_str,

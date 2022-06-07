@@ -69,6 +69,16 @@ def list_entry_points(module_name):
                 print("    " + entry_doc)
                 print()
 
+def modules_and_scripts_json():
+    # xxx refactor above...
+    find_entry_points()
+    result = []
+    for module_name in sorted(module_to_name_to_entry.keys()):
+        name_to_entry = module_to_name_to_entry[module_name]
+        script_names = list(sorted(name_to_entry.keys()))
+        result.append([module_name, script_names])
+    return result
+
 def start_entry_point(module_name, script_name):
     find_entry_points()
     name_to_entry = module_to_name_to_entry[module_name]
