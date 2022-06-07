@@ -67,7 +67,7 @@ function setup_start_page(json_parameters) {
             list_area.html(`
                 <div>
                     <h3>Failed to launch script</h3>
-                    <blockquote> ${launche_exception} </blockquote>
+                    <blockquote> ${launch_exception} </blockquote>
                 </div>
             `)
         } else {
