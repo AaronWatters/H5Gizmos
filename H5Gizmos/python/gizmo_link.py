@@ -123,6 +123,8 @@ static_folder =  os.path.abspath(
 
 LINK_PREFIX = "GIZMO_LINK:"
 
+REDIRECT_AUTOMATICALLY = True
+
 icon_path = os.path.join(static_folder, "logo.svg")
 start_html_path = os.path.join(static_folder, "gizmo_link_start.html")
 
@@ -161,12 +163,13 @@ class GizmoLink:
         if self.verbose:
             print("GizmoLink created.")
 
-    def json_parameters(self, module_name=None, script_name=None, prefix=None):
+    def json_parameters(self, module_name=None, script_name=None, prefix=None, redirect=False):
         result = dict(
             port=self.port,
             base_url=self.base_url,
             prefix=self.prefix,
             launch=False, # default
+            redirect=redirect,
         )
         result["module_name"] = module_name
         result["script_name"] = script_name
@@ -211,7 +214,12 @@ class GizmoLink:
         module = query.get("module")
         script = query.get("script")
         prefix = query.get("prefix")
-        json_parameters = self.json_parameters(module_name=module, script_name=script, prefix=prefix)
+        json_parameters = self.json_parameters(
+            module_name=module, 
+            script_name=script, 
+            prefix=prefix,
+            redirect=REDIRECT_AUTOMATICALLY,
+        )
         if json_parameters["launch"]:
             watcher = ScriptWatcher(module, script, prefix)
             try:

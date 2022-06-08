@@ -7,6 +7,12 @@ var json_data = null;
 
 function setup_start_page(json_parameters) {
     debugger;
+
+    function redirect_to(href) {
+        console.log("automatically redicrecting to", href)
+        window.location.replace(href);
+    };
+
     json_data = json_parameters;
     // Determine the fully specified URL prefix
     var location = window.location;
@@ -31,7 +37,7 @@ function setup_start_page(json_parameters) {
                 for (var j=0; j<scripts.length; j++) {
                     script_name = scripts[j];
                     var escript = encodeURIComponent(script_name);
-                    slink = `${mlink}&script=${escript}`
+                    slink = `${mlink}&script=${escript}`;
                     var script_tag = `<h4 title="start script"> <a href="${slink}">${script_name}</a> </h4>`;
                     $(script_tag).appendTo(script_block);
                 }
@@ -53,7 +59,7 @@ function setup_start_page(json_parameters) {
             var script_doc = script_detail.doc;
             var emodule = encodeURIComponent(module_name);
             var escript = encodeURIComponent(script_name);
-            var script_link = `${url_prefix}?module=${emodule}&script=${escript}${link_arg}`
+            var script_link = `${url_prefix}?module=${emodule}&script=${escript}${link_arg}`;
             $(`<h4><a href="${script_link}">${script_name}</a></h4>`).appendTo(list_area);
             if (script_doc) {
                 $(`<blockquote>${script_doc}</blockquote>`).appendTo(list_area);
@@ -72,13 +78,32 @@ function setup_start_page(json_parameters) {
             `)
         } else {
             var link_url = json_parameters.link_url;
-            list_area.html(`
-            <blockquote>
-                <h3>
-                <a href="${link_url}">Connect to ${module_name} / ${script_name} </a>
-                </h3>
-                (url=${link_url})
-            </blockquote>`)
+            if (link_url) {
+                list_area.html(`
+                <blockquote>
+                    <h3>
+                    <a href="${link_url}">Connect to ${module_name} / ${script_name} </a>
+                    </h3>
+                    (url=${link_url})
+                </blockquote>`);
+                if (json_parameters.redirect) {
+                    redirect_to(link_url);
+                }
+            } else {
+                var emodule = encodeURIComponent(module_name);
+                var escript = encodeURIComponent(script_name);
+                launch_url = `${url_prefix}?module=${emodule}&script=${escript}${link_arg}`;
+                list_area.html(`
+                <blockquote>
+                    <h3>
+                    <a href="${launch_url}">Launch ${module_name} / ${script_name} </a>
+                    </h3>
+                    (url=${launch_url})
+                </blockquote>`);
+                if (json_parameters.redirect) {
+                    redirect_to(launch_url);
+                }
+            }
         }
     }
 };
