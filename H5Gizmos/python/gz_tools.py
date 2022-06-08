@@ -53,3 +53,21 @@ async def use_proxy():
         '<textarea rows="4" cols="80">export %s=%s</textarea>' 
         % (PREFIX_ENV_VAR, prefix)))
     set_url_prefix(prefix)
+
+TEST_ENVIRONMENT_VARIABLES = set([
+    'BINDER_SERVICE_PORT',
+    'BINDER_REQUEST',
+    'JUPYTERHUB_USER',
+    'JUPYTERHUB_HOST',
+])
+
+async def use_proxy_if_remote(test_vars=TEST_ENVIRONMENT_VARIABLES):
+    "If the environment seems to be running in binder or jupyter hub, harden the proxy."
+    import os
+    env_vars = set(os.environ.keys())
+    indicators = env_vars & test_vars
+    if indicators:
+        print("Found remote indicator env vars: ", list(indicators))
+        return await use_proxy()
+    else:
+        print("No remote indicator variables found in environment.")

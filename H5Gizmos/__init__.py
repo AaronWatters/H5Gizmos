@@ -44,6 +44,7 @@ from .python.gz_jQuery import (
 
 from .python.gz_tools import (
     use_proxy,
+    use_proxy_if_remote,
 )
 
 from .python.gizmo_link import setup_gizmo_link
