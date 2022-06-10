@@ -46,6 +46,7 @@ setup(
             'GizmoLink = H5Gizmos:setup_gizmo_link',
         ],
         "H5Gizmos.scripts": [
+            "hello_env = H5Gizmos.python.scripts.hello_env:main",
             "Lorenz_Attractor = H5Gizmos.python.scripts.lorenz:main",
         ]
     },
