@@ -186,6 +186,22 @@ process and introduces some special methods for large data transfers.
 
 
 
+<h2>
+<a href="GizmoLink/README.md">
+Gizmo Scripts and the GizmoLink Proxy Server
+</a>
+</h2>
+
+The 
+<a href="GizmoLink/README.md">
+Gizmo Scripts and the GizmoLink Proxy Server
+</a>
+ section discusses how to define and launch `H5Gizmos.scripts` entry points
+ and the `GizmoLink` proxy server which launches those entry points within a
+ Jupyter server instance.
+
+
+
 
 <a href="https://github.com/AaronWatters/H5Gizmos">Go to the github.com/AaronWatters/H5Gizmos repository root.</a>
 
