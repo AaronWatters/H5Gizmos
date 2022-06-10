@@ -123,7 +123,7 @@ static_folder =  os.path.abspath(
 
 LINK_PREFIX = "GIZMO_LINK:"
 
-REDIRECT_AUTOMATICALLY = True
+REDIRECT_AUTOMATICALLY = False
 
 icon_path = os.path.join(static_folder, "logo.svg")
 start_html_path = os.path.join(static_folder, "gizmo_link_start.html")
@@ -220,6 +220,8 @@ class GizmoLink:
             prefix=prefix,
             redirect=REDIRECT_AUTOMATICALLY,
         )
+        if self.verbose:
+            print("Start parameters:", json_parameters)
         if json_parameters["launch"]:
             watcher = ScriptWatcher(module, script, prefix)
             try:
@@ -488,6 +490,7 @@ class ScriptWatcher:
         verbose = self.verbose
         if self.verbose:
             print("starting command", repr(self.command))
+            print("prefix is", repr(env[PREFIX_ENV_VAR]))
         self.process = await asyncio.create_subprocess_shell(
             self.command,
             stdout=asyncio.subprocess.PIPE,
@@ -502,7 +505,8 @@ class ScriptWatcher:
             line = await self.process.stdout.readline()
             if len(line) < 1:
                 break
-            #print("got line", repr(line))
+            if verbose:
+                print("got line", repr(line))
             if self.capture:
                 self.captured_stdout.append(line)
             sline = line.strip()
@@ -516,7 +520,7 @@ class ScriptWatcher:
                 found = True
             else:
                 if verbose:
-                    print("pattern not found in line", repr(sline))
+                    print(" & pattern not found in line", repr(sline))
         # read the rest of stdout
         await self.readall(self.process.stdout, self.captured_stdout)
         if not self.link_future.done():
