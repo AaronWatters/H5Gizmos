@@ -123,7 +123,7 @@ static_folder =  os.path.abspath(
 
 LINK_PREFIX = "GIZMO_LINK:"
 
-REDIRECT_AUTOMATICALLY = False
+REDIRECT_AUTOMATICALLY = True
 
 icon_path = os.path.join(static_folder, "logo.svg")
 start_html_path = os.path.join(static_folder, "gizmo_link_start.html")
