@@ -1,7 +1,14 @@
 #!/usr/bin/env python
 
 usage = """
-% gizmo_link port base_url
+Start a GizmoLink proxy server instance.
+
+% gizmo_link port base_url prefix
+
+For example
+
+% gizmo_link 9876 / GizmoLink
+
 """
 
 try:
