@@ -122,8 +122,8 @@ For example
 ```bash
 $ gizmo_link 9876 / GizmoLink
 ```
-Use this command to verify that <a href="./Scripts.md">Gizmo script entry points.  
-</a> work properly in the server interface, for example.
+Use this command to verify that <a href="./Scripts.md">Gizmo script entry points</a> 
+work properly in the server interface, for example.
 
 
 <a href="./README.md">
