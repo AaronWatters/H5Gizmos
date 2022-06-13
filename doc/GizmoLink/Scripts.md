@@ -1,7 +1,7 @@
 
 # Gizmo script entry points
 
-A Python module may advertise H5Gizmo script entry points to publish gizmo
+A Python package may advertise H5Gizmo script entry points to publish gizmo
 based user interfaces.  
 H5Gizmo script entry points advertise Gizmo scripts designed to be launched by the Gizmo Link proxy server in a subprocess.
 These entry points may be discovered and launched from the command line
@@ -14,7 +14,7 @@ that starts an H5Gizmo parent process which requires no standard input
 or command line arguments.
 
 The `H5Gizmos/python/scripts/hello_env.py` listed below is included in
-the `H5Gizmos` module to illustrate the mechanics of creating Gizmo entry points.
+the `H5Gizmos` package to illustrate the mechanics of creating Gizmo entry points.
 
 <a href="https://github.com/AaronWatters/H5Gizmos/blob/main/H5Gizmos/python/scripts/hello_env.py">
 Content of hello_env.py</a>
@@ -43,17 +43,20 @@ if __name__ == "__main__":
 
 The `hello_env.main` function listed above is suitable to use as a gizmo entry
 point because it creates a gizmo interface and does not require standard input
-or command line arguments.  It is helpful to include an informative doc string
-with functions intended for use as gizmo entry points because the doc string
+or command line arguments.  
+
+It is helpful to include an informative doc string
+with functions intended for use as gizmo entry points
+(such as `main` above) because the doc string
 is displayed during entry point discovery.
 
-## Registering the entry point in the module setup script
+## Registering the entry point in the package setup script
 
-To identify a function in a module as a gizmo entry point for that
-module, list the entry point in the module setup script as
-a "H5Gizmos.scripts" member in the setup script for the module.
+To identify a function in a package as a gizmo entry point for that
+package, list the entry point in the package setup script as
+a "H5Gizmos.scripts" member in the setup script for the package.
 
-For example the `H5Gizmos` module lists the `hello_env` function
+For example the `H5Gizmos` package lists the `hello_env` function
 as an entry point as shown below (abbreviated) in the H5Gizmos
 setup script.
 
@@ -80,10 +83,10 @@ setup(
 
 Note that to make the entry point known to the Python environment
 after editing the setup script
-you *must rerun the setup.py script even if the module is installed
+you *must rerun the setup.py script even if package is installed
 in development mode* in order to regenerate the appropriate file structures.
 
-## Optionally add a module top level documentation string
+## Optionally add a package top level documentation string
 
 It may be useful to add a top level doc string to the package
 top level module because those doc strings are also displayed during entry
@@ -113,12 +116,12 @@ for testing and debugging gizmo script entry points.
 
 ### Listing packages with entry points from the command line
 
-Invoked with no arguments, the `gizmo_script` program lists modules
+Invoked with no arguments, the `gizmo_script` program lists packages
 that declare gizmo script entry  points.
 
 ```
 $ gizmo_script 
-The following modules advertise H5Gizmos.scripts entry points
+The following packages advertise H5Gizmos.scripts entry points
 
 gizmo_script H5Gizmos
 ```
@@ -130,7 +133,7 @@ the `gizmo_script` program list the package doc string and the gizmo entry point
 by the package with their doc strings.
 
 For example, the `gizmo_script H5Gizmos` line above may be pasted into the command prompt
-to list the gizmo entry points for the H5Gizmos module.
+to list the gizmo entry points for the H5Gizmos package.
 
 ```
 $ gizmo_script H5Gizmos
@@ -202,8 +205,12 @@ Open gizmo using link (control-click / open link)
 
 ```
 
+# Accessing entry points from a proxy server
 
-## Listing modules with entry points from the proxy server
+The gizmo proxy server discovers and launches gizmo entry points.
+
+For testing purposes launch a proxy server from the command line using the `gizmo_link` program
+like this:
 
 ```
 $ gizmo_link 9876 / GizmoLink
@@ -213,8 +220,28 @@ GizmoLink app created.
 (Press CTRL+C to quit)
 ```
 
+## Listing packages with entry points from the proxy server
+
+The server top level entry page listed above `http://0.0.0.0:9876`
+lists a summary of the names of packages with registered gizmo entry points and the names
+of the entry points.
+
 <img src="entry_page.png"/>
 
+## Listing entry point details for a package using the proxy server
+
+Following a package name link such as `H5Gizmos` above opens a "package detail" page
+which lists the entry points for the package and the doc strings for the package
+and the entry points.
+
+<img src="module_detail.png"/>
+
+## Launching an entry point from the proxy server
+
+Following an entry point link, such as `hello_env` above, from either the summary
+page or the detail page starts the entry point parent process and connects to the parent process
+using a browser window child context.  All interactions between the child context
+and the parent process are mediated by the proxy server.
 
 
 <a href="./README.md">
