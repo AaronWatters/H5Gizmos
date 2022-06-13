@@ -49,6 +49,10 @@ function setup_start_page(json_parameters) {
         // list details for module
         //list_area.html(`module=${module_name}`);
         module_detail = json_parameters.module_detail;
+        if (module_detail.module_doc) {
+            $(`<h2>${module_name} description:</h2>`).appendTo(list_area);
+            $(`<blockquote> <b> ${module_detail.module_doc} </b> </blockquote>`).appendTo(list_area);
+        }
         $(`<h2>Gizmo scripts in ${module_name}</h2>`).appendTo(list_area);
         var script_info = module_detail.script_info;
         var script_list = module_detail.script_list;
