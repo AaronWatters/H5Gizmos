@@ -29,7 +29,7 @@ def main():
     assert nargs > 0, "no arguments??"
     if nargs == 1:
         find_entry_points()
-        print("The following modules advertise", ENTRY_POINT_GROUP_NAME, "entry points")
+        print("The following packages advertise", ENTRY_POINT_GROUP_NAME, "entry points")
         print()
         for module_name in sorted(module_to_name_to_entry.keys()):
             print(GIZMO_SCRIPT, module_name)
@@ -52,7 +52,7 @@ def list_entry_points(module_name):
     print()
     doc = the_module.__doc__
     if doc is not None:
-        print("Module documentation string:")
+        print("Package documentation string:")
         print(doc)
         print()
     find_entry_points()
