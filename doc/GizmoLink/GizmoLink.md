@@ -110,9 +110,6 @@ The environment test will not correctly detect
 the need for the proxy in all remote environments (for example running
 using `repo2docker` outside of Binder).
 
-<a href="./README.md">
-Return to Gizmo Scripts and the GizmoLink Proxy Server.
-</a>
 
 ## Running the proxy server from the command line
 
