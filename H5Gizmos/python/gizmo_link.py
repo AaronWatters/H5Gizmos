@@ -220,8 +220,8 @@ class GizmoLink:
             prefix=prefix,
             redirect=REDIRECT_AUTOMATICALLY,
         )
-        if self.verbose:
-            print("Start parameters:", json_parameters)
+        #if self.verbose:
+        #    print("Start parameters:", json_parameters)
         if json_parameters["launch"]:
             watcher = ScriptWatcher(module, script, prefix)
             try:
