@@ -105,10 +105,20 @@ class jQueryComponent(gz_components.Component):
     def error_message(self, error_text):
         do(self.gizmo.websocket_error_callback(error_text))
 
-    def get_element(self, gizmo):
+    def get_element(self, gizmo=None):
+        if gizmo is None:
+            gizmo = self.gizmo
+        assert gizmo is not None, "Cannot get element until gizmo is attached: " + repr(self)
         if self.element is None:
             self.dom_element_reference(gizmo)
         return self.element
+
+    def detach(self):
+        """
+        Remove the element from the DOM, preserving, eg, event handlers for later reinsertion.
+        """
+        if self.gizmo is not None:
+            do(self.get_element().detach())
 
     def enable_tooltips(self):
         "Enable jQueryUI tool tips for the whole gizmo document."
@@ -260,11 +270,12 @@ class jQueryComponent(gz_components.Component):
             do(self.element.html(html_text))
         return self
 
-    def text(self, string_text):
+    def text(self, string_text, break_spaces=True):
         """
         Set the innerHTML for the element to plain HTML escaped text (not appropriate for all subclasses).
+        Set break_spaces to false to replace spaces with nonbreaking spaces
         """
-        html_text = html.escape(string_text)
+        html_text = html_escape(string_text, break_spaces=break_spaces)
         return self.html(html_text)
         #return self
 
@@ -821,7 +832,7 @@ class ChildContainerSuper(jQueryComponent):
                     if cs.startswith("<"):
                         c = Html(cs)
                     else:
-                        c = Text(c)
+                        c = Text(c, break_spaces=False)
             checked.append(c)
         return checked
 
@@ -850,7 +861,8 @@ class ChildContainerSuper(jQueryComponent):
         if child is None:
             return None
         else:
-            return gizmo.jQuery(child.dom_element_reference(gizmo))
+            #return gizmo.jQuery(child.dom_element_reference(gizmo))
+            return child.get_element(gizmo)
 
 
 class Template(ChildContainerSuper):
@@ -962,6 +974,12 @@ class GridStack(ChildContainerSuper):
     def attach_children(self, children):
         gizmo = self.gizmo
         assert gizmo is not None, "gizmo must be attached."
+        # detach all children
+        current_children = self.children
+        if current_children:
+            for child in current_children:
+                child.detach()
+                pass
         do(self.element.empty())
         children = self.children = self.check_children(children)
         # xxxx maybe use child.element?
@@ -1313,9 +1331,9 @@ def Html(tag, init_text=None, title=None, css=None):
         result.css(css)
     return result
 
-def Text(content, title=None, css=None):
-    "Simple text, escaped."
-    econtent = html.escape(content)
+def Text(content, title=None, css=None, break_spaces=True):
+    "Simple text, escaped.  Set break_spaces to False to non-break spaces."
+    econtent = html_escape(content, break_spaces=break_spaces)
     result = Html("<div>%s</div>"  % str(econtent), title=title)
     if css:
         result.css(**css)
@@ -1327,6 +1345,14 @@ def ClickableText(content, title=None, on_click=None, color="blue"):
     result = Html("<tag/>", content, title=title, css=css)
     if on_click:
         result.set_on_click(on_click)
+    return result
+
+# utilities
+def html_escape(txt, break_spaces=False):
+    "Escape html with option to not break spaces."
+    result = html.escape(txt)
+    if not break_spaces:
+        result = result.replace(" ", "&nbsp;")
     return result
 
 Button = jQueryButton

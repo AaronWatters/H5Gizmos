@@ -636,6 +636,7 @@ var H5Gizmos = {};
             var index = this.index_pair.value;
             var value = target[index];
             if ((to_truthy) && (!value)) {
+                console.log("get not truthy", target, index, value)
                 throw new Error("get " + index + " from " + target + " not truthy: " + value);
             }
             this.result = translator.this_value_pair(target, value);
