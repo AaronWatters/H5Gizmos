@@ -9,7 +9,7 @@ function setup_start_page(json_parameters) {
     debugger;
 
     function redirect_to(href) {
-        console.log("automatically redicrecting to", href)
+        console.log("automatically redirecting to", href)
         window.location.replace(href);
     };
 
@@ -37,7 +37,7 @@ function setup_start_page(json_parameters) {
                 for (var j=0; j<scripts.length; j++) {
                     script_name = scripts[j];
                     var escript = encodeURIComponent(script_name);
-                    slink = `${mlink}&script=${escript}`;
+                    var slink = `${mlink}&script=${escript}`;
                     var script_tag = `<h4 title="start script"> <a href="${slink}">${script_name}</a> </h4>`;
                     $(script_tag).appendTo(script_block);
                 }
