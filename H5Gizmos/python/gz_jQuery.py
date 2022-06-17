@@ -598,10 +598,14 @@ class jQueryInput(jQueryComponent):
         input_type="text", 
         size=None, 
         change_callback=None,
-        title=None):
+        title=None,
+        readonly=False,
+        ):
         sizetext = ""
         if size is not None:
             sizetext = ' size="%s"' % size
+        if readonly:
+            sizetext += " readonly"
         tag = '<input type="%s" value="%s" %s/>' % (input_type, initial_value, sizetext)
         super().__init__("", tag=tag, title=title)
         self.value = initial_value
