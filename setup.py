@@ -48,6 +48,7 @@ setup(
         "H5Gizmos.scripts": [
             "hello_env = H5Gizmos.python.scripts.hello_env:main",
             "Lorenz_Attractor = H5Gizmos.python.scripts.lorenz:main",
+            "show_binary = H5Gizmos.python.scripts.show_binary:main",
         ]
     },
 )
