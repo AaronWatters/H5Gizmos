@@ -41,6 +41,8 @@ class jQueryComponent(gz_components.Component):
     def __init__(self, init_text="Uninitialized JQuery Gizmo.", tag="<div/>", title=None):
         if title:
             self.set_title(title)
+        ttag = type(tag)
+        assert ttag is str, "Tag should be str: " + repr((ttag, tag))
         self.init_text = init_text
         self.tag = tag
         #self.element_name = H5Gizmos.new_identifier("JQuery_element")
