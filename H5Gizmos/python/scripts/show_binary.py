@@ -59,14 +59,24 @@ def open_click(*ignored):
 select_button.set_on_click(open_click)
 
 def select_click(*ignored):
+    dashboard.clear_error_message()
     path = selector.get_value()
     info.text("path: " + repr(path))
+    detail.empty()
+    hex_display.empty()
+    repr_display.empty()
     selector.gizmo.close_dialog()
     dumper = Dumper(path)
     (dhex, drepr) = dumper.display_texts(0, 40, 50)
-    detail.text("Size: " + str(dumper.size()))
-    hex_display.text(dhex)
-    repr_display.text(drepr)
+    size = dumper.size()
+    if size > 0:
+        detail.text("Size: " + str(dumper.size()))
+        hex_display.text(dhex)
+        repr_display.text(drepr)
+    else:
+        detail.text("Empty file: " + repr(path))
+        hex_display.text("")
+        repr_display.text("")
 
 selector = FileSelector(on_select=select_click)
 
