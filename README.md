@@ -1,5 +1,7 @@
 <img src="https://github.com/AaronWatters/H5Gizmos/raw/main/doc/lorenz.gif" width="50%">
 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/AaronWatters/H5Gizmos/HEAD)
+
 # H5Gizmos
 
 H5Gizmos provides
