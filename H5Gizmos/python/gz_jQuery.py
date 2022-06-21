@@ -23,8 +23,13 @@ function add_websocket_error_callback() {
         if (!info) {
             info = $("<div/>").appendTo($("#GIZMO_BODY"));
         }
-        info.html(message);
-        info.css("background-color", "pink")
+        if (message) {
+            info.html(message);
+            info.css("background-color", "pink")
+        } else {
+            info.empty();
+            info.css("background-color", "transparent")
+        }
         tr.jquery_info = info;
     };
     return tr.ws_error_message_callback;
@@ -106,6 +111,9 @@ class jQueryComponent(gz_components.Component):
 
     def error_message(self, error_text):
         do(self.gizmo.websocket_error_callback(error_text))
+
+    def clear_error_message(self):
+        do(self.gizmo.websocket_error_callback(None))
 
     def get_element(self, gizmo=None):
         if gizmo is None:
