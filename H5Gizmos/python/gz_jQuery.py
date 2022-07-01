@@ -1069,11 +1069,13 @@ class FlexColumn(GridStack):
 
     flex_direction = "column"
     default_class = "H5Gizmo-Column"
+    gap = "10px"
 
     def main_css(self, children):
         css = {}
         css["display"] = "flex"
         css["flex-direction"] = self.flex_direction
+        css["gap"] = self.gap
         return css
 
     def listChild(self, seq):
