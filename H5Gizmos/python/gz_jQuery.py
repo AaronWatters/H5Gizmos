@@ -684,6 +684,7 @@ class Slider(jQueryComponent):
         self.minimum = minimum
         self.maximum = maximum
         self.value = value
+        self.initial_value = value
         self.step = step
         self.orientation = orientation
         self.change_pending = False
@@ -705,6 +706,11 @@ class Slider(jQueryComponent):
         "Set the value of the slider, triggering any attached callback."
         self.value = value
         do(self.element.slider("value", value))
+
+    def reset(self):
+        v = self.initial_value
+        if v is not None:
+            self.set_value(v)
 
     async def get_value(self):
         value = await get(self.element.slider("value"), to_depth=1)
@@ -744,6 +750,7 @@ class Slider(jQueryComponent):
 class RangeSlider(jQueryComponent):
 
     # xxx cut/paste from Slider -- too hard to refactor for now
+    # xxx should add delay logic...
 
     def __init__(
         self, 
@@ -808,6 +815,9 @@ class RangeSlider(jQueryComponent):
             self.high_value = high_value
         values = [self.low_value, self.high_value]
         do(self.element.slider("values", values))
+
+    def reset(self):
+        self.set_values(self.minimum, self.maximum)
 
     async def get_values(self):
         values = await get(self.element.slider("values"), to_depth=1)
