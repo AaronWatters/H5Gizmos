@@ -775,7 +775,7 @@ class RangeSlider(jQueryComponent):
         self.high_value = high_value
         self.step = step
         self.orientation = orientation
-        self.values = None
+        self.values = [low_value, high_value]
 
     def configure_jQuery_element(self, element):
         options = dict(
