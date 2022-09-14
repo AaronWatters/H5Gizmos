@@ -762,6 +762,7 @@ class RangeSlider(jQueryComponent):
         step=None, 
         orientation="horizontal",
         title=None,
+        delay=0.1,  # async delay in seconds for callback to avoid flooding
         ):
         assert maximum > minimum, "Bad slider range: " + repr((minimum, maximum))
         if low_value is None:
@@ -783,6 +784,9 @@ class RangeSlider(jQueryComponent):
         self.step = step
         self.orientation = orientation
         self.values = [low_value, high_value]
+        self.change_pending = False
+        self.change_delay = delay
+        self.initial_values = [self.low_value, self.high_value]
 
     def configure_jQuery_element(self, element):
         options = dict(
@@ -817,7 +821,7 @@ class RangeSlider(jQueryComponent):
         do(self.element.slider("values", values))
 
     def reset(self):
-        self.set_values(self.minimum, self.maximum)
+        self.set_values(*self.initial_values)
 
     async def get_values(self):
         values = await get(self.element.slider("values"), to_depth=1)
@@ -832,8 +836,28 @@ class RangeSlider(jQueryComponent):
         self.values = values
         [self.low_value, self.high_value] = values
         c = self.on_change
-        if c is not None:
-            c(values)
+        if c is not None and not self.change_pending:
+            self.change_pending = True
+            #c(values)
+            schedule_task(self.delayed_callback())
+
+    async def delayed_callback(self):
+        "delay the change callback and ignore other change requests that arrive too quickly to prevent jitter"
+        # xxxx this method should probably be used for other callbacks too...
+        c = self.on_change
+        if c is None:
+            self.change_pending = False
+            return
+        self.change_pending = True  # redundant
+        try:
+            # sleep a little to prevent other changes coming in too quickly
+            await asyncio.sleep(self.change_delay)
+        finally:
+            # allow other changes to arrive while the callback executes
+            self.change_pending = False
+        # use the current value which may have changed during the sleep
+        v = self.values
+        c(v)
 
 class ChildContainerSuper(jQueryComponent):
 
