@@ -8,15 +8,18 @@ import H5Gizmos as gz
 import collections
 import html
 import sys
+import types
+import traceback
 
 SHORT_LENGTH = 50  # Abbreviate strings to this size.
 PAGING = 20    # break sequences into this size.
 
-async def examine(object, link=True):
+async def examine(object, link=True, expand=False):
     """
     Create and display an interactive explorer for an object.
     """
     exp = explorer(object)
+    exp.expanded = expand
     #print("exp is", exp)
     gizmo = exp.gizmo()
     if link:
@@ -36,11 +39,17 @@ def explorer(object):
     if ty is str:
         return StringExplorer(object)
     if ty is np.ndarray:
+        if not object.shape:
+            return ScalarExplorer(object)
         return NdArrayExplorer(object)
     if isinstance(object, collections.abc.Sequence):
         return SequenceExplorer(object)
     if isinstance(object, collections.abc.Mapping):
         return MappingExplorer(object)
+    if ty is types.TracebackType:
+        return TracebackExplorer(object)
+    if ty is traceback.FrameSummary:
+        return FrameSummaryExplorer(object)
     try:
         return VarsExplorer(object)
     except TypeError:
@@ -62,7 +71,7 @@ class Explorer:
         result = "%s :: %s" % (R, self.typename())
         if escape:
             result = html.escape("%s :: %s" % (R, self.typename()))
-        print("short html", repr(result))
+        #print("short html", repr(result))
         #raise ValueError(result)
         return result
 
@@ -239,6 +248,37 @@ class VarsExplorer(Explorer):
         #return gz.Stack([desc, "vars", vars_gizmo])
         return gz.Stack([desc, vars_gizmo])
 
+class TracebackExplorer(Explorer):
+
+    def __init__(self, object):
+        self.object = object
+
+    def gizmo(self):
+        ob = self.object
+        desc = self.short_html()
+        extracted = traceback.extract_tb(ob)
+        try:
+            stack = traceback.extract_stack(ob)
+        except Exception as e:
+            stack = "Stack exception: " + repr(e)
+        D = dict(extracted=extracted, stack=stack)
+        D_gizmo = explorer(D).gizmo()
+        #return gz.Stack([desc, "vars", vars_gizmo])
+        return gz.Stack([desc, D_gizmo])
+
+class FrameSummaryExplorer(Explorer):
+
+    def __init__(self, object):
+        self.object = object
+
+    def gizmo(self):
+        ob = self.object
+        desc = self.short_html()
+        D = dict(filename=ob.filename, lineno=ob.lineno, name=ob.name, locals=ob.locals)
+        D_gizmo = explorer(D).gizmo()
+        #return gz.Stack([desc, "vars", vars_gizmo])
+        return gz.Stack([desc, D_gizmo])
+
 def execute_environment(code):
     import traceback
     exc = tb = None
@@ -248,6 +288,7 @@ def execute_environment(code):
         exc = e
         (ty, val, tb) = sys.exc_info()
     return dict(
+        code=code,
         locals=locals(),
         globals=globals(),
         exception=exc,
@@ -256,7 +297,7 @@ def execute_environment(code):
 
 async def execution_task(code):
     env = execute_environment(code)
-    await examine(env, link=True)
+    await examine(env, link=True, expand=True)
 
 def examine_environment(code):
     gz.serve(execution_task(code))
