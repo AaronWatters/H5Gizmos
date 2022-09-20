@@ -1,0 +1,26 @@
+#!/usr/bin/env python
+
+usage = """
+Gizmos for interactively exploring Python structures.
+
+Script usage:
+
+$ gz_examine command0 command1 command2
+
+Execute the commands formatted on separate lines and explore the resulting
+environment bindings.
+
+If an uncaught exception occurs include the exception and the traceback
+in the bindings.
+"""
+
+try:
+    import sys
+    from H5Gizmos.python.examine import examine_environment
+    commands = sys.argv[1:]
+    code = "\n".join(commands)
+    examine_environment(code)
+except Exception as e:
+    print("Exception", e)
+    print(usage)
+    raise
