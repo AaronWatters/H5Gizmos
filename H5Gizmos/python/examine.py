@@ -1,8 +1,13 @@
 
+"""
+Gizmos for interactively exploring Python structures.
+"""
+
 import numpy as np
 import H5Gizmos as gz
 import collections
 import html
+import sys
 
 SHORT_LENGTH = 50  # Abbreviate strings to this size.
 PAGING = 20    # break sequences into this size.
@@ -12,6 +17,7 @@ async def examine(object, link=True):
     Create and display an interactive explorer for an object.
     """
     exp = explorer(object)
+    #print("exp is", exp)
     gizmo = exp.gizmo()
     if link:
         await gizmo.link()
@@ -22,8 +28,10 @@ def explorer(object):
     """
     Create an interactive explorer for an object.
     """
+    if object is None:
+        return NoneExplorer(object)
     ty = type(object)
-    if ty in (int, bool, float, complex) or np.isscalar(object):
+    if (ty is not str) and (ty in (int, bool, float, complex) or (np.isscalar(object))):
         return ScalarExplorer(object)
     if ty is str:
         return StringExplorer(object)
@@ -47,14 +55,20 @@ class Explorer:
     def typename(self):
         return type(self.object).__name__
 
-    def short_description(self):
+    def short_description(self, escape=True):
         R = repr(self.object)
         if len(R) > SHORT_LENGTH:
             R = R[:SHORT_LENGTH] + "..."
-        return html.escape("%s :: %s" % (R, self.typename()))
+        result = "%s :: %s" % (R, self.typename())
+        if escape:
+            result = html.escape("%s :: %s" % (R, self.typename()))
+        print("short html", repr(result))
+        #raise ValueError(result)
+        return result
 
     def short_html(self):
-        return gz.Html("<span> %s </span>" % self.short_description())
+        #print(self.short_description)
+        return gz.Html("<span> %s </span>" % self.short_description(escape=True))
 
 class ScalarExplorer(Explorer):
 
@@ -64,12 +78,18 @@ class ScalarExplorer(Explorer):
         self.object = object
 
     def gizmo(self):
-        return gz.Text(self.short_description())
+        return gz.Text(self.short_description(escape=False))
+
+class NoneExplorer(ScalarExplorer):
+
+    def gizmo(self):
+        return gz.Text("None")
+
 
 class UnknownDisplay(ScalarExplorer):
     
     def gizmo(self):
-        return gz.Text("??" + self.short_description())
+        return gz.Text("??" + self.short_description(escape=False))
 
 class ExpandableExplorer(Explorer):
 
@@ -89,7 +109,7 @@ class ExpandableExplorer(Explorer):
 
     def gizmo(self):
         if not self.expandable:  # eg; for short strings
-            return gz.Text(self.short_description())
+            return self.short_html()
         prefix = self.prefix()
         detail = self.detail()
         self._gizmo = gz.Shelf([prefix, detail])
@@ -107,7 +127,7 @@ class ExpandableExplorer(Explorer):
             return gz.ClickableText(" &gt; ", on_click=self.expand)
 
     def detail(self):
-        short = self.short_description()
+        short = self.short_description(escape=False)
         if self.expanded:
             more = self.expanded_list()
             first = gz.ClickableText(short, on_click=self.collapse)
@@ -123,13 +143,17 @@ class StringExplorer(ExpandableExplorer):
         # only expand longer strings
         self.expandable = (len(object) > SHORT_LENGTH)
 
-    def short_description(self):
+    def short_description(self, escape=True):
         ob = self.object
         ln = len(ob)
         if ln < SHORT_LENGTH:
-            return repr(ob)
-        trunc = ob[:SHORT_LENGTH]
-        return "%s... [%s]" % (repr(trunc), ln)
+            result = repr(ob)
+        else:
+            trunc = ob[:SHORT_LENGTH]
+            result = "%s... [%s]" % (repr(trunc), ln)
+        if escape:
+            return html.escape(result)
+        return result
 
     def expanded_list(self):
         q = html.escape(self.object)
@@ -154,7 +178,7 @@ class SequenceExplorer(ExpandableExplorer):
         self.limit -= PAGING
         self.reset_gizmo()
 
-    def short_description(self):
+    def short_description(self, escape=True):
         t = self.typename()
         l = len(self.object)
         return "%s of length %s" % (t, l)
@@ -162,7 +186,7 @@ class SequenceExplorer(ExpandableExplorer):
     def expanded_list(self):
         limit = self.limit
         viewed = list(self.object)[:limit]
-        gizmos = [explorer(x).gizmo() for x in viewed]
+        gizmos = [[repr(i) + ":", explorer(x).gizmo()] for (i, x) in enumerate(viewed)]
         gizmos = self.add_paging(gizmos)
         return gizmos
 
@@ -177,7 +201,7 @@ class SequenceExplorer(ExpandableExplorer):
 
 class NdArrayExplorer(SequenceExplorer):
 
-    def short_description(self):
+    def short_description(self, escape=True):
         ob = self.object
         shape = ob.shape
         dtype = ob.dtype
@@ -212,4 +236,27 @@ class VarsExplorer(Explorer):
     def gizmo(self):
         desc = self.short_html()
         vars_gizmo = explorer(self.vars).gizmo()
-        return gz.Stack([desc, ["vars", vars_gizmo]])
+        #return gz.Stack([desc, "vars", vars_gizmo])
+        return gz.Stack([desc, vars_gizmo])
+
+def execute_environment(code):
+    import traceback
+    exc = tb = None
+    try:
+        exec(code)
+    except Exception as e:
+        exc = e
+        (ty, val, tb) = sys.exc_info()
+    return dict(
+        locals=locals(),
+        globals=globals(),
+        exception=exc,
+        traceback=tb,
+    )
+
+async def execution_task(code):
+    env = execute_environment(code)
+    await examine(env, link=True)
+
+def examine_environment(code):
+    gz.serve(execution_task(code))
