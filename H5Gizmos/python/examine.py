@@ -54,6 +54,8 @@ def explorer(object):
         return VarsExplorer(object)
     except TypeError:
         pass
+    if hasattr(object, "__slots__"):
+        return SlottedObjectExplorer(object)
     # default
     return UnknownDisplay(object)
 
@@ -275,6 +277,19 @@ class FrameSummaryExplorer(Explorer):
         ob = self.object
         desc = self.short_html()
         D = dict(filename=ob.filename, lineno=ob.lineno, name=ob.name, locals=ob.locals)
+        D_gizmo = explorer(D).gizmo()
+        #return gz.Stack([desc, "vars", vars_gizmo])
+        return gz.Stack([desc, D_gizmo])
+
+class SlottedObjectExplorer(Explorer):
+
+    def __init__(self, object):
+        self.object = object
+
+    def gizmo(self):
+        ob = self.object
+        desc = self.short_html()
+        D = {name: getattr(ob, name) for name in ob.__slots__}
         D_gizmo = explorer(D).gizmo()
         #return gz.Stack([desc, "vars", vars_gizmo])
         return gz.Stack([desc, D_gizmo])
