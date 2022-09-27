@@ -35,6 +35,7 @@ setup(
         "bin/gizmo_link",
         "bin/gizmo_script",
         "bin/gz_examine",
+        "bin/json_gizmo",
     ],
     package_data={
         "H5Gizmos": [
