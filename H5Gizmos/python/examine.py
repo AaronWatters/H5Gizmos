@@ -225,7 +225,7 @@ class MappingExplorer(SequenceExplorer):
     def expanded_list(self):
         ob = self.object
         if self.key_sequence is None:
-            self.key_sequence = list(ob.keys())
+            self.key_sequence = list(sorted(ob.keys()))
         limit = self.limit
         viewed_keys = self.key_sequence[:limit]
         gizmos = []
