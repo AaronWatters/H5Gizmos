@@ -147,15 +147,20 @@ def is_port_in_use(port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('localhost', port)) == 0
 
+
 def get_local_ip():
     hostname = socket.gethostname()
     try:
         local_ip = socket.gethostbyname(hostname)
     except Exception:
         local_ip = socket.gethostbyname("localhost")
-    if not ping_test.pingable(local_ip):
+    try:
+        if not ping_test.pingable(local_ip):
+            return "localhost"
+    except Exception:
         return "localhost"
     return local_ip
+
 
 def choose_port0(limit=1000):
     "old version"
