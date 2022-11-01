@@ -1,7 +1,7 @@
 from setuptools import setup
 
 url = "https://github.com/AaronWatters/H5Gizmos"
-version = "0.1.5"
+version = "0.1.6"
 readme = open('README.md').read()
 
 setup(
