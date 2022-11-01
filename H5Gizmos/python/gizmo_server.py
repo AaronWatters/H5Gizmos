@@ -13,6 +13,7 @@ import contextlib
 import socket
 #import traceback
 import sys
+from . import ping_test
 
 # Max size for posts -- really big
 DEFAULT_MAX_SIZE = 1000 * 1000 * 1000 * 1000 * 100
@@ -152,6 +153,8 @@ def get_local_ip():
         local_ip = socket.gethostbyname(hostname)
     except Exception:
         local_ip = socket.gethostbyname("localhost")
+    if not ping_test.pingable(local_ip):
+        return "localhost"
     return local_ip
 
 def choose_port0(limit=1000):
@@ -159,6 +162,7 @@ def choose_port0(limit=1000):
     for i in range(limit):
         port = DEFAULT_PORT + i
         if not is_port_in_use(port):
+            #print ("CHOSE PORT", port)
             return port
     raise ValueError("Could not find open port: " + repr(
         (DEFAULT_PORT, DEFAULT_PORT+limit)))
@@ -175,6 +179,9 @@ def choose_port():
     port = s.getsockname()[1]
     s.close()
     return port
+
+# use the old version:
+#choose_port = choose_port0
 
 
 def get_file_bytes(path):
