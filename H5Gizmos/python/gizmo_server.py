@@ -148,7 +148,7 @@ def is_port_in_use(port):
         return s.connect_ex(('localhost', port)) == 0
 
 
-def get_local_ip():
+def get_local_ip(port=None):
     hostname = socket.gethostname()
     try:
         local_ip = socket.gethostbyname(hostname)
@@ -159,6 +159,11 @@ def get_local_ip():
             return "localhost"
     except Exception:
         return "localhost"
+    if port is not None:
+        # check that we can send a message on the port
+        test = ping_test.loop_test(local_ip, port)
+        if not test:
+            return "localhost"
     return local_ip
 
 
@@ -368,9 +373,9 @@ class GzServer:
             out=None,  # context redirect (like widgets.Output) or None
             err=None,  # context redirect (like widgets.Output) or None
             ):
-        server = server or get_local_ip()
         if port is None:
             port = choose_port()
+        server = server or get_local_ip(port)
         self.prefix = prefix
         self.server = server
         self.port = port
