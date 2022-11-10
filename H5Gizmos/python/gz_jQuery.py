@@ -8,6 +8,7 @@ from .H5Gizmos import do, get, schedule_task
 import html
 import io
 import asyncio
+import math
 
 # add Markdown(...)
 # new method jqc.append(other_jqc)
@@ -1239,16 +1240,55 @@ class jQueryImage(jQueryComponent):
         self.bytes_content = bytes_content
         self.height = height
         self.width = width
+        self.img_height = self.img_width = self.array = None
+        self.pixel_click_callback = None
         self.content_type = mime_type
+
+    def on_pixel(self, callback, type="click"):
+        """
+        When the image is clicked call the callback with the pixel_row, pixel_column coordinates added
+        and also the pixel_data, the array entry value at array[row, column]
+        This only works if the image is populated using an array at present.
+        """
+        self.pixel_click_callback = callback
+        self.on(type, self._pixel_callback)
+
+    def _pixel_callback(self, event):
+        assert self.img_height is not None and self.img_width is not None, (
+            "Cannot determine pixel coordinates from non-array data."
+        )
+        cb = self.pixel_click_callback
+        assert cb is not None, "No pixel click callback defined."
+        # https://stackoverflow.com/questions/56451370/how-to-get-pixel-number-from-image-by-click
+        offsetX = event["offsetX"]
+        offsetY = event["offsetY"]
+        iw = self.img_width
+        ih = self.img_height
+        ratioX = iw / self.width
+        ratioY = ih / self.height
+        pixel_i = math.floor(offsetX * ratioX)
+        pixel_j = math.floor(offsetY * ratioY)
+        if pixel_i >= iw:
+            pixel_i = iw-1
+        if pixel_j >= ih:
+            pixel_j = ih - 1
+        event["pixel_column"] = pixel_i
+        event["pixel_row"] = pixel_j
+        if self.array is not None:
+            pixel_data = self.array[pixel_j, pixel_i]
+            event["pixel_data"] = pixel_data
+        return cb(event)
 
     def change_content(self, bytes_content, mime_type=None):
         self.bytes_content = bytes(bytes_content)
         self.getter.set_content(bytes_content, mime_type)
         do(self.element.attr("src", self.versioned_link()))
+        self.img_height = self.img_width = self.array = None
 
     def change_content_url(self, bytes_content, mime_type):
         url = content_url(bytes_content, mime_type)
         do(self.element.attr("src", url))
+        self.img_height = self.img_width = self.array = None
 
     def change_array(self, array, url=True, scale=False, epsilon=1e-12):
         from PIL import Image
@@ -1274,6 +1314,8 @@ class jQueryImage(jQueryComponent):
             self.change_content_url(byt, mime_type)
         else:
             self.change_content(byt, mime_type)
+        (self.img_height, self.img_width) = array.shape[:2]
+        self.array = array
 
     def versioned_link(self):
         self.version += 1   # use versioning to foil browser caching.
