@@ -288,6 +288,7 @@ class Component:
         """
         self.gizmo = gizmo
         self.initialize_object_cache()
+        self.window = gizmo.window # define the window shortcut
         return "Undefined gizmo component."  # override return value in subclass.
 
     def initialize_object_cache(self):
