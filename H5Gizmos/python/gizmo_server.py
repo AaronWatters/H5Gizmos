@@ -3,7 +3,7 @@ from . import H5Gizmos
 #from . import gz_resources
 
 from aiohttp import web
-#import aiohttp
+import aiohttp
 import asyncio
 #import weakref
 import mimetypes
@@ -13,7 +13,8 @@ import contextlib
 import socket
 #import traceback
 import sys
-from . import ping_test
+#from . import ping_test
+import time
 
 # Max size for posts -- really big
 DEFAULT_MAX_SIZE = 1000 * 1000 * 1000 * 1000 * 100
@@ -154,6 +155,7 @@ def get_local_ip(port=None):
         local_ip = socket.gethostbyname(hostname)
     except Exception:
         local_ip = socket.gethostbyname("localhost")
+    """
     try:
         if not ping_test.pingable(local_ip):
             return "localhost"
@@ -164,6 +166,7 @@ def get_local_ip(port=None):
         test = ping_test.loop_test(local_ip, port)
         if not test:
             return "localhost"
+            """
     return local_ip
 
 
@@ -390,6 +393,23 @@ class GzServer:
         self.out = out
         self.err = err
         self.captured_stdout = None
+        self.validator = None
+
+    async def check_server_name_is_reachable(self):
+        validator = self.validator
+        if validator is None:
+            server = self.server
+            port = self.port
+            validator = ValidateServerConnection(server, port)
+        await validator.future
+        if not validator.succeeded:
+            # fall back to localhost
+            print("server", server, "is not reachable -- using localhost.")
+            self.server = "localhost"
+        else:
+            print("server", server, "reachable")
+            pass
+        return validator.succeeded
 
     def set_url_prefix(self, url_prefix):
         self.url_prefix = url_prefix
@@ -505,6 +525,8 @@ class GzServer:
             self.my_print ("runner using port", port)
             if "print" not in args:
                 args["print"] = self.my_print
+            # Start the validator (which delays immediately to permit server start)
+            H5Gizmos.schedule_task(self.check_server_name_is_reachable())
             await async_run(app, port=port, **args)
         except asyncio.CancelledError:
             self.status = "app has been cancelled,"
@@ -515,12 +537,20 @@ class GzServer:
             #pr(self.status)
             self.stopped = True
 
+    secret = bytes(str(time.time()), "utf8")
+
     def add_routes(self):
         app = self.app
         prefix = "/" + self.prefix
         app.router.add_route(GET, prefix + '/http/{tail:.*}', self.handle_http_get)
         app.router.add_route(POST, prefix + '/http/{tail:.*}', self.handle_http_post)
         app.router.add_route(GET, prefix + '/ws/{tail:.*}', self.handle_web_socket)
+        app.router.add_route(GET, "/ping", self.handle_ping)
+
+    async def handle_ping(self, request):
+        message = b'pong ' + self.secret
+        http_response = web.Response(body=message, content_type="text/plain")
+        return http_response
 
     async def handle(self, request, method="GET", interface=None):
         if interface is None:
@@ -903,3 +933,59 @@ class GizmoPipelineSocketHandler:
     async def handle(self, info, request, interface):
         #print("**** pipeline handler started")
         await self.pipeline.handle_websocket_request(request)
+
+class ValidateServerConnection:
+
+    "Check that the web server '/ping' is reachable using the current port and server name."
+
+    def __init__(self, server, port, delay=0.1, wait=0.2, verbose=False):
+        self.succeeded = False
+        self.status = "initialized"
+        self.verbose = verbose
+        self.server = server
+        self.port = port
+        self.delay = delay
+        self.wait = wait
+        self.loop = get_or_create_event_loop()
+        self.future = self.loop.create_future()
+        self.task = self.loop.create_task(self.validate())
+
+    def __repr__(self) -> str:
+        return "V" + repr([self.server, self.port, self.status, self.succeeded])
+
+    async def validate(self):
+        future = self.future
+        now = str(time.time())
+        server = self.server
+        port = self.port
+        url = "http://%s:%s/ping?now=%s" % (server, port, now)
+        try:
+            self.status = "delaying"
+            await asyncio.sleep(self.delay)  # allow time for server to start (?)
+            self.status = "preparing"
+            self.timer = self.loop.create_task(self.timeout())
+            # https://www.twilio.com/blog/asynchronous-http-requests-in-python-with-aiohttp
+            # https://docs.aiohttp.org/en/stable/client_reference.html
+            self.status = "requesting"
+            async with aiohttp.ClientSession() as client:
+                async with client.get(url) as resp:
+                    status = resp.status
+                    bytes = await resp.read()
+                    text = bytes.decode("utf-8")
+                    self.status = "responded"
+                    future.set_result((status, text))
+                    self.succeeded = True
+                    self.response = resp
+        except asyncio.CancelledError:
+            self.status = "cancelled"
+        except Exception as e:
+            self.status = repr(e)
+        if not future.done():
+            future.set_result(False)
+
+    async def timeout(self):
+        future = self.future
+        await asyncio.sleep(self.wait)
+        self.task.cancel()
+        if not future.done():
+            future.set_result(False)  
