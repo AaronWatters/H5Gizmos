@@ -404,10 +404,10 @@ class GzServer:
         await validator.future
         if not validator.succeeded:
             # fall back to localhost
-            print("server", server, "is not reachable -- using localhost.")
+            #print("server", server, "is not reachable -- using localhost.")
             self.server = "localhost"
         else:
-            print("server", server, "reachable")
+            #print("server", server, "reachable")
             pass
         return validator.succeeded
 
