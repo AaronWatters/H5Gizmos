@@ -4,8 +4,15 @@
 
 # H5Gizmos
 
+A computer dashboard is a graphical user interface that provides real-time feedback about the state of a system or process. It is typically used in scientific and engineering applications where it is important to monitor the status of complex systems.
+
+The computer dashboard was first developed at Lawrence Livermore National Laboratory in the early 1990s. It was designed to provide immediate feedback about the performance of supercomputers, which were then used for simulations of nuclear weapons tests. The original dashboard included several hundred individual gauges that displayed various aspects of system performance.
+
+Today, computer dashboards are used in a wide variety of applications, from monitoring web servers and databases to tracking the progress of scientific experiments. They have also been adapted for use in business settings, where they can provide information about sales figures, customer satisfaction levels, and other key metrics.
+
 H5Gizmos provides
-tools for building interactive graphical interfaces for applications using browser technology and HTML5. 
+tools for building dashboards and other
+interactive graphical interfaces for applications using browser technology and HTML5. 
 
 A Gizmo "child" interface displays in a standard web browser such as Chrome and communicates
 with a "parent" Python process using a web socket and other HTTP protocols.  H5Gizmos can load and
