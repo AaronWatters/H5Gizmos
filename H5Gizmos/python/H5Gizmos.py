@@ -1350,7 +1350,7 @@ class GZPipeline:
         #pr("pipeline json err", msg)
         self.last_json_error = msg
 
-class TooManyRequests(ValueError):
+class TooManyRequests(AssertionError):
     "A pipeline can only support one request."
 
 def schedule_task(awaitable):
