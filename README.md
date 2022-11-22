@@ -10,10 +10,6 @@ The computer dashboard was first developed at Lawrence Livermore National Labora
 
 Today, computer dashboards are used in a wide variety of applications, from monitoring web servers and databases to tracking the progress of scientific experiments. They have also been adapted for use in business settings, where they can provide information about sales figures, customer satisfaction levels, and other key metrics.
 
-H5Gizmos provides
-tools for building dashboards and other
-interactive graphical interfaces for applications using browser technology and HTML5. 
-
 A Gizmo "child" interface displays in a standard web browser such as Chrome and communicates
 with a "parent" Python process using a web socket and other HTTP protocols.  H5Gizmos can load and
 use arbitrary Javascript resources to provide sophisticated interactive graphical interfaces.
