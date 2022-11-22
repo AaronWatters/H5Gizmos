@@ -112,7 +112,7 @@ var H5Gizmos = {};
                 var message = "Web socket error."
                 var ws = this.ws;
                 if ((ws) && (ws.readyState != ws_open)) {
-                    message = "Web socket connection is not open. " + ws.readyState;
+                    message = "Web socket connection is not open. Is this a duplicate connection?" + ws.readyState;
                 }
                 cb(message)
             }
