@@ -398,6 +398,13 @@ class jQueryButton(jQueryComponent):
             do(self.element.css("opacity", 0.5))
         return self
 
+    def set_enabled(self, value=True):
+        do(self.element.prop("disabled", not value))
+        if value:
+            do(self.element.css("opacity", 1.0))
+        else:
+            do(self.element.css("opacity", 0.5))
+
 class RadioButtons(jQueryComponent):
 
     # based on https://api.jqueryui.com/checkboxradio/
