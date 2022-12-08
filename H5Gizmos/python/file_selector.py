@@ -59,7 +59,7 @@ class FileSelector:
                 # do a directory listing
                 files = os.listdir(full_path)
                 children = []
-                for filename in files:
+                for filename in sorted(files):
                     filepath = os.path.join(current_path, filename)
                     full_filepath = os.path.join(self.root_folder, filepath)
                     is_subdir = os.path.isdir(full_filepath)
@@ -91,6 +91,9 @@ class FileSelector:
 
     def reset(self):
         to_path = self.current_location
+        value = self.get_value()
+        if os.path.isdir(value):
+            to_path += "/"
         self.input_area.set_value(to_path)
         gizmo = self.listing_gizmo()
         self.listing_container.attach_children([gizmo])
