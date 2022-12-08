@@ -74,10 +74,10 @@ class FileSelector:
             this_component = components[0]
             next_path = os.path.join(current_path, this_component)
             next_full_path = os.path.join(self.root_folder, next_path)
-            next_is_dir = os.path.isdir(next_full_path)
+            #next_is_dir = os.path.isdir(next_full_path)
             other_components = components[1:]
             sublisting = self.listing_gizmo_recursive(next_path, other_components)
-            selector = PathSelector(self, this_component, current_path, is_dir=next_is_dir, flag="--")
+            selector = PathSelector(self, this_component, current_path, is_dir=True, flag="--")
             children = [selector.gizmo]
             if sublisting is not None:
                 children.append(sublisting)
@@ -87,9 +87,16 @@ class FileSelector:
 
     def set_current_path(self, to_path):
         self.current_location = to_path
+        self.reset()
+
+    def reset(self):
+        to_path = self.current_location
         self.input_area.set_value(to_path)
         gizmo = self.listing_gizmo()
         self.listing_container.attach_children([gizmo])
+
+    def get_value(self):
+        return os.path.join(self.root_folder, self.current_location)
 
 class PathSelector:
 
