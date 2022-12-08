@@ -46,7 +46,7 @@ def new_identifier(prefix="Gizmo"):
     t = int(time.time() * 1000)
     return "%s_%s_%s" % (prefix, t, c)
 
-FORBIDDEN_BROWSERS = ["links"]
+FORBIDDEN_BROWSERS = ["lynx"]
 
 def check_browser():
     import webbrowser
