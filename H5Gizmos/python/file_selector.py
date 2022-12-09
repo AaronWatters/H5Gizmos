@@ -59,10 +59,12 @@ class FileSelector:
             on_select=None,
             tester=test_regular_file,
             input_width=100,
-            button_text="Select"
+            button_text="Select",
+            dialog_width=500,
         ):
         self.tester = tester
-        self.on_select = None
+        self.on_select = on_select
+        self.dialog_width = dialog_width
         root_folder = fix_path(root_folder)
         if title is None:
             title = "Select file from " + repr(root_folder)
@@ -87,6 +89,13 @@ class FileSelector:
             self.listing_container,
         ])
 
+    def add_as_dialog_to(self, parent_gizmo, options=None):
+        if options is None:
+            # default dialog options
+            options = dict(height="auto", width=self.dialog_width, modal=True, autoOpen=False)
+        dialog = parent_gizmo.add_dialog(self.gizmo, dialog_options=options)
+        return dialog
+
     def select_file(self, *ignored):
         value = self.get_value()
         if self.on_select is not None:
@@ -94,7 +103,6 @@ class FileSelector:
             self.info_area.text("selected: " + repr(value))
         else:
             self.info_area.text("no select action for " + repr(value))
-
     
     def listing_gizmo(self):
         current_path = ""
