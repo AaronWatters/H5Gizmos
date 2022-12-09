@@ -367,10 +367,11 @@ class jQueryButton(jQueryComponent):
     options = None  # default
     on_click = None
     
-    def __init__(self, init_text, tag="<button/>", on_click=None, options=None, title=None):
+    def __init__(self, init_text, tag="<button/>", on_click=None, options=None, title=None, enabled=None):
         super().__init__(init_text, tag, title=title)
         self.options = options
         self.on_click = on_click
+        self.enable_override = enabled # None to ignore, else True or False
 
     widget_name = "button"
     on_click_depth = 1
@@ -390,6 +391,12 @@ class jQueryButton(jQueryComponent):
             return  self # not yet configured.
         if on_click is not None:
             do(self.element.on("click", on_click), to_depth=self.on_click_depth)
+        else:
+            do(self.element.off("click"))
+        enable = (on_click is not None)
+        if self.enable_override is not None:
+            enable = self.enable_override
+        if enable:
             do(self.element.prop("disabled", False))
             do(self.element.css("opacity", 1.0))
         else:
@@ -399,6 +406,11 @@ class jQueryButton(jQueryComponent):
         return self
 
     def set_enabled(self, value=True):
+        if self.element is None:
+            # not displayed
+            self.enable_override = value
+            return
+        # otherwise
         do(self.element.prop("disabled", not value))
         if value:
             do(self.element.css("opacity", 1.0))
