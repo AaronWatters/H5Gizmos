@@ -22,9 +22,47 @@ def fix_path(path):
     no_user = os.path.expanduser(path)
     return os.path.abspath(no_user)
 
+def test_regular_file(path):
+    test_result = False
+    message = "Please choose a regular file."
+    if os.path.isfile(path):
+        test_result = True
+        (_, filename) = os.path.split(path)
+        message = "Click to select " + repr(filename)
+    return (test_result, message)
+
+def test_accept_any(path):
+    return (True, "")
+
+def select_any_file(
+        title=None, 
+        root_folder=".", 
+        start_location="",
+        #tester=test_regular_file,
+        input_width=100,
+    ):
+    return FileSelector(
+            title=title, 
+            root_folder=root_folder, 
+            start_location=start_location,
+            tester=test_accept_any,
+            input_width=input_width,
+            )
+
 class FileSelector:
 
-    def __init__(self, title=None, root_folder=".", start_location="", input_width=100):
+    def __init__(
+            self, 
+            title=None, 
+            root_folder=".",
+            start_location="",
+            on_select=None,
+            tester=test_regular_file,
+            input_width=100,
+            button_text="Select"
+        ):
+        self.tester = tester
+        self.on_select = None
         root_folder = fix_path(root_folder)
         if title is None:
             title = "Select file from " + repr(root_folder)
@@ -35,15 +73,28 @@ class FileSelector:
         self.current_location = start_location
         self.title_text = gz.Text(title)
         self.input_area = gz.Input(self.current_location, size=input_width)
+        value = self.get_value()
+        enabled = tester(value)[0]
+        self.select_button = gz.Button(button_text, on_click=self.select_file)
+        #self.select_button.set_enabled(enabled)
         child = self.listing_gizmo()
         self.listing_container = gz.Stack([child])
         self.info_area = gz.Text("root: " + repr(self.root_folder))
         self.gizmo = gz.Stack([ 
             self.title_text,
-            self.input_area,
-            self.listing_container,
+            [self.select_button, self.input_area],
             self.info_area,
+            self.listing_container,
         ])
+
+    def select_file(self, *ignored):
+        value = self.get_value()
+        if self.on_select is not None:
+            self.on_select(value)
+            self.info_area.text("selected: " + repr(value))
+        else:
+            self.info_area.text("no select action for " + repr(value))
+
     
     def listing_gizmo(self):
         current_path = ""
@@ -73,7 +124,7 @@ class FileSelector:
             assert is_dir, "intermediate path not a dir: " + repr(full_path)
             this_component = components[0]
             next_path = os.path.join(current_path, this_component)
-            next_full_path = os.path.join(self.root_folder, next_path)
+            #next_full_path = os.path.join(self.root_folder, next_path)
             #next_is_dir = os.path.isdir(next_full_path)
             other_components = components[1:]
             sublisting = self.listing_gizmo_recursive(next_path, other_components)
@@ -88,6 +139,9 @@ class FileSelector:
     def set_current_path(self, to_path):
         self.current_location = to_path
         self.reset()
+        value = self.get_value()
+        (enabled, msg) = self.tester(value)
+        self.select_button.set_enabled(enabled)
 
     def reset(self):
         to_path = self.current_location
