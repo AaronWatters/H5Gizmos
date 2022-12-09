@@ -37,6 +37,7 @@ def test_accept_any(path):
 def select_any_file(
         title=None, 
         root_folder=".", 
+        on_select=None,
         start_location="",
         #tester=test_regular_file,
         input_width=100,
@@ -44,6 +45,7 @@ def select_any_file(
     return FileSelector(
             title=title, 
             root_folder=root_folder, 
+            on_select=on_select,
             start_location=start_location,
             tester=test_accept_any,
             input_width=input_width,
@@ -78,7 +80,7 @@ class FileSelector:
         value = self.get_value()
         enabled = tester(value)[0]
         self.select_button = gz.Button(button_text, on_click=self.select_file)
-        #self.select_button.set_enabled(enabled)
+        self.select_button.set_enabled(enabled)
         child = self.listing_gizmo()
         self.listing_container = gz.Stack([child])
         self.info_area = gz.Text("root: " + repr(self.root_folder))
@@ -150,6 +152,7 @@ class FileSelector:
         value = self.get_value()
         (enabled, msg) = self.tester(value)
         self.select_button.set_enabled(enabled)
+        self.info_area.text(msg)
 
     def reset(self):
         to_path = self.current_location
