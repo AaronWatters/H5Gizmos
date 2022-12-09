@@ -414,8 +414,13 @@ class jQueryButton(jQueryComponent):
         do(self.element.prop("disabled", not value))
         if value:
             do(self.element.css("opacity", 1.0))
+            on_click = self.on_click
+            if on_click is not None:
+                do(self.element.off("click"))
+                do(self.element.on("click", on_click), to_depth=self.on_click_depth)
         else:
             do(self.element.css("opacity", 0.5))
+            do(self.element.off("click"))
 
 class RadioButtons(jQueryComponent):
 
