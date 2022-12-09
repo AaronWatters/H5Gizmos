@@ -1,6 +1,8 @@
 
 from H5Gizmos import Html, Stack, Shelf, Slider, Button, serve, bytearray_to_hex
-from H5Gizmos.python.qd_file_browser import FileSelector
+#from H5Gizmos.python.qd_file_browser import FileSelector
+from H5Gizmos.python.file_selector import FileSelector
+
 import os
 
 def main():
@@ -78,7 +80,8 @@ def select_click(*ignored):
         hex_display.text("")
         repr_display.text("")
 
-selector = FileSelector(on_select=select_click)
+start = os.path.abspath(".")
+selector = FileSelector(on_select=select_click, root_folder="/", start_location=start)
 
 if __name__ == "__main__":
     main()
