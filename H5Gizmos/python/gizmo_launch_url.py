@@ -15,15 +15,17 @@ class LaunchGizmoAndRedirect(FileGetter):
         component = self.component_maker()
         gizmo = await get_gizmo(title=self.title)
         component.prepare_application(gizmo)
+        nonce = new_identifier("N")
         #redirect_url = gizmo._entry_url(proxy=self.proxy)
-        redirect_url = "../%s/%s" % (gizmo._manager.identifier, gizmo._filename)  # use relative url
+        redirect_url = "../%s/%s?nonce=%s" % (gizmo._manager.identifier, gizmo._filename, nonce)  # use relative url
         parent_component = self.parent_component
         if parent_component is not None:
             parent_component.add("created new gizmo at" + repr(redirect_url))
         sbody = 'redirect to: <a href="%s">%s</a>.' % (redirect_url, redirect_url)
         bbody = sbody.encode("utf8")
         response = interface.respond(body=bbody, content_type="text/html", status=301)
-        #response.headers["location"] = redirect_url
+        response.headers["location"] = redirect_url
+        response.headers["Cache-Control"] = "no-store"
         return response
 
 
@@ -34,6 +36,7 @@ def add_launcher(to_gizmo, component_maker, filename=None, parent_component=None
     mgr = to_gizmo._manager
     mgr.add_http_handler(filename, launcher)
     relative_url = to_gizmo.relative_url(filename)
-    print ("relative_url", repr(relative_url))
+    #print ("relative_url", repr(relative_url))
     full_url = mgr.local_url(for_gizmo=to_gizmo, method="http", filename=filename)
-    print ("full url", repr(full_url))
+    #print ("full url", repr(full_url))
+    return (relative_url, full_url)
