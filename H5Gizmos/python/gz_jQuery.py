@@ -1246,12 +1246,16 @@ class jQueryImage(jQueryComponent):
         self, 
         filename=None,   # filename of None generates a fresh "don't care" name.
         bytes_content=None, 
+        array=None,
         height=None, 
         width=None, 
         mime_type=None, 
         alt="image",
         title=None,
         ):
+        assert array is None or bytes_content is None, (
+            "ambiguous content -- both array and bytes provided."
+        )
         if filename is None:
             filename = H5Gizmos.new_identifier("jQueryImage")
         if mime_type is None and bytes_content is None:
@@ -1265,6 +1269,13 @@ class jQueryImage(jQueryComponent):
         self.height = height
         self.width = width
         self.img_height = self.img_width = self.array = None
+        if array is not None:
+            self.array = array
+            (self.img_height, self.img_width) = array.shape[:2]
+            if height is None:
+                self.height = self.img_height
+            if width is None:
+                self.width = self.img_width
         self.pixel_click_callback = None
         self.content_type = mime_type
 
@@ -1316,6 +1327,11 @@ class jQueryImage(jQueryComponent):
 
     def change_array(self, array, url=True, scale=False, epsilon=1e-12):
         from PIL import Image
+        (self.img_height, self.img_width) = array.shape[:2]
+        self.array = array
+        if self.element is None:
+            # not displayed -- defer.
+            return
         m = array.min()
         M = array.max()
         if scale:
@@ -1338,8 +1354,6 @@ class jQueryImage(jQueryComponent):
             self.change_content_url(byt, mime_type)
         else:
             self.change_content(byt, mime_type)
-        (self.img_height, self.img_width) = array.shape[:2]
-        self.array = array
 
     def versioned_link(self):
         self.version += 1   # use versioning to foil browser caching.
@@ -1352,6 +1366,8 @@ class jQueryImage(jQueryComponent):
         #mgr.add_http_handler(self.filename, self.getter)
         gizmo._add_getter(self.filename, self.getter)
         self.resize(height=self.height, width=self.width)
+        if self.array is not None:
+            self.change_array(self.array)
 
 def content_url(bytes_content, mime_type):
     import base64
