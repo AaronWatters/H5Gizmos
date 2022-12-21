@@ -393,10 +393,33 @@ The resulting interface looks like this:
 
 <img src="Image1.png">
 
-### Loading an array into a blank image
 
-The `Image` implementation can also display
-numeric Python arrays as images.  First create a "blank"
+### Initializing an Image using a numpy array
+
+The content of an image can be initialized using a numpy array.
+The interaction below creates a numpy array and an Image display using the array.
+
+```Python
+import numpy as np
+from H5Gizmos import Image
+
+R = np.arange(100 * 79).reshape((100,79))
+I = np.zeros((100, 79, 3))
+I[:, :, 0] = 11 * (R % 23)
+I[:, :, 1] =  5 * (R % 37)
+I[:, :, 2] =  7 * (R % 19)
+
+Im = Image(array=I)
+await Im.show()
+```
+The resulting image looks like this:
+
+<img src="ImageArray.png">
+
+### Loading an array into an existing Image
+
+The `Image` implementation can also load
+numeric Python arrays as images.  The interaction below first creates a "blank"
 image:
 
 ```Python
@@ -404,7 +427,7 @@ Blank = Image(height=100, width=200)
 await Blank.show()
 ```
 
-then later load the image using the `change_array` method.
+then later loads the image using the `change_array` method.
 
 ```Python
 import numpy as np

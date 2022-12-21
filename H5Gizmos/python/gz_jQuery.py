@@ -65,6 +65,7 @@ class jQueryComponent(gz_components.Component):
         self.on_click = None
         self.cached_dom_element_reference = None
         self.class_list = []
+        self.event_name_to_callback_and_depth = {}
 
     def __repr__(self):
         def truncate(x):
@@ -172,9 +173,13 @@ class jQueryComponent(gz_components.Component):
             self.enable_tooltips()
         do(self.element.appendTo(self.container))
         self.configure_jQuery_element(self.element)
+        # handle deferred event callbacks
         # Set on_click after element has been configured -- order important for Button
         if self.radio_on_click is None:
             self.set_on_click(self.on_click)
+        e2c = self.event_name_to_callback_and_depth.copy()
+        for (event_name, (callback, to_depth)) in e2c.items():
+            self.on(event_name, callback, to_depth)
         result = self.container[0]
         self.cached_dom_element_reference = result
         return result
@@ -344,12 +349,18 @@ class jQueryComponent(gz_components.Component):
 
     def on(self, event_name, callback, to_depth=1):
         "When an event of this type happens to this object, invoke the callback."
-        do(self.element.on(event_name, callback), to_depth=to_depth)
+        self.event_name_to_callback_and_depth[event_name] = (callback, to_depth)
+        if self.element is not None:
+            do(self.element.on(event_name, callback), to_depth=to_depth)
         return self
 
     def off(self, event_name):
         "Cancel event callbacks of this type for this object."
-        do(self.element.off(event_name))
+        e2c = self.event_name_to_callback_and_depth
+        if event_name in e2c:
+            del e2c[event_name]
+        if self.element is not None:
+            do(self.element.off(event_name))
         return self
 
     def empty(self):
@@ -1327,10 +1338,10 @@ class jQueryImage(jQueryComponent):
 
     def change_array(self, array, url=True, scale=False, epsilon=1e-12):
         from PIL import Image
-        (self.img_height, self.img_width) = array.shape[:2]
-        self.array = array
         if self.element is None:
             # not displayed -- defer.
+            (self.img_height, self.img_width) = array.shape[:2]
+            self.array = array
             return
         m = array.min()
         M = array.max()
@@ -1354,6 +1365,8 @@ class jQueryImage(jQueryComponent):
             self.change_content_url(byt, mime_type)
         else:
             self.change_content(byt, mime_type)
+        (self.img_height, self.img_width) = array.shape[:2]
+        self.array = array
 
     def versioned_link(self):
         self.version += 1   # use versioning to foil browser caching.
