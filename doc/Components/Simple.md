@@ -472,6 +472,47 @@ The resulting image looks like this:
 
 <img src="rgb_image.png"/>
 
+### Pixel event callbacks
+
+Mouse events over an image that represents an array can
+provide the array index coordinates for the mouse location.
+The following example reports the array indices and array value
+for a mouse click over an array image.  The reported values appear
+in a text area below the image.
+
+```Python
+from H5Gizmos import Image, Stack, Text
+import numpy as np
+
+spiral_array = np.zeros((100, 100))
+for i in range(10000):
+    theta = i / 1000.0
+    r = i / 210.0
+    i = 50 + int(r * np.sin(theta))
+    j = 50 + int(r * np.cos(theta))
+    spiral_array[i:i+10, j:j+10] = 255
+    
+spiral_image = Image(array=spiral_array, height=300, width=300)
+info = Text("Click the image for more information.")
+dashboard = Stack([spiral_image, info])
+
+def click_callback(event):
+    column = event["pixel_column"]
+    row = event["pixel_row"]
+    value = spiral_array[row, column]
+    info.text(repr(dict(row=row, column=column, value=value)))
+
+spiral_image.on_pixel(click_callback, "click")
+
+await dashboard.show()
+```
+The resulting dashboard looks like this after a mouse click:
+
+<img src="spiral.png">
+
+The `on_pixel` method may associate callbacks to other mouse event
+types such as "mouseover" and "mousemove".
+
 ## `Plotter`
 
 `Plotter` components serve as context managers for capturing
