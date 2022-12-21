@@ -1047,6 +1047,20 @@ var H5Gizmos = {};
         }
     };
 
+    H5Gizmos.post_2d_canvas_image = function(end_point, dom_canvas, context2d, x, y, w, h, gizmo_translator) {
+        // Send the image data from the canvas to the parent in a POST request
+        context2d = context2d || dom_canvas.getContext("2d");
+        x = x || 0;
+        y = y || 0;
+        w = w || canvas.width;
+        h = h || canvas.height;
+        // default to global interface
+        gizmo_translator = gizmo_translator || H5GIZMO_INTERFACE;
+        var image_data = context2d.getImageData(x, y, w, h);
+        var json_metadata = {height: image_data.height, width: image_data.width};
+        gizmo_translator.post_binary_data(end_point, image_data.data, json_metadata);
+    };
+
     H5Gizmos.is_loaded = true;
 
 }) ();  // execute initialization in protected scope.

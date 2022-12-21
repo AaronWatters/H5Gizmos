@@ -10,6 +10,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
 
 (function () {
 
+    /* moved to H5Gizmos.js as generally useful
     H5Gizmos.post_2d_canvas_image = function(end_point, dom_canvas, context2d, x, y, w, h, gizmo_translator) {
         // Send the image data from the canvas to the parent in a POST request
         context2d = context2d || dom_canvas.getContext("2d");
@@ -23,7 +24,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API/Using_Screen
         var json_metadata = {height: image_data.height, width: image_data.width};
         gizmo_translator.post_binary_data(end_point, image_data.data, json_metadata);
     };
-
+    */
 
     // XXXX NOTE: This screen capture method only seems to work in recent versions of Chrome (not Firefox, Safari...)
     class ScreenCapture extends H5Gizmos.DeferredValue {
