@@ -95,6 +95,7 @@ async def get_gizmo(from_server=None, verbose=False, log_messages=False, title="
     Get a gizmo (the official way).  Set up a server iff needed.
     """
     from_server = _check_server(from_server, verbose=verbose)
+    await from_server.check_server_name_is_reachable()
     return from_server.gizmo(log_messages=log_messages, title=title)
 
 def _check_server(server=None, verbose=False):
@@ -120,6 +121,7 @@ def _check_server(server=None, verbose=False):
                 if verbose:
                     print("setting server prefix", [PREFIX_ENV_VAR, prefix])
                 set_url_prefix(prefix, server=server)
+        #server.check_server_name_is_reachable() -- but need to await...
     return server
 
 def set_url_prefix(proxy_prefix, server=None):
@@ -401,6 +403,7 @@ class GzServer:
             server = self.server
             port = self.port
             validator = ValidateServerConnection(server, port)
+            self.validator = validator
         await validator.future
         if not validator.succeeded:
             # fall back to localhost
@@ -526,7 +529,7 @@ class GzServer:
             if "print" not in args:
                 args["print"] = self.my_print
             # Start the validator (which delays immediately to permit server start)
-            H5Gizmos.schedule_task(self.check_server_name_is_reachable())
+            #H5Gizmos.schedule_task(self.check_server_name_is_reachable())
             await async_run(app, port=port, **args)
         except asyncio.CancelledError:
             self.status = "app has been cancelled,"
