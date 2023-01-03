@@ -35,6 +35,7 @@ STD_HTML_PAGE_TEMPLATE = """
 <!DOCTYPE html>
 <html>
     <head>
+    <meta charset="UTF-8">
 {HEAD}
     </head>
 
