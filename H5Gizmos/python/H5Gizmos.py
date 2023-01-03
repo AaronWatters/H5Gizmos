@@ -1005,7 +1005,6 @@ class ValueConverter:
         #np.float16: float,
         #np.float32: float,
         #np.float64: float,
-        #np.int: int,
         #np.int0: int,
         #np.int16: int,
         #np.int32: int,
