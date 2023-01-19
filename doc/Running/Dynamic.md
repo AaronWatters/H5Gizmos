@@ -439,6 +439,70 @@ Please see the
 hello curves
 </a> tutorial for a detailed interactive example usage of matplotlib in a Gizmo.
 
+## Opening a component in a new window or tab using `component.launcher_link`
+
+The `component.launcher_link` method creates a clickable link which opens a user interface
+to a sub-component in a new window or tab.  Below the assignment
+```Python
+link = main_component.launcher_link("More information about dogs.", info_launcher_function)
+```
+Generates a link with the text `More information about dogs` that will use the `info_launcher_function`
+callable to create a new component and present the interface for the component in a new window or
+tab (depending on how the user opens the link).
+
+Here is a silly example usage which presents a dog image and opens a "more info" tab when the user
+clicks a link.
+
+```Python
+from H5Gizmos import Html, Stack
+
+dog_page = """
+<div>
+<h3>This is a dog</h3>
+<img src="local_files/dog.png" width="200" height="200"/>
+</div>
+"""
+
+main_component = Html(dog_page)
+main_component.serve_folder("local_files", "./example_folder")
+
+# Initialize the main component
+await main_component.show()
+
+# Attach a "more info" link which presents more information in a new tab.
+more_info = """
+<div>
+<h3>Dog</h3>
+<h5>From Wikipedia, the free encyclopedia</h5>
+<p>The dog (Canis familiaris or Canis lupus familiaris) is a domesticated descendant of the wolf...</p>
+</div>
+"""
+
+def info_launcher_function():
+    return Html(more_info)
+
+link = main_component.launcher_link("More information about dogs.", info_launcher_function)
+main_component.add(link)
+```
+
+In a Jupyter notebook the above code creates a user interface which looks like this:
+
+<img src="launch.png">
+
+In this case the user opened the link into a new window.
+
+The link created using
+
+```Python
+link = component.launcher_link(anchor_text, launcher_function)
+```
+
+Will use the `launcher_function` to create a new component for every click on the link.
+It is possible (but not yet documented) to launch components in new tabs in other ways --
+please "use the source, Luke" if you want to use some other method.  At this writing
+the `component.launcher_link` will fail if the `component` is not actively displayed when
+the method is called.
+
 <a href="./README.md">
 Return to introduction to running a Gizmo.
 </a>
