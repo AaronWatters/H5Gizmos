@@ -330,6 +330,11 @@ class jQueryComponent(gz_components.Component):
                 do(self.element.removeClass(class_string))
         return self
 
+    def launcher_link(self, text, component_maker):
+        from . import gizmo_launch_url
+        launcher = gizmo_launch_url.Launcher(self, component_maker)
+        return launcher.anchor(text)
+
     def resize(self, width=None, height=None):
         """
         Set width and/or height of element.
