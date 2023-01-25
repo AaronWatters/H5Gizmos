@@ -956,39 +956,55 @@ class ValidateServerConnection:
     def __repr__(self) -> str:
         return "V" + repr([self.server, self.port, self.status, self.succeeded])
 
-    async def validate(self):
+    async def validate(self, verbose=False):
+        from contextlib import redirect_stderr
+        import io
+        if verbose:
+            print("starting connection validation")
         future = self.future
         now = str(time.time())
         server = self.server
         port = self.port
         url = "http://%s:%s/ping?now=%s" % (server, port, now)
-        try:
-            self.status = "delaying"
-            await asyncio.sleep(self.delay)  # allow time for server to start (?)
-            self.status = "preparing"
-            self.timer = self.loop.create_task(self.timeout())
-            # https://www.twilio.com/blog/asynchronous-http-requests-in-python-with-aiohttp
-            # https://docs.aiohttp.org/en/stable/client_reference.html
-            self.status = "requesting"
-            async with aiohttp.ClientSession() as client:
-                async with client.get(url) as resp:
-                    status = resp.status
-                    bytes = await resp.read()
-                    text = bytes.decode("utf-8")
-                    self.status = "responded"
-                    future.set_result((status, text))
-                    self.succeeded = True
-                    self.response = resp
-        except asyncio.CancelledError:
-            self.status = "cancelled"
-        except Exception as e:
-            self.status = repr(e)
-        if not future.done():
-            future.set_result(False)
+        self.my_stderr = io.StringIO()
+        with redirect_stderr(self.my_stderr):
+            try:
+                self.status = "delaying"
+                await asyncio.sleep(self.delay)  # allow time for server to start (?)
+                self.status = "preparing"
+                self.timer = self.loop.create_task(self.timeout())
+                # https://www.twilio.com/blog/asynchronous-http-requests-in-python-with-aiohttp
+                # https://docs.aiohttp.org/en/stable/client_reference.html
+                self.status = "requesting"
+                async with aiohttp.ClientSession() as client:
+                    async with client.get(url) as resp:
+                        status = resp.status
+                        bytes = await resp.read()
+                        text = bytes.decode("utf-8")
+                        self.status = "responded"
+                        future.set_result((status, text))
+                        if verbose:
+                            print("validation succeeded")
+                        self.succeeded = True
+                        self.response = resp
+            except asyncio.CancelledError:
+                if verbose:
+                    print("validation cancelled.")
+                self.status = "cancelled"
+            except Exception as e:
+                self.status = repr(e)
+                if verbose:
+                    print("validation exception", e)
+            if not future.done():
+                if verbose:
+                    print("validation defaults to fail.")
+                future.set_result(False)
 
-    async def timeout(self):
+    async def timeout(self, verbose=False):
         future = self.future
         await asyncio.sleep(self.wait)
         self.task.cancel()
         if not future.done():
+            if verbose:
+                print("validation future timeout.")
             future.set_result(False)  
