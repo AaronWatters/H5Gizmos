@@ -440,16 +440,54 @@ class Component:
         data_bytes = bytearray(body)
         return np.frombuffer(data_bytes, dtype=dtype)
 
-    async def get_canvas_image_array(self, canvas_reference, x=None, y=None, w=None, h=None, timeout=60):
+    async def get_webgl_image_array(
+        self,
+        context_reference,
+        x=None, 
+        y=None, 
+        w=None, 
+        h=None,
+        timeout=60,
+    ):
+        gizmo = self.gizmo
+        postback = gz_get_blob.BytesPostBack()
+        endpoint = H5Gizmos.new_identifier("webgl_image_endpoint")
+        gizmo._add_getter(endpoint, postback)
+        try:
+            do(gizmo.H5Gizmos.post_webgl_canvas_image(
+                endpoint,
+                context_reference,
+                x, y, w, h))
+            data = await postback.wait_for_post(timeout=timeout, on_timeout=self.on_timeout)
+        finally:
+            gizmo._remove_getter(endpoint)
+        return self.array_from_canvas_data(data)
+
+    async def get_canvas_image_array(
+        self, 
+        canvas_reference,
+        x=None, 
+        y=None, 
+        w=None, 
+        h=None,
+        context_reference=None,
+        timeout=60):
         gizmo = self.gizmo
         postback = gz_get_blob.BytesPostBack()
         endpoint = H5Gizmos.new_identifier("canvas_image_endpoint")
         gizmo._add_getter(endpoint, postback)
         try:
-            do(gizmo.H5Gizmos.post_2d_canvas_image(endpoint, canvas_reference, x, y, w, h))
+            do(gizmo.H5Gizmos.post_2d_canvas_image(
+                endpoint, 
+                canvas_reference, 
+                context_reference,
+                x, y, w, h))
             data = await postback.wait_for_post(timeout=timeout, on_timeout=self.on_timeout)
         finally:
             gizmo._remove_getter(endpoint)
+        return self.array_from_canvas_data(data)
+
+    def array_from_canvas_data(self, data):
         (body, query) = data
         data_bytes = bytearray(body)
         byte_array = np.frombuffer(data_bytes, dtype=np.uint8)
