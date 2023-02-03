@@ -1047,18 +1047,37 @@ var H5Gizmos = {};
         }
     };
 
-    H5Gizmos.post_2d_canvas_image = function(end_point, dom_canvas, context2d, x, y, w, h, gizmo_translator) {
+    H5Gizmos.post_2d_canvas_image = function(
+        end_point, dom_canvas, context2d, x, y, w, h, gizmo_translator) {
         // Send the image data from the canvas to the parent in a POST request
         context2d = context2d || dom_canvas.getContext("2d");
         x = x || 0;
         y = y || 0;
-        w = w || canvas.width;
-        h = h || canvas.height;
+        w = w || dom_canvas.width;
+        h = h || dom_canvas.height;
         // default to global interface
         gizmo_translator = gizmo_translator || H5GIZMO_INTERFACE;
         var image_data = context2d.getImageData(x, y, w, h);
         var json_metadata = {height: image_data.height, width: image_data.width};
         gizmo_translator.post_binary_data(end_point, image_data.data, json_metadata);
+    };
+
+    H5Gizmos.post_webgl_canvas_image = function(
+        end_point, gl_context, x, y, w, h, gizmo_translator)
+    {
+        debugger;
+        var gl = gl_context;
+        x = x || 0;
+        y = y || 0;
+        w = w || (gl.drawingBufferWidth - x);
+        h = h || (gl.drawingBufferHeight - y);
+        // default to global interface
+        gizmo_translator = gizmo_translator || H5GIZMO_INTERFACE;
+        // https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/readPixels
+        const pixels = new Uint8Array(w * h * 4);
+        gl.readPixels(x, y, w, h, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        var json_metadata = {height: h, width: w};
+        gizmo_translator.post_binary_data(end_point, pixels, json_metadata);
     };
 
     H5Gizmos.is_loaded = true;
