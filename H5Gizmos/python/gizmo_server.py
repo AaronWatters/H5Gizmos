@@ -27,6 +27,9 @@ PROCESS_SHARED_GIZMO_SERVER = None
 # Environment variable used to construct proxied urls.
 PREFIX_ENV_VAR = "GIZMO_LINK_PREFIX"
 
+# Environment variable indicating which port to use.
+USE_PORT_ENV_VAR = "GIZMO_USE_PORT"
+
 # set/unset to enable/disable auto detection of prefix
 DETECT_PREFIX_ENV_VAR = True
 
@@ -183,7 +186,7 @@ def choose_port0(limit=1000):
         (DEFAULT_PORT, DEFAULT_PORT+limit)))
 
 
-def choose_port():
+def choose_port1():
     """
     Copied from repo2docker...
     Hacky method to get a free random port on local host
@@ -194,6 +197,36 @@ def choose_port():
     port = s.getsockname()[1]
     s.close()
     return port
+
+def choose_port(verbose=True):
+    """
+    Try to use port indicated by USE_PORT_ENV_VAR, or fall back to any free port.
+    """
+    port = None
+    port_str = os.environ.get(USE_PORT_ENV_VAR)
+    #("DEBUG:", USE_PORT_ENV_VAR, repr(port_str))
+    if port_str is not None:
+        try:
+            port_int = int(port_str)
+        except Exception as e:
+            if verbose:
+                print("Invalid port int ", USE_PORT_ENV_VAR, "value", repr(port_str))
+        else:
+            if is_port_in_use(port_int):
+                if verbose:
+                    print("Port int ", USE_PORT_ENV_VAR, "value", repr(port_str), "is not available.")
+            else:
+                port = port_int
+        if verbose and port is None:
+            print("Failed to use", USE_PORT_ENV_VAR, "value", repr(port_str), "falling back to random port.")
+        else:
+            port = port_int
+    if port is not None:
+        #("DEBUG: using specified port", port)
+        return port
+    else:
+        #("DEBUG: Using random port.")
+        return choose_port1()
 
 # use the old version:
 #choose_port = choose_port0
