@@ -16,7 +16,7 @@ from H5Gizmos.python import gizmo_server
 
 try:
     assert len(sys.argv) <= 1, "No arguments expected."
-    gizmo_server.print_reachable_server_name()
+    gizmo_server.print_reachable_server_name(verbose=False)
 except Exception as e:
     print ("Exception: ", e)
     print (usage)

@@ -181,9 +181,9 @@ def print_reachable_server_name(verbose=True):
     if verbose:
         print("Validating connection to", repr(local_ip), "port", random_port)
     server = GzServer(server=local_ip, port=random_port)
-    server.verbose = True
+    server.verbose = verbose
     #_check_server(server, verbose=verbose)
-    server.run_in_task()
+    server.run_in_task(log=None)
     async def print_task():
         # allow server to start
         await asyncio.sleep(0.1)
@@ -570,13 +570,13 @@ class GzServer:
         self.status = "done standalone"
         return result
 
-    def run_in_task(self, app_factory=web.Application, async_run=web._run_app, **args):
+    def run_in_task(self, app_factory=web.Application, async_run=web._run_app, log=True, **args):
         loop = get_or_create_event_loop()
         app = self.get_app(app_factory=app_factory)
         self.status = "making runner"
         if self.verbose:
             print("making runner")
-        runner = self.make_runner(app, async_run=async_run, **args)
+        runner = self.make_runner(app, async_run=async_run, log=log, **args)
         if self.verbose:
             print("creating task")
         task = loop.create_task(runner)
@@ -605,7 +605,7 @@ class GzServer:
             with self.my_stdout():
                 print(*args, **kwargs)
           
-    async def make_runner(self, app, async_run=web._run_app, **args):
+    async def make_runner(self, app, async_run=web._run_app, log=True, **args):
         self.status = "starting runner"
         #app = self.get_app()
         try:
@@ -617,12 +617,19 @@ class GzServer:
             else:
                 #raise ValueError("didn't choose port???")
                 pass
-            self.my_print ("runner using port", port)
+            #self.my_print ("runner using port", port)
             if "print" not in args:
                 args["print"] = self.my_print
             # Start the validator (which delays immediately to permit server start)
             #H5Gizmos.schedule_task(self.check_server_name_is_reachable())
-            await async_run(app, port=port, **args)
+            if log:
+                #print("running with log")
+                await async_run(app, port=port, **args)
+            else:
+                #print("running with no log")
+                await async_run(
+                    app, port=port, 
+                    access_log=None, print=None, **args)
         except asyncio.CancelledError:
             self.status = "app has been cancelled,"
             #pr(self.status)
