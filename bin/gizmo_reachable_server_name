@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+
+usage = """
+
+USAGE:
+======
+
+% gizmo_reachable_server_name
+
+Choose the most useful reachable server name which can be inferred
+from available interfaces.
+"""
+
+import sys
+from H5Gizmos.python import gizmo_server
+
+try:
+    assert len(sys.argv) <= 1, "No arguments expected."
+    gizmo_server.print_reachable_server_name()
+except Exception as e:
+    print ("Exception: ", e)
+    print (usage)
+    raise

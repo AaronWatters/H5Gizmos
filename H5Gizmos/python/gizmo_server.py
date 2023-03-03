@@ -158,6 +158,29 @@ def is_port_in_use(port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('localhost', port)) == 0
 
+async def get_reachable_server_name():
+    """
+    Choose the most useful reachable server name which can be inferred
+    from available interfaces.
+    For use in external scripts, for example to pass to containers.
+    """
+    local_ip = get_local_ip()
+    random_port = choose_port1()
+    validator = ValidateServerConnection(local_ip, random_port)
+    await validator.future
+    if validator.succeeded:
+        return local_ip
+    return "localhost" # fall back default
+
+def print_reachable_server_name():
+    """
+    Print the most useful reachable server name.
+    External script entry point.
+    """
+    async def print_task():
+        name = await get_reachable_server_name()
+        print(name)
+    asyncio.run(print_task())
 
 def get_local_ip(port=None):
     hostname = socket.gethostname()
