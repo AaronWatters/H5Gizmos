@@ -30,6 +30,11 @@ PREFIX_ENV_VAR = "GIZMO_LINK_PREFIX"
 # Environment variable indicating which port to use.
 USE_PORT_ENV_VAR = "GIZMO_USE_PORT"
 
+# Environment variable indicating which server address to use (eg, "localhost")
+# Setting this variable will disable reachability testing
+# because an external server name may not be reachable from within a container, for example.
+USE_SERVER_ADDRESS_VAR = "GIZMO_USE_SERVER_ADDRESS"
+
 # set/unset to enable/disable auto detection of prefix
 DETECT_PREFIX_ENV_VAR = True
 
@@ -431,6 +436,17 @@ class GzServer:
         self.validator = None
 
     async def check_server_name_is_reachable(self):
+        """
+        Adjust server address.
+        Use environment override if set.
+        Otherwise if the current choice is not reachable use "localhost".
+        """
+        # Override server address and don't test reachability
+        # if the USE_SERVER_ADDRESS_VAR environment variable is set.
+        server_str = os.environ.get(USE_SERVER_ADDRESS_VAR)
+        if server_str is not None and len(server_str) > 0:
+            self.server = server_str
+            return True
         validator = self.validator
         if validator is None:
             server = self.server
