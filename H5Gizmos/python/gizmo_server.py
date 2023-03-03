@@ -622,11 +622,13 @@ class GzServer:
                 args["print"] = self.my_print
             # Start the validator (which delays immediately to permit server start)
             #H5Gizmos.schedule_task(self.check_server_name_is_reachable())
-            if log:
-                #print("running with log")
+            if log or self.verbose:
+                if self.verbose:
+                    print("running with log")
                 await async_run(app, port=port, **args)
             else:
-                #print("running with no log")
+                if self.verbose:
+                    print("running with no log")
                 await async_run(
                     app, port=port, 
                     access_log=None, print=None, **args)
