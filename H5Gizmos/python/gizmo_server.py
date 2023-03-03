@@ -158,29 +158,49 @@ def is_port_in_use(port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('localhost', port)) == 0
 
-async def get_reachable_server_name():
+async def get_reachable_server_name(local_ip, random_port, verbose=True):
     """
     Choose the most useful reachable server name which can be inferred
     from available interfaces.
     For use in external scripts, for example to pass to containers.
     """
-    local_ip = get_local_ip()
-    random_port = choose_port1()
-    validator = ValidateServerConnection(local_ip, random_port)
+    validator = ValidateServerConnection(local_ip, random_port, verbose=verbose)
     await validator.future
     if validator.succeeded:
         return local_ip
     return "localhost" # fall back default
 
-def print_reachable_server_name():
+def print_reachable_server_name(verbose=True):
     """
     Print the most useful reachable server name.
     External script entry point.
     """
+    import io, sys
+    local_ip = get_local_ip()
+    random_port = choose_port1()
+    if verbose:
+        print("Validating connection to", repr(local_ip), "port", random_port)
+    server = GzServer(server=local_ip, port=random_port)
+    server.verbose = True
+    #_check_server(server, verbose=verbose)
+    server.run_in_task()
     async def print_task():
-        name = await get_reachable_server_name()
+        # allow server to start
+        await asyncio.sleep(0.1)
+        if verbose:
+            print("print_task started.")
+        name = await get_reachable_server_name(local_ip, random_port, verbose=verbose)
+        if verbose:
+            print("print task got", repr(name))
         print(name)
-    asyncio.run(print_task())
+        if verbose:
+            print("print task exitting with name", repr(name))
+        sys.stdout = sys.stderr = io.StringIO()
+        sys.exit()
+    loop = get_or_create_event_loop()
+    #asyncio.run(print_task())
+    H5Gizmos.schedule_task(print_task())
+    run_until_exit()
 
 def get_local_ip(port=None):
     hostname = socket.gethostname()
@@ -1031,6 +1051,7 @@ class ValidateServerConnection:
     async def validate(self, verbose=False):
         from contextlib import redirect_stderr
         import io
+        verbose = verbose or self.verbose
         if verbose:
             print("starting connection validation")
         future = self.future
