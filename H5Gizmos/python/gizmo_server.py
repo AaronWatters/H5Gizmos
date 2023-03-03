@@ -176,6 +176,10 @@ def print_reachable_server_name(verbose=True):
     External script entry point.
     """
     import io, sys
+    # work around some sort of anomaly with printing for now, ignore stdout...
+    stdout = sys.stdout
+    if not verbose:
+        sys.stdout = io.StringIO()
     local_ip = get_local_ip()
     random_port = choose_port1()
     if verbose:
@@ -183,7 +187,7 @@ def print_reachable_server_name(verbose=True):
     server = GzServer(server=local_ip, port=random_port)
     server.verbose = verbose
     #_check_server(server, verbose=verbose)
-    server.run_in_task(log=None)
+    server.run_in_task(log=True)
     async def print_task():
         # allow server to start
         await asyncio.sleep(0.1)
@@ -192,6 +196,7 @@ def print_reachable_server_name(verbose=True):
         name = await get_reachable_server_name(local_ip, random_port, verbose=verbose)
         if verbose:
             print("print task got", repr(name))
+        sys.stdout = stdout
         print(name)
         if verbose:
             print("print task exitting with name", repr(name))
@@ -622,16 +627,18 @@ class GzServer:
                 args["print"] = self.my_print
             # Start the validator (which delays immediately to permit server start)
             #H5Gizmos.schedule_task(self.check_server_name_is_reachable())
-            if log or self.verbose:
+            if log:
                 if self.verbose:
                     print("running with log")
                 await async_run(app, port=port, **args)
             else:
                 if self.verbose:
                     print("running with no log")
+                def ignore_print(*args, **kwargs):
+                    pass
                 await async_run(
                     app, port=port, 
-                    access_log=None, print=None, **args)
+                    access_log=None, print=ignore_print, **args)
         except asyncio.CancelledError:
             self.status = "app has been cancelled,"
             #pr(self.status)
