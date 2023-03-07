@@ -118,12 +118,14 @@ server may be started using the shell command `gizmo_link` of form
 ```bash
 $ gizmo_link port base_url prefix
 ```
-For example
+For example, if I open a remote shell on `rusty` in my local network and start
 ```bash
 $ gizmo_link 9876 / GizmoLink
 ```
-Use this command to verify that <a href="./Scripts.md">Gizmo script entry points</a> 
-work properly in the server interface, for example.
+Then I can direct a browser to `http://rusty:9876/` to get to the GizmoLink
+start page.
+I can use the start page to verify that <a href="./Scripts.md">Gizmo script entry points</a> 
+work properly in the server interface.
 
 
 <a href="./README.md">
