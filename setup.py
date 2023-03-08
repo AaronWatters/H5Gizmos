@@ -1,7 +1,7 @@
 from setuptools import setup
 
 url = "https://github.com/AaronWatters/H5Gizmos"
-version = "0.1.9"
+version = "0.1.10"
 readme = open('README.md').read()
 
 setup(
@@ -36,6 +36,7 @@ setup(
         "bin/gizmo_script",
         "bin/gz_examine",
         "bin/json_gizmo",
+        "bin/gizmo_reachable_server_name",
     ],
     package_data={
         "H5Gizmos": [
