@@ -192,17 +192,20 @@ process and introduces some special methods for large data transfers.
 
 <h2>
 <a href="GizmoLink/README.md">
-Gizmo Scripts and the GizmoLink Proxy Server
+Containers, Gizmo Scripts and the GizmoLink Proxy Server
 </a>
 </h2>
 
 The 
 <a href="GizmoLink/README.md">
-Gizmo Scripts and the GizmoLink Proxy Server
+Containers, Gizmo Scripts and the GizmoLink Proxy Server
 </a>
- section discusses how to define and launch `H5Gizmos.scripts` entry points
- and the `GizmoLink` proxy server which launches those entry points within a
- Jupyter server instance.
+ section discusses how to run Gizmo interfaces in internet cloud environments.
+H5Gizmo interfaces running in containers can display on remote web browsers and 
+the `GizmoLink` proxy server helps user web browsers
+display Gizmo user interfaces where the parent process runs on a remote machine.
+The section also describes how to declare Gizmo script entry points that can be
+advertized and launched by the proxy server.
 
 
 

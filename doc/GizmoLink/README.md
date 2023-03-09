@@ -1,10 +1,22 @@
 
-# Gizmo Scripts and the GizmoLink Proxy Server
+# Containers, Gizmo Scripts and the GizmoLink Proxy Server
 
-This section discusses the `GizmoLink` proxy server which helps user web browsers
+This section discusses how to run Gizmo interfaces in internet cloud environments.
+H5Gizmo interfaces running in containers can display on remote web browsers and 
+the `GizmoLink` proxy server helps user web browsers
 display Gizmo user interfaces where the parent process runs on a remote machine.
 The section also describes how to declare Gizmo script entry points that can be
 advertized and launched by the proxy server.
+
+<h2>
+<a href="Containers.md">
+Running Gizmos in Containers
+</a>
+</h2>
+
+A process running in a Docker container can present an H5Gizmo user interface
+if the container is configured to connect the gizmo server to the correct port
+and to use the correct server name.
 
 <h2>
 <a href="GizmoLink.md">
