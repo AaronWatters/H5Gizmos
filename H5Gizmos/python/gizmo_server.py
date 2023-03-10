@@ -132,6 +132,12 @@ def _check_server(server=None, verbose=False):
         #server.check_server_name_is_reachable() -- but need to await...
     return server
 
+def running_under_gizmo_link():
+    """
+    Detect whether the process was started by the gizmo_link proxy server.
+    """
+    return os.environ.get(PREFIX_ENV_VAR) is not None
+
 def set_url_prefix(proxy_prefix, server=None):
     """
     Specify the proxy prefix the server should use.
