@@ -42,5 +42,5 @@ The implementatoin of the curves diagram Gizmo script entry point.
 
 <hr>
 <a href="../Containers.md">
-Return to ../Containers.md<
+Return to ../Containers.md
 </a>
