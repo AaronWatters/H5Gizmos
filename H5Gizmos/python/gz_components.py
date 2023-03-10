@@ -134,6 +134,12 @@ class Component:
         proxy=False,
         ):
         if auto_start:
+            # override auto_start if running under gizmo_link server
+            if gizmo_server.running_under_gizmo_link():
+                if verbose:
+                    print("Overriding auto start inside gizmo_link.")
+                auto_start = False
+        if auto_start:
             H5Gizmos.check_browser()
         in_notebook = gizmo_server.isnotebook()
         if verbose:
