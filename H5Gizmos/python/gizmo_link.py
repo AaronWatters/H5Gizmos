@@ -214,6 +214,11 @@ class GizmoLink:
         module = query.get("module")
         script = query.get("script")
         prefix = query.get("prefix")
+        server = query.get("server")
+        port = query.get("port")
+        # Try to infer the prefix if possible.
+        if prefix is None and server is not None and port is not None:
+            prefix = "http://%s:%s/" % (server, port)
         json_parameters = self.json_parameters(
             module_name=module, 
             script_name=script, 
