@@ -76,7 +76,14 @@ class Component:
             await task()
 
     def shutdown_on_unload(self, gizmo):
-        do(gizmo.window.addEventListener("unload", self.shutdown_parent_only), to_depth=1)
+        #do(gizmo.window.addEventListener("unload", self.shutdown_parent_only), to_depth=1)
+        self.on_shutdown(self.shutdown_parent_only)
+
+    def on_shutdown(self, callback, gizmo=None):
+        if gizmo is None:
+            gizmo = self.gizmo
+        assert gizmo is not None, "No gizmo attached -- cannot add listener."
+        do(gizmo.window.addEventListener("unload", callback), to_depth=1)
 
     _icon_path = "../static/icon.png"
     _icon_content_type = "image/png"
@@ -129,9 +136,10 @@ class Component:
         auto_start=True, 
         verbose=True, 
         log_messages=False, 
-        close_button=False,
+        #close_button=False,
         await_start=True,
         proxy=False,
+        shutdown_on_close=True,
         ):
         if auto_start:
             # override auto_start if running under gizmo_link server
@@ -145,14 +153,14 @@ class Component:
         if verbose:
             print("Display gizmo component in new browser window.")
         gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages, title=title)
-        if close_button:
-            gizmo._insert_html('<button onclick="self.close()">Close</button>')
+        #if close_button:
+        #    gizmo._insert_html('<button onclick="self.close()">Close</button>')
         self.prepare_application(gizmo)
         if verbose:
             print("   entry_url=", gizmo._entry_url(proxy=proxy))
         #if close_button:
         #    gizmo._insert_html('<button onclick="self.close()">Close</button>')
-        if not in_notebook:
+        if shutdown_on_close and not in_notebook:
             self.shutdown_on_unload(gizmo)
         self.add_std_icon(gizmo)
         if auto_start:
@@ -161,7 +169,15 @@ class Component:
             if await_start:
                 await gizmo._show_start_link(proxy=proxy)
 
-    async def link(self, title="Gizmo", verbose=False, log_messages=False, await_start=True, proxy=False):
+    async def link(
+            self, 
+            title="Gizmo",
+            verbose=False, 
+            log_messages=False, 
+            await_start=True, 
+            proxy=False,
+            shutdown_on_close=True,
+            ):
         await self.browse(
             title=title,
             auto_start=False, 
@@ -169,6 +185,7 @@ class Component:
             log_messages=log_messages,
             await_start=await_start,
             proxy=proxy,
+            shutdown_on_close=shutdown_on_close,
             )
 
     async def has_started(self):
