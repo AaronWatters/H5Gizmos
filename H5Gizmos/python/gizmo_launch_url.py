@@ -1,6 +1,6 @@
 
 from .gizmo_server import FileGetter, STDInterface, get_gizmo
-from .H5Gizmos import new_identifier
+from H5Gizmos import new_identifier
 from .gz_jQuery import Html
 
 class LaunchGizmoAndRedirect(FileGetter):

@@ -106,7 +106,8 @@ completion in a subtask.
 from aiohttp import web
 import aiohttp
 import asyncio
-from .H5Gizmos import schedule_task
+#from .H5Gizmos import schedule_task
+from .gz_parent_protocol import schedule_task
 from .gizmo_script_support import GIZMO_SCRIPT
 import os
 import json
@@ -444,7 +445,8 @@ class ScriptWatcher:
         link_timeout=10,
         verbose=True,
         ):
-        from .H5Gizmos import make_future
+        #from .H5Gizmos import make_future
+        from .gz_parent_protocol import make_future
         self.module_name = module_name
         self.script_name = script_name
         self.server_prefix = server_prefix
@@ -463,7 +465,7 @@ class ScriptWatcher:
         """
         Start the script and await/return the start url after a short delay to make sure the script is ready.
         """
-        from .H5Gizmos import schedule_task
+        #from .H5Gizmos import schedule_task
         schedule_task(self.run_script())
         url = await self.link_future
         if delay is not None:
@@ -488,7 +490,7 @@ class ScriptWatcher:
         return "".join(L)
 
     async def run_script(self):
-        from .H5Gizmos import schedule_task
+        #from .H5Gizmos import schedule_task
         from .gizmo_server import PREFIX_ENV_VAR
         env = os.environ.copy()
         env[PREFIX_ENV_VAR] = self.server_prefix

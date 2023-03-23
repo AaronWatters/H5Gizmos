@@ -3,8 +3,9 @@ import numpy as np
 from H5Gizmos.python import gizmo_server
 #from H5Gizmos.python.gz_resources import MISC_OPERATIONS_TEMPLATE
 from . import gz_components
-from . import H5Gizmos
-from .H5Gizmos import do, get, schedule_task
+#from . import H5Gizmos
+from . import gz_parent_protocol as H5Gizmos
+from .gz_parent_protocol import do, get, schedule_task
 import html
 import io
 import asyncio
@@ -1516,7 +1517,7 @@ Shelf = FlexRow
 # Tests and Demos:
 
 def hello_jquery(message="<h2>Hello world: click me.</h2>", auto_start=False):
-    from .H5Gizmos import do
+    #from .H5Gizmos import do
     E = jQueryComponent("initializing jquery component.")
     E.counter = 0
 

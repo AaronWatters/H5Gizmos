@@ -1,5 +1,6 @@
 
-from . import H5Gizmos
+#from . import H5Gizmos
+from . import gz_parent_protocol as H5Gizmos
 #from . import gz_resources
 
 from aiohttp import web

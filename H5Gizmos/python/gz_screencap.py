@@ -8,7 +8,8 @@ from ..python import gz_jQuery
 from .. import do, get, schedule_task
 from .gz_tools import get_snapshot_array, get_snapshot_arrays
 from .gz_get_blob import BytesPostBack
-from . import H5Gizmos
+#from . import H5Gizmos
+from . import gz_parent_protocol as H5Gizmos
 import numpy as np
 from imageio import imsave, mimsave
 #import pyperclip  -- problematic install!

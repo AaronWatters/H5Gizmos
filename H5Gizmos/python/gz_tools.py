@@ -38,7 +38,7 @@ async def use_proxy():
     "Harden proxy URL paths in a Jupyter notebook, for example inside Binder."
     from .gz_jQuery import Html
     from .gizmo_server import set_url_prefix, PREFIX_ENV_VAR
-    from .H5Gizmos import get
+    from H5Gizmos import get
     msg = Html("<h4>Hardening GizmoLink proxy access</h4>")
     await msg.iframe(proxy=True)
     # eg:

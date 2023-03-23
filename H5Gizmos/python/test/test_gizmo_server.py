@@ -11,7 +11,8 @@ import asyncio
 import aiohttp
 from aiohttp import web
 
-from H5Gizmos.python import H5Gizmos
+#from H5Gizmos.python import H5Gizmos
+from H5Gizmos.python import gz_parent_protocol as H5Gizmos
 
 from H5Gizmos.python.gizmo_server import (
     GzServer,

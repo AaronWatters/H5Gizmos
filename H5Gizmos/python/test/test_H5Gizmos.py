@@ -9,7 +9,7 @@ import unittest
 import numpy as np
 import json
 
-from H5Gizmos.python.H5Gizmos import (
+from H5Gizmos.python.gz_parent_protocol import (
     Gizmo, 
     GZ,
     GizmoLiteral,

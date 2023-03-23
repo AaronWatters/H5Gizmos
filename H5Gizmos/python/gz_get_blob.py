@@ -4,7 +4,8 @@ from a gizmo child process.
 """
 
 from . import gizmo_server
-from . import H5Gizmos
+#from . import H5Gizmos
+from . import gz_parent_protocol as H5Gizmos
 import json
 import urllib.parse
 

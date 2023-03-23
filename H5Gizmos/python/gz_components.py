@@ -8,7 +8,8 @@ Composable gizmo factories.
 #from numpy.lib.function_base import _ARGUMENT
 from H5Gizmos import do, get, name, run, get_gizmo, schedule_task
 from . import gizmo_server
-from . import H5Gizmos
+#from . import H5Gizmos
+from . import gz_parent_protocol as H5Gizmos
 from . import gz_get_blob
 import numpy as np
 import asyncio

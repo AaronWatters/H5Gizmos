@@ -1,6 +1,6 @@
 
 from . import gz_jQuery
-from .H5Gizmos import do, get, schedule_task
+from .gz_parent_protocol import do, get, schedule_task
 
 class Plot(gz_jQuery.jQueryComponent):
 
