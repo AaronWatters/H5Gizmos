@@ -77,7 +77,7 @@ class Component:
 
     def shutdown_on_unload(self, gizmo):
         #do(gizmo.window.addEventListener("unload", self.shutdown_parent_only), to_depth=1)
-        self.on_shutdown(self.shutdown_parent_only)
+        self.on_shutdown(self.shutdown_parent_only, gizmo=gizmo)
 
     def on_shutdown(self, callback, gizmo=None):
         if gizmo is None:
