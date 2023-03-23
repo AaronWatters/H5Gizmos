@@ -47,8 +47,16 @@ class ChatMember:
     async def startup(self):
         started = await self.dashboard.has_started()
         assert started, self.name + " failed to start."
+        self.dashboard.on_shutdown(self.leave)
         self.controller.post_message("<em> %s joins </em>" % self.name)
         self.controller.update_all_chatters()
+
+    def leave(self, *ignored):
+        import sys
+        self.controller.chatters.remove(self)
+        self.controller.post_message("<em> %s leaves </em>" % self.name)
+        if len(self.controller.chatters) < 1:
+            sys.exit()
 
 class ChatController:
 
@@ -68,8 +76,13 @@ class ChatController:
             chatter.update_messages(messages)
 
     async def start_chatters(self):
+        print("Starting chatters, please use CONTROL-C to exit.")
         for chatter in self.chatters:
-            await chatter.dashboard.link(verbose=False, await_start=False)
+            await chatter.dashboard.link(
+                verbose=False, 
+                await_start=False,
+                shutdown_on_close=False,
+                )
             print()
             print("chatter", chatter.name, "available at", chatter.dashboard.entry_url())
             print()
