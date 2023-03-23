@@ -1,4 +1,10 @@
 
+"""
+This is an example of an H5Gizmo which provides two interface entry points.
+Two ChatMembers display in different clients, chatting with eachother
+via a controller.
+"""
+
 from H5Gizmos import Stack, Button, LabelledInput, Text, Html, serve, schedule_task, Template
 
 class ChatMember:
