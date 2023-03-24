@@ -2,6 +2,18 @@
 from .gizmo_server import FileGetter, STDInterface, get_gizmo
 from H5Gizmos import new_identifier
 from .gz_jQuery import Html
+import traceback
+import html
+
+ERR_TEMPLATE = """
+<p>
+Exception encountered when creating component to launch:
+</p>
+
+<pre>
+%s
+</pre>
+"""
 
 class LaunchGizmoAndRedirect(FileGetter):
 
@@ -13,7 +25,10 @@ class LaunchGizmoAndRedirect(FileGetter):
 
     async def handle_get(self, info, request, interface=STDInterface):
         #redirect_url = "https://www.yahoo.com"
-        component = self.component_maker()
+        try:
+            component = self.component_maker()
+        except:
+            return self.error_response(interface)
         gizmo = await get_gizmo(title=self.title)
         component.prepare_application(gizmo)
         nonce = new_identifier("N")
@@ -28,7 +43,13 @@ class LaunchGizmoAndRedirect(FileGetter):
         response.headers["location"] = redirect_url
         response.headers["Cache-Control"] = "no-store"
         return response
-
+    
+    def error_response(self, interface):
+        err_str = traceback.format_exc()
+        err_html = html.escape(err_str)
+        err_fmt = ERR_TEMPLATE % (err_html,)
+        response = interface.respond(body=err_fmt.encode("utf8"), content_type="text/html")
+        return response
 
 def add_launcher(to_gizmo, component_maker, filename=None, parent_component=None):
     if filename is None:
