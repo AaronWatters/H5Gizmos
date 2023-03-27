@@ -2,6 +2,7 @@
 from .gizmo_server import FileGetter, STDInterface, get_gizmo
 from H5Gizmos import new_identifier
 from .gz_jQuery import Html
+from .gz_parent_protocol import schedule_task
 import traceback
 import html
 
@@ -31,6 +32,8 @@ class LaunchGizmoAndRedirect(FileGetter):
             return self.error_response(interface)
         gizmo = await get_gizmo(title=self.title)
         component.prepare_application(gizmo)
+        print("schedule round-trip communication test...")
+        schedule_task(gizmo._has_started())
         nonce = new_identifier("N")
         #redirect_url = gizmo._entry_url(proxy=self.proxy)
         redirect_url = "../%s/%s?nonce=%s" % (gizmo._manager.identifier, gizmo._filename, nonce)  # use relative url
