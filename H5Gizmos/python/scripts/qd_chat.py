@@ -24,6 +24,7 @@ class ChatController:
         fmt = self.format_messages()
         for member in self.members:
             member.display_messages(fmt)
+        self.report()
 
     def format_messages(self):
         msgs = self.messages
@@ -36,15 +37,19 @@ class ChatController:
     def make_gizmo(self):
         self.full_path = gz.Text("Not initialized.")
         self.launch_link = gz.Html("<div>Not initialized.</div>")
+        self.member_list = gz.Html("<div></div>")
         self.dashboard = (
             gz.Template("""
                 <div>
                     <p class="FULL_PATH"/>
                     <p class="LAUNCH_LINK"/>
+                    <h2>Members</h2>
+                    <div class="MEMBERS"></div>
                 </div>
             """)
             .put(self.full_path, "FULL_PATH")
             .put(self.launch_link, "LAUNCH_LINK")
+            .put(self.member_list, "MEMBERS")
         )
         return self.dashboard
     
@@ -53,24 +58,34 @@ class ChatController:
         #started = await dashboard.has_started()
         await dashboard.link()
         #assert started, "ChatController failed to start."
-        parent = dashboard
-        #parent = None
+        #parent = dashboard
+        parent = None
         (relative, full, path) = add_launcher(
             dashboard.gizmo, self.add_new_member, parent_component=parent)
         self.full_path.text(full)
         self.launch_link.html(
             '<a href="%s">%s</a>' % (relative, relative)
         )
+        self.report()
         # debug explorer
-        exp = explorer(self)
-        dashboard.add(exp.gizmo())
+        #exp = explorer(self)
+        #dashboard.add(exp.gizmo())
+
+    def report(self):
+        mlines = [m.report_line() for m in self.members]
+        mdiv = "<div> <em> No members </em> </div>"
+        if mlines:
+            mdiv = "<div> %s </div>" % ("\n".join(mlines),)
+        self.member_list.html(mdiv)
+
     
     def add_new_member(self):
-        print("add new member called.")
+        #print("add new member called.")
         #component = gz.Text("TEMP FOR DEBUGGING.")
         member = ChatMember(self)
         self.members.append(member)
         component = member.dashboard
+        self.report()
         return component
 
 class ChatMember:
@@ -96,6 +111,11 @@ class ChatMember:
             self.messages,
             self.status_text,
         ])
+        self.message_count = 0
+
+    def report_line(self):
+        return "<div> <b> %s </b> : %s messages. </div>" % (
+            self.nickname, self.message_count)
 
     def send(self, *ignored):
         msg = self.input.value.strip()
@@ -118,6 +138,7 @@ class ChatMember:
                 self.info("Please send a non-empty message.")
             else:
                 self.info("Sending: " + repr(ln))
+                self.message_count += 1
                 message = ChatMessage(self.nickname, msg)
                 self.controller.add_message(message)
         self.input.set_value("")
