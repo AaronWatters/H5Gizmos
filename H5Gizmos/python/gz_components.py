@@ -42,6 +42,53 @@ class Component:
     auto_start = True  # start browser page automatically.
     close_button = False
     gizmo_configured = False
+    _gizmo_attached_future = None
+    _component_started_future = None
+
+    def gizmo_attached_future(self):
+        """
+        Future which resolves when gizmo is attached.
+        """
+        f = self._gizmo_attached_future
+        if f is None:
+            f = self._gizmo_attached_future = H5Gizmos.make_future()
+        if self.gizmo is not None and not f.done():
+            f.set_result(True)
+        return f
+    
+    def component_started_future(self):
+        """
+        Future which resolves when the component has initialized on the front end.
+        """
+        f = self._component_started_future
+        if f is None:
+            print("set up the future to wait for initialization.")
+            f = self._component_started_future = H5Gizmos.make_future()
+            attached = self.gizmo_attached_future()
+            async def start_test_task():
+                print("wait for the gizmo to attach")
+                await attached
+                print("wait for confirmation of communication to front end")
+                await self.gizmo._start_confirm_future
+                print("signal component has started.")
+                f.set_result(True)
+            H5Gizmos.schedule_task(start_test_task())
+        return f
+    
+    def call_when_started(self, action):
+        started = self.component_started_future()
+        if not started.done():
+            print("wait for start, then call.")
+            async def call_after_start_task():
+                print("awaiting start...")
+                await started
+                print("deferred call...")
+                action()
+            H5Gizmos.schedule_task(call_after_start_task())
+        else:
+            # started: just call immediately
+            print("component started, calling immediately.")
+            action()
 
     def attach_gizmo(self, gizmo):
         self.gizmo = gizmo
@@ -50,6 +97,9 @@ class Component:
         self.add_deferred_dependencies(gizmo)
         gizmo._translate_1d_array = self.translate_1d_array
         self.gizmo_configured = True
+        attached = self.gizmo_attached_future()
+        if not attached.done():
+            attached.set_result(True)
 
     def run(self, task=None, auto_start=True, verbose=True, log_messages=False, close_button=False):
         self.task = task
@@ -81,10 +131,13 @@ class Component:
         self.on_shutdown(self.shutdown_parent_only, gizmo=gizmo)
 
     def on_shutdown(self, callback, gizmo=None):
-        if gizmo is None:
-            gizmo = self.gizmo
-        assert gizmo is not None, "No gizmo attached -- cannot add listener."
-        do(gizmo.window.addEventListener("unload", callback), to_depth=1)
+        def action(gizmo=gizmo):
+            if gizmo is None:
+                gizmo = self.gizmo
+            assert gizmo is not None, "No gizmo attached -- cannot add listener."
+            do(gizmo.window.console.log("adding unload callback"))
+            do(gizmo.window.addEventListener("unload", callback), to_depth=1)
+        self.call_when_started(action)
 
     _icon_path = "../static/icon.png"
     _icon_content_type = "image/png"
@@ -311,6 +364,9 @@ class Component:
         initialize and return a reference to the DOM element for this component.
         """
         self.gizmo = gizmo
+        attached = self.gizmo_attached_future()
+        if not attached.done():
+            attached.set_result(True)
         self.initialize_object_cache()
         self.window = gizmo.window # define the window shortcut
         return "Undefined gizmo component."  # override return value in subclass.
