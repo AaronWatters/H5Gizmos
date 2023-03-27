@@ -122,7 +122,8 @@ class Gizmo:
             else:
                 self._out = contextlib.redirect_stdout(callback_stdout)
         self._err = None
-        self._start_confirm_future = None
+        self._start_confirm_future = make_future()
+        self._confirmation_underway = False
 
     COUNTER = 0
 
@@ -193,11 +194,20 @@ class Gizmo:
         await self._has_started()
 
     async def _has_started(self):
+        """
+        Use a round trip call/callback to the Javascript front end
+        to confirm that communication is established.
+        Call this after the Javascript front end has been set up.
+        """
+        #p("_has_started round trip test initializing...")
         # Await callback confirmation
-        self._start_confirm_future = make_future()
-        callback = GizmoCallback(self._confirm_start, self)
-        call_callback = GizmoCall(callback, [], self)
-        do(call_callback)
+        #self._start_confirm_future = make_future()
+        confirm = self._start_confirm_future
+        if not self._confirmation_underway:
+            self._confirmation_underway = True
+            callback = GizmoCallback(self._confirm_start, self)
+            call_callback = GizmoCall(callback, [], self)
+            do(call_callback)
         await self._start_confirm_future
         if self._exit_on_disconnect:
             self._start_heartbeat()
