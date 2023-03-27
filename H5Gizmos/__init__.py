@@ -7,7 +7,7 @@ from .python.gizmo_server import (
     set_url_prefix,
 )
 
-from .python.H5Gizmos import (
+from .python.gz_parent_protocol import (
     schedule_task,
     do,
     get,
