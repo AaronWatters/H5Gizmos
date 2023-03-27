@@ -64,7 +64,7 @@ class ChatController:
             dashboard.gizmo, self.add_new_member, parent_component=parent)
         self.full_path.text(full)
         self.launch_link.html(
-            '<a href="%s">%s</a>' % (relative, relative)
+            '<a href="%s"  target="_blank" >%s</a>' % (relative, relative)
         )
         self.report()
         # debug explorer
@@ -77,16 +77,16 @@ class ChatController:
         if mlines:
             mdiv = "<div> %s </div>" % ("\n".join(mlines),)
         self.member_list.html(mdiv)
-
     
     def add_new_member(self):
-        #print("add new member called.")
-        #component = gz.Text("TEMP FOR DEBUGGING.")
         member = ChatMember(self)
         self.members.append(member)
         component = member.dashboard
         self.report()
         return component
+    
+    def remove_member(self, member):
+        self.members.remove(member)
 
 class ChatMember:
 
@@ -111,11 +111,13 @@ class ChatMember:
             self.messages,
             self.status_text,
         ])
+        self.dashboard.on_shutdown(self.shutdown)
         self.message_count = 0
+        self.status = "Logging in"
 
     def report_line(self):
-        return "<div> <b> %s </b> : %s messages. </div>" % (
-            self.nickname, self.message_count)
+        return "<div> <b> %s </b> : %s messages. %s.</div>" % (
+            self.nickname, self.message_count, self.status)
 
     def send(self, *ignored):
         msg = self.input.value.strip()
@@ -131,6 +133,7 @@ class ChatMember:
                 message = ChatMessage("", repr(self.nickname) + " logged in.")
                 self.controller.add_message(message)
                 title = repr(self.nickname) + " chatting"
+                self.status = "Active."
                 # window.document.title = title
                 gz.do(self.dashboard.window.document._set("title", title))
         else:
@@ -142,6 +145,13 @@ class ChatMember:
                 message = ChatMessage(self.nickname, msg)
                 self.controller.add_message(message)
         self.input.set_value("")
+
+    def shutdown(self, *args):
+        print(self, "shutdown called")
+        message = ChatMessage("", "<b>%s</b> exitted." % (self.nickname,))
+        self.controller.remove_member(self)
+        self.controller.add_message(message)
+        self.status = "Exitted."
 
     def display_messages(self, fmt):
         self.messages.html(fmt)
