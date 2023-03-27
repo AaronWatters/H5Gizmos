@@ -62,15 +62,15 @@ class Component:
         """
         f = self._component_started_future
         if f is None:
-            print("set up the future to wait for initialization.")
+            #("set up the future to wait for initialization.")
             f = self._component_started_future = H5Gizmos.make_future()
             attached = self.gizmo_attached_future()
             async def start_test_task():
-                print("wait for the gizmo to attach")
+                #("wait for the gizmo to attach")
                 await attached
-                print("wait for confirmation of communication to front end")
+                #("wait for confirmation of communication to front end")
                 await self.gizmo._start_confirm_future
-                print("signal component has started.")
+                #("signal component has started.")
                 f.set_result(True)
             H5Gizmos.schedule_task(start_test_task())
         return f
@@ -78,16 +78,16 @@ class Component:
     def call_when_started(self, action):
         started = self.component_started_future()
         if not started.done():
-            print("wait for start, then call.")
+            #("wait for start, then call.")
             async def call_after_start_task():
-                print("awaiting start...")
+                #("awaiting start...")
                 await started
-                print("deferred call...")
+                #("deferred call...")
                 action()
             H5Gizmos.schedule_task(call_after_start_task())
         else:
             # started: just call immediately
-            print("component started, calling immediately.")
+            #("component started, calling immediately.")
             action()
 
     def attach_gizmo(self, gizmo):
