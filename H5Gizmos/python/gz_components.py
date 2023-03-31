@@ -44,6 +44,7 @@ class Component:
     gizmo_configured = False
     _gizmo_attached_future = None
     _component_started_future = None
+    _actions_awaiting_start = None
 
     def gizmo_attached_future(self):
         """
@@ -64,6 +65,7 @@ class Component:
         if f is None:
             #("set up the future to wait for initialization.")
             f = self._component_started_future = H5Gizmos.make_future()
+            self._actions_awaiting_start = []
             attached = self.gizmo_attached_future()
             async def start_test_task():
                 #("wait for the gizmo to attach")
@@ -72,6 +74,11 @@ class Component:
                 await self.gizmo._start_confirm_future
                 #("signal component has started.")
                 f.set_result(True)
+                # execute deferred actions now (stop on first exception (???))
+                actions = self._actions_awaiting_start
+                self._actions_awaiting_start = []
+                for action in actions:
+                    action()
             H5Gizmos.schedule_task(start_test_task())
         return f
     
@@ -79,12 +86,7 @@ class Component:
         started = self.component_started_future()
         if not started.done():
             #("wait for start, then call.")
-            async def call_after_start_task():
-                #("awaiting start...")
-                await started
-                #("deferred call...")
-                action()
-            H5Gizmos.schedule_task(call_after_start_task())
+            self._actions_awaiting_start.append(action)
         else:
             # started: just call immediately
             #("component started, calling immediately.")
@@ -183,6 +185,8 @@ class Component:
         gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages)
         self.prepare_application(gizmo)
         await gizmo.start_in_iframe(height=height, proxy=proxy)
+        # Make sure all deferred actions complete before continuing...
+        await self.component_started_future()
 
     async def browse(
         self, 
@@ -222,6 +226,8 @@ class Component:
         else:
             if await_start:
                 await gizmo._show_start_link(proxy=proxy)
+        # Make sure all deferred actions complete before continuing...
+        await self.component_started_future()
 
     async def link(
             self, 
