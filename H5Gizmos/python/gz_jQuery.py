@@ -256,12 +256,14 @@ class jQueryComponent(gz_components.Component):
         pass  # do nothing here.
 
     def js_init(self, js_function_body, to_depth=3, **argument_names_to_values):
-        assert self.element is not None, "Gizmo must be displayed for js_init evaluation."
         argument_names = ["element"] + list(argument_names_to_values.keys())
-        argument_values = [self.element] + [argument_names_to_values[n] for n in argument_names[1:]]
-        function = self.function(argument_names, js_function_body)
-        function_call = function(*argument_values)
-        do(function_call, to_depth=to_depth)
+        def action():
+            function = self.function(argument_names, js_function_body)
+            argument_values = [self.element] + [argument_names_to_values[n] for n in argument_names[1:]]
+            function_call = function(*argument_values)
+            assert self.element is not None, "Gizmo must be displayed for js_init evaluation."
+            do(function_call, to_depth=to_depth)
+        self.call_when_started(action)
 
     def js_debug(self):
         self.js_init("debugger;")
