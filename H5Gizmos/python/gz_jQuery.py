@@ -772,7 +772,10 @@ class Slider(jQueryComponent):
     def set_value(self, value):
         "Set the value of the slider, triggering any attached callback."
         self.value = value
-        do(self.element.slider("value", value))
+        def action():
+            do(self.element.slider("value", value))
+        self.call_when_started(action)
+        return self
 
     def reset(self):
         v = self.initial_value
@@ -874,8 +877,10 @@ class RangeSlider(jQueryComponent):
             self.maximum = maximum
         if step is not None:
             self.step = step
-        do(self.element.slider("option", "min", self.minimum))
-        do(self.element.slider("option", "max", self.maximum))
+        def action():
+            do(self.element.slider("option", "min", self.minimum))
+            do(self.element.slider("option", "max", self.maximum))
+        self.call_when_started(action)
         #do(self.element.slider("step", self.step))
 
     def set_values(self, low_value=None, high_value=None):
@@ -885,7 +890,9 @@ class RangeSlider(jQueryComponent):
         if high_value is not None:
             self.high_value = high_value
         values = [self.low_value, self.high_value]
-        do(self.element.slider("values", values))
+        def action():
+            do(self.element.slider("values", values))
+        self.call_when_started(action)
 
     def reset(self):
         self.set_values(*self.initial_values)
