@@ -250,7 +250,9 @@ class jQueryComponent(gz_components.Component):
         Close this dialog.  Error if the component is not a jQueryUI dialog.
         """
         assert self.is_dialog, "This operation is only valid for dialogs."
-        do(self.element.dialog("close"))
+        def action():
+            do(self.element.dialog("close"))
+        self.call_when_started(action)
         return self
 
     def open_dialog(self):
@@ -258,7 +260,9 @@ class jQueryComponent(gz_components.Component):
         Open this dialog.  Error if the component is not a jQueryUI dialog.
         """
         assert self.is_dialog, "This operation is only valid for dialogs."
-        do(self.element.dialog("open"))
+        def action():
+            do(self.element.dialog("open"))
+        self.call_when_started(action)
         return self
 
     def configure_jQuery_element(self, element):
