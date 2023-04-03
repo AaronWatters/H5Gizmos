@@ -113,10 +113,14 @@ class jQueryComponent(gz_components.Component):
         self.error_message(error_text)
 
     def error_message(self, error_text):
-        do(self.gizmo.websocket_error_callback(error_text))
+        def action():
+            do(self.gizmo.websocket_error_callback(error_text))
+        self.call_when_started(action)
 
     def clear_error_message(self):
-        do(self.gizmo.websocket_error_callback(None))
+        def action():
+            do(self.gizmo.websocket_error_callback(None))
+        self.call_when_started(action)
 
     def get_element(self, gizmo=None):
         if gizmo is None:
@@ -130,15 +134,17 @@ class jQueryComponent(gz_components.Component):
         """
         Remove the element from the DOM, preserving, eg, event handlers for later reinsertion.
         """
-        if self.gizmo is not None:
+        def action():
             do(self.get_element().detach())
+        self.call_when_started(action)
 
     def enable_tooltips(self):
         "Enable jQueryUI tool tips for the whole gizmo document."
         self.tooltips_enabled = True
-        if self.gizmo:
+        def action():
             # only enable tooltips after gizmo connect...
             do(self.jQuery(self.window.document).tooltip())
+        self.call_when_started(action)
 
     def set_title(self, title_string):
         # xxxx need to change title if executing...
@@ -170,8 +176,8 @@ class jQueryComponent(gz_components.Component):
             do(self.element.html(self.init_text))
         if self.title_string:
             do(self.element.prop("title", self.title_string))
-        if self.tooltips_enabled:
-            self.enable_tooltips()
+        #if self.tooltips_enabled:
+        #    self.enable_tooltips()
         do(self.element.appendTo(self.container))
         self.configure_jQuery_element(self.element)
         # handle deferred event callbacks
@@ -192,8 +198,6 @@ class jQueryComponent(gz_components.Component):
         before the gizmo started.
         Return the added component.
         """
-        gizmo = self.gizmo
-        assert gizmo is not None, "add() only to a component of a started gizmo."
         if not isinstance(component, jQueryComponent):
             ty = type(component)
             assert type(component) is str, "Only strings or jQuery components may be added: " + repr(ty)
@@ -201,7 +205,11 @@ class jQueryComponent(gz_components.Component):
         else:
             if title:
                 component.set_title(title)
-        do(component.get_element(gizmo).appendTo(self.container))
+        def action():
+            gizmo = self.gizmo
+            assert gizmo is not None, "add() only to a component of a started gizmo."
+            do(component.get_element(gizmo).appendTo(self.container))
+        self.call_when_started(action)
         return component
 
     def add_pyplot(self, title=None):
@@ -373,12 +381,16 @@ class jQueryComponent(gz_components.Component):
 
     def empty(self):
         "Remove all content from this element."
-        do(self.element.empty())
+        def action():
+            do(self.element.empty())
+        self.call_when_started(action)
         return self
 
     def focus(self):
         "Set focus to this element."
-        do(self.element.focus())
+        def action():
+            do(self.element.focus())
+        self.call_when_started(action)
         return self
 
 class jQueryButton(jQueryComponent):
