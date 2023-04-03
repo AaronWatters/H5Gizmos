@@ -284,6 +284,7 @@ class jQueryComponent(gz_components.Component):
 
     def get_info_div(self):
         "Attach a DIV to the surrounding container for displaying miscellaneous information."
+        # xxx deferral???
         if self.info_div is None:
             gizmo = self.gizmo
             assert gizmo is not None, "no gizmo to attach"
@@ -710,12 +711,16 @@ class jQueryInput(jQueryComponent):
 
     def set_value(self, value):
         # https://stackoverflow.com/questions/4088467/get-the-value-in-an-input-text-box?rq=1
-        do(self.element.val(value))
+        def action():
+            do(self.element.val(value))
+        self.call_when_started(action)
         self.value = value
+        return self
 
     async def get_value(self):
         value = await get(self.element.val())
         self.value = value
+        return value
 
 
 class Slider(jQueryComponent):
@@ -1290,6 +1295,7 @@ class jQueryImage(jQueryComponent):
         alt="image",
         title=None,
         ):
+        self._getter = None
         assert array is None or bytes_content is None, (
             "ambiguous content -- both array and bytes provided."
         )
@@ -1353,13 +1359,18 @@ class jQueryImage(jQueryComponent):
 
     def change_content(self, bytes_content, mime_type=None):
         self.bytes_content = bytes(bytes_content)
-        self.getter.set_content(bytes_content, mime_type)
-        do(self.element.attr("src", self.versioned_link()))
+        def action():
+            getter = self.bytes_getter()
+            getter.set_content(bytes_content, mime_type)
+            do(self.element.attr("src", self.versioned_link()))
+        self.call_when_started(action)
         self.img_height = self.img_width = self.array = None
 
     def change_content_url(self, bytes_content, mime_type):
         url = content_url(bytes_content, mime_type)
-        do(self.element.attr("src", url))
+        def action():
+            do(self.element.attr("src", url))
+        self.call_when_started(action)
         self.img_height = self.img_width = self.array = None
 
     def change_array(self, array, url=True, scale=False, epsilon=1e-12):
@@ -1397,13 +1408,18 @@ class jQueryImage(jQueryComponent):
     def versioned_link(self):
         self.version += 1   # use versioning to foil browser caching.
         return "%s?v=%s" % (self.filename, self.version)
+    
+    def bytes_getter(self):
+        result = self._getter 
+        assert result is not None, "getter not created."
+        return result
 
     def configure_jQuery_element(self, element):
         gizmo = self.gizmo
         mgr = gizmo._manager
-        self.getter = gizmo_server.BytesGetter(self.filename, self.bytes_content, mgr, self.content_type)
+        self._getter = gizmo_server.BytesGetter(self.filename, self.bytes_content, mgr, self.content_type)
         #mgr.add_http_handler(self.filename, self.getter)
-        gizmo._add_getter(self.filename, self.getter)
+        gizmo._add_getter(self.filename, self._getter)
         self.resize(height=self.height, width=self.width)
         if self.array is not None:
             self.change_array(self.array)
