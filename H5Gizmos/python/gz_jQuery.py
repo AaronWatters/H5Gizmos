@@ -235,11 +235,13 @@ class jQueryComponent(gz_components.Component):
         See https://api.jqueryui.com/dialog/ for options documentation.
         Return the dialog component.
         """
-        assert self.gizmo is not None, "add dialog only to a component of a started gizmo."
+        #assert self.gizmo is not None, "add dialog only to a component of a started gizmo."
         if dialog_options is None:
             dialog_options = {}
         component = self.add(text_or_component, title)
-        do(component.element.dialog(dialog_options), to_depth=to_depth)
+        def action():
+            do(component.element.dialog(dialog_options), to_depth=to_depth)
+        self.call_when_started(action)
         component.is_dialog = True
         return component
 
