@@ -44,8 +44,10 @@ class jQueryComponent(gz_components.Component):
     title_string = None
     on_click_depth = 1
     radio_on_click = None
+    tag = None  # default
 
     def __init__(self, init_text="Uninitialized JQuery Gizmo.", tag="<div/>", title=None):
+        #(self, "initialized")
         if title:
             self.set_title(title)
         ttag = type(tag)
@@ -154,8 +156,10 @@ class jQueryComponent(gz_components.Component):
         return self
 
     def dom_element_reference(self, gizmo):
+        #(" getting dom element", self)
         result = self.cached_dom_element_reference
         if result is not None:
+            #("   ... reference is cached", result)
             return result
         super().dom_element_reference(gizmo)
         # ??? does it cause harm to always create an extra container around the element ???
@@ -937,6 +941,7 @@ class ChildContainerSuper(jQueryComponent):
 
     # defaults
     children = ()
+    initial_children = ()
     _css = {}
     child_css = {}
 
@@ -964,17 +969,18 @@ class ChildContainerSuper(jQueryComponent):
     def add_dependencies(self, gizmo):
         super().add_dependencies(gizmo)
         # also add child dependencies
-        for child in self.children:
+        for child in self.initial_children:
             child.add_dependencies(gizmo)
 
     def add_deferred_dependencies(self, gizmo):
         super().add_deferred_dependencies(gizmo)
         # also add child dependencies
-        for child in self.children:
+        for child in self.initial_children:
             child.add_deferred_dependencies(gizmo)
 
     def configure_jQuery_element(self, element):
-        self.attach_children(self.children)
+        #(self, "configuring element")
+        self.attach_children(self.initial_children)
         
     def attach_children(self, children):
         raise NotImplementedError("this must be defined in a subclass.")
@@ -990,9 +996,9 @@ class ChildContainerSuper(jQueryComponent):
 class Template(ChildContainerSuper):
 
     def __init__(self, html_template, title=None, empty_targets=True):
+        self.class_child_pairs = []
         self.html_template = html_template
         super().__init__(init_text=None, tag=html_template, title=title)
-        self.class_child_pairs = []
         self.empty_targets = empty_targets
 
     def put(self, child_component, at_class):
@@ -1017,7 +1023,7 @@ class Template(ChildContainerSuper):
     def configure_jQuery_element(self, element):
         gizmo = self.gizmo
         pairs = self.class_child_pairs
-        classes = set(p[0] for p in pairs)
+        #classes = set(p[0] for p in pairs)
         ref_pairs = []
         class_to_ref = {}
         # find all references first
@@ -1071,7 +1077,8 @@ class GridStack(ChildContainerSuper):
         css_class=None
         ):
         super().__init__(init_text=None, tag=tag, title=title)
-        self.children = self.check_children(children)
+        self.initial_children = self.check_children(children)
+        self.children = []
         self._css = css or {}
         self.child_css = child_css or {}
         css_class = css_class or self.default_class
@@ -1082,7 +1089,7 @@ class GridStack(ChildContainerSuper):
     def __repr__(self):
         L = [self.__class__.__name__ + "(["]
         indent = "    "
-        for c in self.children:
+        for c in self.initial_children:
             rc = repr(c)
             rc = rc.replace("\n", "\n" + indent)
             L.append( indent + rc + ",")
@@ -1096,7 +1103,7 @@ class GridStack(ChildContainerSuper):
     def attach_children(self, children):
         gizmo = self.gizmo
         assert gizmo is not None, "gizmo must be attached."
-        # detach all children
+        # detach all current children
         current_children = self.children
         if current_children:
             for child in current_children:
@@ -1120,6 +1127,7 @@ class GridStack(ChildContainerSuper):
             child_css.update(self.child_css)
             child_container = gizmo.jQuery("<div/>").css(child_css).appendTo(self.element)
             if childref is not None:
+                #("appending", childref)
                 do(childref.appendTo(child_container))
             else:
                 #do(child_container)  # ???? is this needed?

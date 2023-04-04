@@ -63,33 +63,38 @@ class Component:
         """
         f = self._component_started_future
         if f is None:
-            #("set up the future to wait for initialization.")
+            #(self, "set up start future to wait for initialization.")
             f = self._component_started_future = H5Gizmos.make_future()
             self._actions_awaiting_start = []
             attached = self.gizmo_attached_future()
             async def start_test_task():
-                #("wait for the gizmo to attach")
+                #(self, "wait for the gizmo to attach")
                 await attached
-                #("wait for confirmation of communication to front end")
-                await self.gizmo._start_confirm_future
-                #("signal component has started.")
+                conf = self.gizmo._start_confirm_future
+                #(self, "wait for confirmation of communication to front end", id(conf))
+                await conf
+                #(self, "signal component has started.")
                 f.set_result(True)
                 # execute deferred actions now (stop on first exception (???))
                 actions = self._actions_awaiting_start
                 self._actions_awaiting_start = []
                 for action in actions:
+                    #("    deferred action", action)
                     action()
             H5Gizmos.schedule_task(start_test_task())
         return f
     
     def call_when_started(self, action):
+        #(self, "call when started", action)
+        # make sure future is created...
         started = self.component_started_future()
+        #started = (self.gizmo is not None)
         if not started.done():
-            #("wait for start, then call.")
+            #(self, "  wait for start, deferring", action)
             self._actions_awaiting_start.append(action)
         else:
             # started: just call immediately
-            #("component started, calling immediately.")
+            #(self, "component started, calling immediately.", action)
             action()
 
     def attach_gizmo(self, gizmo):
