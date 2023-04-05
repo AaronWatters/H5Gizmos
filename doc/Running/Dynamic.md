@@ -503,6 +503,55 @@ please "use the source, Luke" if you want to use some other method.  At this wri
 the `component.launcher_link` will fail if the `component` is not actively displayed when
 the method is called.
 
+## Deferring an action until a component is active using `component.call_when_started`
+
+Some operations require a component to be actively displayed in the child context.
+For example `component.launcher_link` will fail if the `component` is not actively displayed.
+
+The `component.call_when_started(action)` method delays calling an
+`action` callable until the `component` is active.
+In the `deferred_launch.py` code below the `show_page` action executes after the `dashboard`
+is displayed -- which is important because `show_page` calls `dashboard.launcher_link` which requires
+the `dashboard` to be active.
+
+```Python
+import H5Gizmos as gz
+
+dashboard = gz.Stack([])
+dashboard.serve_folder("local_files", "./example_folder")
+
+dog_page = """
+<div>
+<h3>This is a dog</h3>
+<img src="local_files/dog.png" width="200" height="200"/>
+</div>
+"""
+
+more_info = """
+<div>
+<h3>Dog</h3>
+<h5>From Wikipedia, the free encyclopedia</h5>
+<p>The dog (Canis familiaris or Canis lupus familiaris) is a domesticated descendant of the wolf...</p>
+</div>
+"""
+
+def show_page():
+    link = dashboard.launcher_link(
+        "More information about dogs.", info_launcher_function)
+    dashboard.attach_children([
+        gz.Html(dog_page),
+        link,
+    ])
+
+def info_launcher_function():
+    return gz.Html(more_info)
+
+dashboard.call_when_started(show_page)
+
+gz.serve(dashboard.show())
+```
+
+
 <a href="./README.md">
 Return to introduction to running a Gizmo.
 </a>
