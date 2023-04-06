@@ -66,7 +66,11 @@ def loop_client(host, port, message=MESSAGE):
     finally:
         sock.close()
 
-def loop_test(host="localhost", port=9874):
+def loop_test(host=None, port=None):
+    from . import gizmo_server
+    if host is None and port is None:
+        host = "localhost"
+        port = gizmo_server.choose_port1()
     try:
         server = LoopServer(host, port)
         client_process = Process(target=loop_client, args=(host, port))
