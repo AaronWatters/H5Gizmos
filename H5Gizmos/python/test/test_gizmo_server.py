@@ -250,7 +250,7 @@ class TestHTTPdelivery(StartStop):
 
     async def test_http_delivery(self, delay=0.1):
         class file_bytes_getter:
-            content = b"abcdef"
+            content = b"abcdefghijklmnop" * 10
             def __init__(self):
                 self.delivered = False
             def __call__(self, path):
