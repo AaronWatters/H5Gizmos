@@ -37,6 +37,7 @@ class FakeApp:
     async def cleanup(self):
         self.clean = True
 
+route_count = 4
 
 class FakeRouter:
 
@@ -59,7 +60,7 @@ class TestServerSync(unittest.TestCase):
         S.verbose = True
         info = S.run_standalone(app_factory=FakeApp, sync_run=trivial_fake_sync_run)
         self.assertIsInstance(S.app, FakeApp)
-        self.assertEqual(len(S.app.router.routes), 3)
+        self.assertEqual(len(S.app.router.routes), route_count)
 
 class TestMockServerAsync(unittest.IsolatedAsyncioTestCase):
     
@@ -69,7 +70,7 @@ class TestMockServerAsync(unittest.IsolatedAsyncioTestCase):
         task = S.run_in_task(app_factory=FakeApp, async_run=trivial_fake_async_run)
         await task
         self.assertIsInstance(S.app, FakeApp)
-        self.assertEqual(len(S.app.router.routes), 4)
+        self.assertEqual(len(S.app.router.routes), route_count)
         assert not S.app.shut
         assert not S.app.clean
         await S.shutdown()
@@ -88,7 +89,7 @@ class TestMockServerAsyncCancel(unittest.IsolatedAsyncioTestCase):
         task = S.run_in_task(app_factory=FakeApp, async_run=trivial_fake_async_run_cancel)
         await task
         self.assertIsInstance(S.app, FakeApp)
-        self.assertEqual(len(S.app.router.routes), 3)
+        self.assertEqual(len(S.app.router.routes), route_count)
         assert not S.app.shut
         assert not S.app.clean
         await S.shutdown()
