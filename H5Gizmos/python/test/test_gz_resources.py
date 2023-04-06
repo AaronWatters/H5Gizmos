@@ -15,7 +15,7 @@ from H5Gizmos.python.gz_resources import (
 class TestHTMLGeneration(unittest.TestCase):
 
     def test_remote_and_embedded_js(self):
-        P = HTMLPage(title="abc123", embed_gizmo=False, ws_url="fake/nonsense")
+        P = HTMLPage(title="abc123", embed_gizmo=False)
         css_url = "https://www.unpkg.com/browse/css-layout@1.1.1/dist/css-layout.css"
         js_url = "https://unpkg.com/wavesurfer.js"
         script_code = "element.wavesurfer.load(url);"
