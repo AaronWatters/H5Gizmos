@@ -69,7 +69,7 @@ class TestMockServerAsync(unittest.IsolatedAsyncioTestCase):
         task = S.run_in_task(app_factory=FakeApp, async_run=trivial_fake_async_run)
         await task
         self.assertIsInstance(S.app, FakeApp)
-        self.assertEqual(len(S.app.router.routes), 3)
+        self.assertEqual(len(S.app.router.routes), 4)
         assert not S.app.shut
         assert not S.app.clean
         await S.shutdown()
