@@ -208,9 +208,9 @@ class Gizmo:
             callback = GizmoCallback(self._confirm_start, self)
             call_callback = GizmoCall(callback, [], self)
             do(call_callback)
+            if self._exit_on_disconnect:
+                self._start_heartbeat()
         await self._start_confirm_future
-        if self._exit_on_disconnect:
-            self._start_heartbeat()
         return self._start_confirm_future.result()
 
     _heartbeat_interval_seconds = 0.5
