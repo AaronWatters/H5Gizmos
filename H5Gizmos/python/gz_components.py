@@ -70,9 +70,9 @@ class Component:
             async def start_test_task():
                 #(self, "wait for the gizmo to attach")
                 await attached
-                conf = self.gizmo._start_confirm_future
-                #(self, "wait for confirmation of communication to front end", id(conf))
-                await conf
+                #conf = self.gizmo._start_confirm_future
+                #(self, "wait for confirmation of communication to front end")
+                await self.gizmo._has_started()
                 #(self, "signal component has started.")
                 f.set_result(True)
                 # execute deferred actions now (stop on first exception (???))
@@ -231,8 +231,9 @@ class Component:
         else:
             if await_start:
                 await gizmo._show_start_link(proxy=proxy)
-        # Make sure all deferred actions complete before continuing...
-        await self.component_started_future()
+        if await_start or auto_start:
+            # Make sure all deferred actions complete before continuing...
+            await self.component_started_future()
 
     async def link(
             self, 
