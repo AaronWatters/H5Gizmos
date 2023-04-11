@@ -602,7 +602,12 @@ class GzServer:
         return self.app
 
     async def on_shutdown(self, app):
+        global PROCESS_SHARED_GIZMO_SERVER
         # https://docs.aiohttp.org/en/v0.22.4/web.html#aiohttp-web-graceful-shutdown
+        #("SERVER IS SHUTTING DOWN!!", self.port)
+        if self is PROCESS_SHARED_GIZMO_SERVER:
+            # In tests, create a new server...
+            PROCESS_SHARED_GIZMO_SERVER = None
         with self.my_stderr():
             with self.my_stdout():
                 for mgr in self.identifier_to_manager.values():
