@@ -98,8 +98,8 @@ class ComponentCase(unittest.IsolatedAsyncioTestCase):
         await asyncio.sleep(self.snooze)
         print( "gizmo: waiting for watcher to exit")
         self.watcher_process.join(self.snooze * self.retries)
-        print( "gizmo: watcher, sleeping to free up connections...")
-        time.sleep(self.snooze)
+        #print( "gizmo: watcher, sleeping to free up connections...")
+        #time.sleep(self.snooze)
         #sys.exit()
 
 class BasicTest(ComponentCase):
