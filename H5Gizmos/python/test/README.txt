@@ -9,4 +9,4 @@ The coverage report will be in ./coverage/index.html
 
 To run a specific test, for example:
 
-% nosetests H5Gizmos/python/test/test_components.py:HeaderTest.test_header
+% nosetests --nocapture H5Gizmos/python/test/test_components.py:BasicTest.test_main
