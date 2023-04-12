@@ -127,10 +127,12 @@ class CompositeTest(BasicTest):
         self.checkboxes = cb
         txt = self.txt = gz.Text("choose beatles")
         txt.css(color="green")
+        B = self.button = gz.Button("Click me") #, on_click=button_click_callback)
         children = [
             "Example Stack",
             [txt, cb],
-            "End of stack"
+            B,
+            "<b>End of stack</b>"
         ]
         S = gz.Stack(children, css={"background-color": "cornsilk"})
         S.resize(width=600)
@@ -142,4 +144,8 @@ class CompositeTest(BasicTest):
         self.assertEqual(width, 600)
         cb = self.checkboxes
         self.assertEqual(self.favorite_beatles, cb.selected_values)
+        # exercise repr code...
+        S.add("Text repr=" + repr(self.txt))
+        # exercise error message
+        S.error_message("Test error message... " + repr(cb.get_element()))
         #print ("big sleep") ; time.sleep(100)
