@@ -14,7 +14,6 @@ import contextlib
 import socket
 #import traceback
 import sys
-#from . import ping_test
 import time
 
 # Max size for posts -- really big
@@ -220,18 +219,6 @@ def get_local_ip(port=None):
         local_ip = socket.gethostbyname(hostname)
     except Exception:
         local_ip = socket.gethostbyname("localhost")
-    """
-    try:
-        if not ping_test.pingable(local_ip):
-            return "localhost"
-    except Exception:
-        return "localhost"
-    if port is not None:
-        # check that we can send a message on the port
-        test = ping_test.loop_test(local_ip, port)
-        if not test:
-            return "localhost"
-            """
     return local_ip
 
 
