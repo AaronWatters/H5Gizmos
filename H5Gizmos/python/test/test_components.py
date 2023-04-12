@@ -120,12 +120,26 @@ class BasicTest(ComponentCase):
 class CompositeTest(BasicTest):
 
     def make_main_component(self):
+        beatles = "John Paul George Ringo".split()
+        favorites = "Paul Ringo".split()
+        self.favorite_beatles = favorites
+        cb = gz.CheckBoxes(beatles, favorites, legend="your favorite") #, on_click=self.checked)
+        self.checkboxes = cb
+        txt = self.txt = gz.Text("choose beatles")
+        txt.css(color="green")
         children = [
             "Example Stack",
+            [txt, cb],
             "End of stack"
         ]
         S = gz.Stack(children, css={"background-color": "cornsilk"})
+        S.resize(width=600)
         return S
     
     async def logic(self):
-        pass
+        S = self.main_component
+        width = await gz.get(S.element.width())
+        self.assertEqual(width, 600)
+        cb = self.checkboxes
+        self.assertEqual(self.favorite_beatles, cb.selected_values)
+        #print ("big sleep") ; time.sleep(100)
