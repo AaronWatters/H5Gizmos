@@ -120,26 +120,38 @@ class BasicTest(ComponentCase):
 class CompositeTest(BasicTest):
 
     def make_main_component(self):
+        # checkbox
         beatles = "John Paul George Ringo".split()
         favorites = "Paul Ringo".split()
         self.favorite_beatles = favorites
         cb = gz.CheckBoxes(beatles, favorites, legend="your favorite") #, on_click=self.checked)
         self.checkboxes = cb
+        # simple text
         txt = self.txt = gz.Text("choose beatles")
         txt.css(color="green")
+        # button
         B = self.button = gz.Button("Click me") #, on_click=button_click_callback)
+        # clickable text
+        CT = self.clickable_text = gz.ClickableText("I'm clickable", on_click=self.click_text)
+        self.text_click_count = 0
         children = [
             "Example Stack",
             [txt, cb],
-            B,
+            [B, CT],
             "<b>End of stack</b>"
         ]
         S = gz.Stack(children, css={"background-color": "cornsilk"})
         S.resize(width=600)
         return S
     
+    def click_text(self, *ignored):
+        self.text_click_count += 1
+        self.txt.text("Text clicked: " + repr(self.text_click_count))
+        self.txt.css(color="magenta")
+    
     async def logic(self):
         S = self.main_component
+        # test get using width
         width = await gz.get(S.element.width())
         self.assertEqual(width, 600)
         cb = self.checkboxes
@@ -148,4 +160,11 @@ class CompositeTest(BasicTest):
         S.add("Text repr=" + repr(self.txt))
         # exercise error message
         S.error_message("Test error message... " + repr(cb.get_element()))
+        # test javascript function creator
+        func = S.function(["a", "b"], "return a+b")
+        five = await gz.get(func(2,3))
+        self.assertEqual(five, 5)
+        # click text
+        # https://stackoverflow.com/questions/7853302/jquery-programmatically-click-on-new-dom-element
+        gz.do(self.clickable_text.element.trigger("click"))
         #print ("big sleep") ; time.sleep(100)
