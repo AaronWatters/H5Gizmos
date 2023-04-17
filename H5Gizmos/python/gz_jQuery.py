@@ -751,15 +751,17 @@ class Slider(jQueryComponent):
         if step is None:
             step = (maximum - minimum) * 0.01
         super().__init__("", title=title)
-        self.on_change = on_change
+        self.on_change = None
+        if on_change is not None:
+            self.on_change = DeJitterCallback(on_change, delay)
         self.minimum = minimum
         self.maximum = maximum
         self.value = value
         self.initial_value = value
         self.step = step
         self.orientation = orientation
-        self.change_pending = False
-        self.change_delay = delay
+        #self.change_pending = False
+        #self.change_delay = delay
 
     def configure_jQuery_element(self, element):
         options = dict(
@@ -797,12 +799,12 @@ class Slider(jQueryComponent):
         v = self.value = ui["value"]
         c = self.on_change
         # only
-        if c is not None and not self.change_pending:
-            #c(v)
-            self.change_pending = True
-            schedule_task(self.delayed_callback())
+        if c is not None:  #and not self.change_pending:
+            c(v)
+            #self.change_pending = True
+            #schedule_task(self.delayed_callback())
 
-    async def delayed_callback(self):
+    '''async def delayed_callback(self):
         "delay the change callback and ignore other change requests that arrive too quickly to prevent jitter"
         # xxxx this method should probably be used for other callbacks too...
         c = self.on_change
@@ -818,8 +820,34 @@ class Slider(jQueryComponent):
             self.change_pending = False
         # use the current value which may have changed during the sleep
         v = self.value
-        c(v)
+        c(v)'''
 
+class DeJitterCallback:
+    """
+    Callable object which delays to prevent too many calls too quickly
+    to avoid interface jitter.
+    """
+
+    def __init__(self, callback, delay=0.1):
+        self.callback = callback
+        self.delay = delay
+        self.call_args = None
+
+    def __call__(self, *args):
+        if self.call_args is None:
+            # set up the task to eventually execute the callback
+            schedule_task(self.callback_task())
+        # when call executes, use most recent args
+        self.call_args = args
+
+    async def callback_task(self):
+        callback = self.callback
+        # wait to prevent jitter
+        await asyncio.sleep(self.delay)
+        args = self.call_args
+        self.call_args = None
+        # execute the callback with the most recent args
+        callback(*args)
 
 class RangeSlider(jQueryComponent):
 
