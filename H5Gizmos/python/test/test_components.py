@@ -69,6 +69,8 @@ class ComponentCase(unittest.IsolatedAsyncioTestCase):
 
     async def startup(self):
         self.main_component = self.make_main_component()
+        started = await self.main_component.has_started()
+        self.assertEqual(started, False)
         fn = self.fullname()
         #startid = gz.new_identifier(fn + "-start")
         self.endid = gz.new_identifier(fn + "-end")
@@ -77,7 +79,8 @@ class ComponentCase(unittest.IsolatedAsyncioTestCase):
         await self.main_component.link(
             await_start=False,
             shutdown_on_close=False,
-            title = repr(fn) + " test"
+            title = repr(fn) + " test",
+            verbose = True,
             )
         url = self.main_component.gizmo._entry_url()
         args = (url, self.endid, self.snooze, self.retries)
@@ -88,6 +91,8 @@ class ComponentCase(unittest.IsolatedAsyncioTestCase):
         self.watcher_process.start()
         print("gizmo: awaiting component start")
         await self.main_component.has_started()
+        url = self.main_component.entry_url()
+        self.assertNotEqual(url, None)
 
     async def shutdown(self):
         print("signalling shutdown")
@@ -151,6 +156,10 @@ class CompositeTest(BasicTest):
     
     async def logic(self):
         S = self.main_component
+        # exercise on_shutdown
+        def shutdown_callback(*ignored):
+            print("shut down callback called.")
+        S.on_shutdown(shutdown_callback)
         # test get using width
         width = await gz.get(S.element.width())
         self.assertEqual(width, 600)
