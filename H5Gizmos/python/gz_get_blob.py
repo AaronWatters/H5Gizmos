@@ -36,7 +36,7 @@ class BytesPostBack(gizmo_server.FileGetter):
         ln = len(body)
         future = self.post_future
         data = (body, json)
-        if future is None or future.done():
+        if future is None or future.done(): # pragma: no cover
             self.unhandled_data = data
             text = "Unexpected POST of length %s" % ln
             status = 404 # not found
@@ -54,7 +54,7 @@ class BytesPostBack(gizmo_server.FileGetter):
         await future
         return future.result()
 
-    async def handle_get(self, info, request, interface=gizmo_server.STDInterface):
+    async def handle_get(self, info, request, interface=gizmo_server.STDInterface): # pragma: no cover
         text = "This end point only accepts POST requests."
         status = 405
         return interface.respond(body=text, content_type="text/plain", status=status)
@@ -75,6 +75,7 @@ class BytesPostBack(gizmo_server.FileGetter):
             status = 200
         return interface.respond(body=text, content_type=self.content_type, status=status)
 
+'''commented until a use case is found...
 class GetBytesViaPost:
 
     def __init__(self, from_gizmo, callable_link, h5_link):
@@ -142,3 +143,4 @@ class PostBackData:
     def __init__(self, body, query):
         self.body = body
         self.query = query
+'''
