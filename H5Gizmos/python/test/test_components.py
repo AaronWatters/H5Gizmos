@@ -13,6 +13,7 @@ import H5Gizmos as gz
 import sys
 import unittest
 import asyncio
+import numpy as np
 
 
 def selenium_watcher_process(url, identity, snooze, retries, verbose=False):
@@ -177,3 +178,44 @@ class CompositeTest(BasicTest):
         # https://stackoverflow.com/questions/7853302/jquery-programmatically-click-on-new-dom-element
         gz.do(self.clickable_text.element.trigger("click"))
         #print ("big sleep") ; time.sleep(100)
+        # exercise store_json
+        json_structure = {
+            "none": None,
+            "number": 3.1,
+            "string": "Bohemian Rhapsody",
+            "bool": False,
+            "dictionary": {"lie": "falsehood"},
+            "list": [1,2,"three"],
+        }
+        json_ref = await S.store_json(json_structure, "my_json")
+        song = await gz.get(json_ref["string"])
+        print("song=", song)
+        self.assertEqual(song, "Bohemian Rhapsody")
+        # exercise store_array
+        A = (np.arange(1000) % 13 - 5).astype(np.int16)
+        Aref = await S.store_array(A, "my_array")
+        A6 = await gz.get(Aref[6])
+        self.assertEqual(A6, A[6])
+        S.uncache("my_array")
+
+class TestSimpleMethods(unittest.TestCase):
+
+    def test_shutdown_parent(self):
+        import sys
+        realexit = sys.exit
+        def fake_exit(*args):
+            print ("not really exitting", args)
+        try:
+            sys.exit = fake_exit
+            component = gz.Html("<div>hello world</div>")
+            component.shutdown_parent_only()
+        finally:
+            sys.exit = realexit
+
+    def test_canvas_data(self):
+        query = dict(height=1, width=1)
+        bytes = b'1234'
+        packet = (bytes, query)
+        component = gz.Html("<div>hello world</div>")
+        byte_array = component.array_from_canvas_data(packet)
+        self.assertIsNotNone(bytearray)
