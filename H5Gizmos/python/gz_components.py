@@ -108,17 +108,17 @@ class Component:
         if not attached.done():
             attached.set_result(True)
 
-    def run(self, task=None, auto_start=True, verbose=True, log_messages=False, close_button=False):
+    '''def run(self, task=None, auto_start=True, verbose=True, log_messages=False, close_button=False):
         self.task = task
         self.auto_start = auto_start
         self.close_button = close_button
-        run(self.run_main, verbose=verbose, log_messages=log_messages)
+        run(self.run_main, verbose=verbose, log_messages=log_messages)'''
 
     def prepare_application(self, gizmo):
         self.attach_gizmo(gizmo)
         self.configure_page(gizmo)
 
-    async def run_main(self, gizmo):
+    '''async def run_main(self, gizmo):
         self.prepare_application(gizmo)
         self.shutdown_on_unload(gizmo)
         self.add_std_icon(gizmo)
@@ -131,7 +131,7 @@ class Component:
         #gizmo._start_report_error_task()
         task = self.task
         if task is not None:
-            await task()
+            await task()'''
 
     def shutdown_on_unload(self, gizmo):
         #do(gizmo.window.addEventListener("unload", self.shutdown_parent_only), to_depth=1)
@@ -618,7 +618,8 @@ class Component:
         # ignore any error messages to stdio caused by exit
         sys.stderr = self.stdio_redirect = io.StringIO()  # xxx this is hacky...
         sys.exit()
-
+        
+'''historical?
 class HelloComponent(Component):
     
     def __init__(self, text="Hello world"):
@@ -631,3 +632,4 @@ class HelloComponent(Component):
 def test_standalone():
     hello = HelloComponent()
     hello.run(verbose=False)
+    '''
