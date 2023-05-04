@@ -196,6 +196,9 @@ class CompositeTest(BasicTest):
         Aref = await S.store_array(A, "my_array")
         A6 = await gz.get(Aref[6])
         self.assertEqual(A6, A[6])
+        B = await S.get_array_from_buffer(Aref, dtype=np.int16)
+        ABdiff = np.abs(A - B).max()
+        self.assertEqual(ABdiff, 0)
         S.uncache("my_array")
 
 class TestSimpleMethods(unittest.TestCase):
