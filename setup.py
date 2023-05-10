@@ -1,7 +1,7 @@
 from setuptools import setup
 
 url = "https://github.com/AaronWatters/H5Gizmos"
-version = "0.1.12"
+version = "0.1.13"
 readme = open('README.md').read()
 
 setup(
@@ -49,7 +49,7 @@ setup(
             'GizmoLink = H5Gizmos:setup_gizmo_link',
         ],
         "H5Gizmos.scripts": [
-            "hello_env = H5Gizmos.python.scripts.hello_env:main",
+            #"hello_env = H5Gizmos.python.scripts.hello_env:main",
             "Lorenz_Attractor = H5Gizmos.python.scripts.lorenz:main",
             "show_binary = H5Gizmos.python.scripts.show_binary:main",
         ]
