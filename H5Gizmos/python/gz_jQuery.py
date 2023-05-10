@@ -1505,6 +1505,22 @@ class Plotter(jQueryImage):
             plt.close()  # don't display the figure anywhere else (?)
             self.png_content = figbytes
 
+def show_matplotlib_plt(link=False, title="Plot"):
+    """
+    Convenience that acts similarly to matplotlib.pyplot.show().
+    Display a previously configured matplotlib plot (in global context).
+    """
+    plot_region = Plotter()
+    async def task():
+        if link:
+            await plot_region.link(title=title)
+        else:
+            await plot_region.show(title=title)
+        with plot_region:
+            # context manager shows the previously configured plot.
+            pass # no additional action needed
+    gizmo_server.serve(task())
+
 class jQueryLabel(jQueryComponent):
 
     def __init__(self, label_text, label_for_component, title=None):

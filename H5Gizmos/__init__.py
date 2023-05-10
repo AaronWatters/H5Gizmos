@@ -40,6 +40,7 @@ from .python.gz_jQuery import (
     Template,
     Plotter,
     Label,
+    show_matplotlib_plt,
 )
 
 from .python.gz_tools import (
