@@ -6,7 +6,12 @@ The H5Gizmos documentation is provided using Github markdown for simplicity.
 If you wish to view the documentation locally from a clone of the repository,
 please use
 <a href="https://github.com/joeyespo/grip">https://github.com/joeyespo/grip</a>
-or a similar github emulator.
+or a similar github emulator.  I start it like this:
+
+```bash
+% cd H5Gizmos/doc
+% grip . http://0.0.0.0:9999
+```
 
 # What is H5Gizmos?
 
@@ -118,6 +123,20 @@ Javascript child context and transferred to the Python parent process.
 # Documentation Organization
 
 The rest of the documentation is organized into the following sections:
+
+<h2>
+<a href="UseCases/README.md">
+Use Cases
+</a>
+</h2>
+
+The 
+<a href="UseCases/README.md">
+Use Cases
+</a>
+ explains some simple uses for H5Gizmos, such as
+ interactively exploring a JSON data structure or
+ viewing a remote matplotlib plot.
 
 <h2>
 <a href="Tutorials/README.md">
