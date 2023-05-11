@@ -30,6 +30,20 @@ use case describes how to interactively explore a data structure
 encoded in a JSON formatted data file.
 
 
+<h2>
+<a href="Show_binary.md">
+Browsing file binary content
+</a>
+</h2>
+
+The 
+<a href="Show_binary.md">
+show_binary
+</a>
+use case describes how to interactively browse the file system
+and view binary file content.
+
+
 <a href="../README.md">
 Return to H5Gizmos documentation root.
 </a>
