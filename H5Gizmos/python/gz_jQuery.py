@@ -47,6 +47,7 @@ class jQueryComponent(gz_components.Component):
     tag = None  # default
 
     def __init__(self, init_text="Uninitialized JQuery Gizmo.", tag="<div/>", title=None):
+        super().__init__()
         #(self, "initialized")
         if title:
             self.set_title(title)

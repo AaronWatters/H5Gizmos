@@ -46,6 +46,10 @@ class Component:
     _component_started_future = None
     _actions_awaiting_start = None
 
+    def __init__(self):
+        # start the task which waits for gizmo initialization
+        self.component_started_future()
+
     def gizmo_attached_future(self):
         """
         Future which resolves when gizmo is attached.
