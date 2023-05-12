@@ -1520,6 +1520,7 @@ def show_matplotlib_plt(link=False, title="Plot"):
         with plot_region:
             # context manager shows the previously configured plot.
             pass # no additional action needed
+        plot_region.shutdown()
     gizmo_server.serve(task())
 
 class jQueryLabel(jQueryComponent):
