@@ -34,7 +34,7 @@ plt.show()
 ```
 
 The H5Gizmos package includes a simple convenience function
-`show_matplotlib_plt()` which can replace `plt.show()` above.
+`show_matplotlib_plt(link=True)` which can replace `plt.show()` above.
 This allows the plot to be generated on the compute cluster
 and viewed using a URL link on the
 researchers personal laptop.
@@ -43,7 +43,7 @@ The modified script replaces `plt.show()` with two lines:
 ```Python
 ...
 from H5Gizmos import show_matplotlib_plt
-show_matplotlib_plt()
+show_matplotlib_plt(link=True)
 ```
 So the 
 <a href="./categorical.py">

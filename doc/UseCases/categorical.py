@@ -12,4 +12,4 @@ fig.suptitle('Categorical Plotting')
 #plt.show()
 
 from H5Gizmos import show_matplotlib_plt
-show_matplotlib_plt()
+show_matplotlib_plt(link=True)
