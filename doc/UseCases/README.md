@@ -11,7 +11,7 @@ Viewing a matplotlib plot on a remote machine
 
 The 
 <a href="Show_matplotlib.md">
-The show_matplotlib_plt
+show_matplotlib_plt
 </a>
  use case describes how to use H5Gizmos to easily view
  a matplotlib plot generated on a remote machine.
@@ -43,6 +43,19 @@ show_binary
 use case describes how to interactively browse the file system
 and view binary file content.
 
+<h2>
+<a href="D3_chart.md">
+Generating a D3 chart
+</a>
+</h2>
+
+The 
+<a href="D3_chart.md">
+D3_chart
+</a>
+ use case describes how to embed a D3 chart
+ in a Gizmo application.  Similar techniques can embed
+ other sorts of web based visualizations.
 
 <a href="../README.md">
 Return to H5Gizmos documentation root.
