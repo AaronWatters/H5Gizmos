@@ -10,7 +10,7 @@ advertized and launched by the proxy server.
 
 <h2>
 <a href="PortForwarding.md">
-Running Gizmos remoteley using port forwarding
+Running Gizmos remotely using port forwarding
 </a>
 </h2>
 
