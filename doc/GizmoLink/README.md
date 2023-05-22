@@ -9,6 +9,17 @@ The section also describes how to declare Gizmo script entry points that can be
 advertized and launched by the proxy server.
 
 <h2>
+<a href="PortForwarding.md">
+Running Gizmos remoteley using port forwarding
+</a>
+</h2>
+
+In some computational environments your computer may not
+have a direct connection to a remote computing environment.
+In such cases you can use secure shell port forwarding together
+with the gizmo-link server to connect to a H5Gizmos user interfaces.
+
+<h2>
 <a href="Containers.md">
 Running Gizmos in Containers
 </a>
