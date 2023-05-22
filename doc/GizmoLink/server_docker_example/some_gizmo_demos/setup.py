@@ -12,6 +12,7 @@ setup(
         "H5Gizmos.scripts": [
             "simple_todo = some_gizmo_demos.simple_todo:main",
             "hello_curves = some_gizmo_demos.hello_curves:main",
+            "hello_env = some_gizmo_demos.hello_env:main",
         ]
     },
 )
