@@ -38,7 +38,7 @@ The implementation of the "to do list" Gizmo script entry point.
 A CSS file resource used by the "to do list" Gizmo script.
 
 <a href="./some_gizmo_demos/some_gizmo_demos/hello_curves.py">./some_gizmo_demos/some_gizmo_demos/hello_curves.py</a>:
-The implementatoin of the curves diagram Gizmo script entry point.
+The implementation of the curves diagram Gizmo script entry point.
 
 <hr>
 <a href="../Containers.md">
