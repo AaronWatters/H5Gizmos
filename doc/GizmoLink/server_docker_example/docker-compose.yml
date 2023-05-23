@@ -1,0 +1,8 @@
+services:
+  python:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app
+    ports:
+      - 5656:9898

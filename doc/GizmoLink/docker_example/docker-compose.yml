@@ -1,0 +1,11 @@
+services:
+  python:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app
+    ports:
+      - 5555:5555
+    environment:
+      - GIZMO_USE_SERVER_ADDRESS=localhost
+      - GIZMO_USE_PORT=5555
