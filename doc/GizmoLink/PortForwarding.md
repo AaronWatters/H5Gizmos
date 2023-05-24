@@ -4,15 +4,22 @@
 In some computational environments your computer may not
 have a direct connection to a remote computing environment.
 In such cases you can use secure shell port forwarding together
-with the gizmo-link server to connect to an H5Gizmos user interfaces.
+with the gizmo-link server to connect to H5Gizmos user interfaces
+running on remote machines.
 
 For the sake of concreteness the following discussion illustrates
 how to open H5Gizmo interfaces using port forwarding within the
 Flatiron Institute (FI) environment at the time of this writing.
 You may need to adjust details for your environment.
 
-First we need to connect to a compute node to use to launch
-the interface.  A guest researcher at FI might use the `gateway`
+In the discussion below I have installed H5Gizmos on the FI compute cluster
+and I want to view H5Gizmos user interfaces for programs running on the
+cluster on my local workstation -- but my local workstation does not
+have a direct network connection to the cluster.  The only network access
+for my workstation to the cluster is via the secure shell mechanism `ssh`.
+
+First we need to connect to a compute node to use run H5Gizmos programs
+in the cluster.  A guest researcher at FI might use the `gateway`
 to get access to the cluster by running a console command
 on the local workstation like this: 
 
@@ -35,7 +42,7 @@ gateway$ ssh rusty
 ```
 
 To access a node that is appropriate for running non-trivial computations
-the research might use `srun` to allocate a compute node, like this:
+the researcher might use `srun` to allocate a compute node, like this:
 ```
 rusty$ srun -N1 --pty bash -i
 worker$ uname -a
