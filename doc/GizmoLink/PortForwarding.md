@@ -56,7 +56,7 @@ on `worker6027` and connect to the interfaces from a user facing "local workstat
 using port forwarding.  Below the node name `worker6027` is just an example name -- in general you will need
 to use whatever "remote host" name that is allocated by `srun`.
 
-# On the remote host start a gizmo-link server using an available remote port (9876)
+### On the remote host start a gizmo-link server using an available remote port (9876)
 
 The `gizmo_link` server provides a web server running on a specific port which
 can connect to H5Gizmo user interfaces running on the remote host `worker6027`.  Start
@@ -71,7 +71,7 @@ The above line starts the server running in the background, because it ends with
 You can launch other programs
 from the same console by hitting "return" to get a new prompt.  
 
-# On the local workstation establish forwarding to the remote port
+### On the local workstation establish forwarding to the remote port
 
 Next, we set up port forwarding between the local workstation and the remote host
 by running a command line in a console window on the local workstation.
@@ -89,7 +89,7 @@ available.
 The `ssh` connection may require passwords
 and other authentication.
 
-# On the local workstation open the gizmo-link test page
+### On the local workstation open the gizmo-link test page
 
 At this point you can verify that the port forwarding is working by opening the
 gizmo-server test page in a browser.  On a Mac laptop this can be done from the
@@ -102,7 +102,7 @@ local$ open http://127.0.0.1:16000/test
 If everything is working you should see a browser tab containing a "hello world"
 page listing some information about the gizmo-server program.
 
-# On the remote host start the gizmo interface(s) using a prefix environment variable
+### On the remote host start the gizmo interface(s) using a prefix environment variable
 
 Now it is possible to launch H5Gizmos interfaces on the remote host and connect to them
 from the local workstation.  But first define the following environment variable on the remote
@@ -125,7 +125,7 @@ Open gizmo using link (control-click / open link)
  GIZMO_LINK: http://127.0.0.1:16000/connect/45385/gizmo/http/MGR_1684773058084_2/index.html 
 ```
 
-# Open the URL for the interface(s) on the local workstation
+### Open the URL for the interface(s) on the local workstation
 
 The URL generated above by the H5Gizmos interface can be opened on the local workstation
 in a browser.  On a Mac laptop this can be done from the command line like this:
