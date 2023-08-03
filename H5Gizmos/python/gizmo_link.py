@@ -145,9 +145,12 @@ def setup_gizmo_link():
 def start_script():
     "Start link web server."
     import sys
-    port = int(sys.argv[1])
-    base_url = sys.argv[2]
-    prefix = sys.argv[3]
+    argv = ["prog", "port", "/", "GizmoLink"]
+    ln = len(sys.argv)
+    argv[:ln] = sys.argv
+    port = int(argv[1])
+    base_url = argv[2]
+    prefix = argv[3]
     server = GizmoLink(port, base_url, prefix)
     app = server.get_app()
     return web.run_app(app, port=port)
