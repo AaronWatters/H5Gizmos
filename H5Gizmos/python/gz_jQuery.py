@@ -1432,7 +1432,7 @@ class jQueryImage(jQueryComponent):
                 scaled = 255 * (A - m) / (M - m)
                 array = scaled.astype(np.uint8)
             else:
-                array = np.zeros(A.shape, dtype=np.uint8)
+                array = np.zeros(array.shape, dtype=np.uint8)
                 array[:] = 128  # arbitrary grey.
         else:
             assert m >= 0 and M < 256, "Array not in range 0..255 " + repr((m,M))
