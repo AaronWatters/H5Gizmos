@@ -1,5 +1,5 @@
 
-# Viewing a matplotlib plot on a remote machine use case
+# View binary file content use case
 
 The `H5Gizmos` package includes a script which allows the user
 to interactively select a file from the file system and view the
