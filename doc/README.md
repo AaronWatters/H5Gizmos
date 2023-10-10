@@ -217,9 +217,10 @@ Containers, Gizmo Scripts and the GizmoLink Proxy Server
 
 The 
 <a href="GizmoLink/README.md">
-Containers, Gizmo Scripts and the GizmoLink Proxy Server
+Containers, Forwarding, Gizmo Scripts, and the GizmoLink Proxy Server
 </a>
- section discusses how to run Gizmo interfaces in internet cloud environments.
+ section discusses how to run Gizmo interfaces 
+using port forwarding or in internet cloud environments.
 H5Gizmo interfaces running in containers can display on remote web browsers and 
 the `GizmoLink` proxy server helps user web browsers
 display Gizmo user interfaces where the parent process runs on a remote machine.
