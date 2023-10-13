@@ -295,6 +295,7 @@ class Component:
         gizmo._initial_reference("H5Gizmos")
         gizmo._initial_reference("make_array_buffer", "H5Gizmos.make_array_buffer")
         gizmo._initial_reference("GIZMO_BODY", 'document.getElementById("GIZMO_BODY")')
+        gizmo._initial_reference("modules", "window.H5GIZMO_INTERFACE.modules")
         self.serve_folder("GIZMO_STATIC", "../static")
 
     def add_deferred_dependencies(self, gizmo):
