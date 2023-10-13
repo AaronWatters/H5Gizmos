@@ -80,6 +80,8 @@ var H5Gizmos = {};
             this.halted = false;
             this.reconnect_count = 0;
             this.reconnect_limit = 10;
+            // modules cache
+            this.modules = {};
         };
         shutdown() {
             console.log("Shutting down gizmo.")
@@ -718,7 +720,7 @@ var H5Gizmos = {};
     indicator_to_command_parser[h5.SET] = SetCommandParser;
 
     function value_pair_test(ob) {
-        if (!ob) {
+        if ((!ob) || (!ob.hasOwnProperty)) {
             return false;
         }
         return ob.hasOwnProperty("_is_value_pair");
