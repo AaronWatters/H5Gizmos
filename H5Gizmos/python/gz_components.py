@@ -45,10 +45,41 @@ class Component:
     _gizmo_attached_future = None
     _component_started_future = None
     _actions_awaiting_start = None
+    _module_context = None
 
     def __init__(self):
         # start the task which waits for gizmo initialization
         self.component_started_future()
+
+    def get_module_context(self):
+        from . import gz_module_support
+        result = self._module_context
+        if result is None:
+            result = self._module_context = gz_module_support.Module_context()
+        return result
+    
+    def load_node_modules(self, node_modules_folder, url_prefix="node_modules"):
+        if self.gizmo:
+            raise RuntimeError("Node modules must be loaded before gizmo initialization. "
+                               + repr(node_modules_folder))
+        self.serve_folder(url_prefix, node_modules_folder)
+        context = self.get_module_context()
+        context.map_node_modules(node_modules_folder, url_prefix)
+
+    def load_module(self, module_identifier, alias=None):
+        if self.gizmo:
+            raise RuntimeError("Modules must be loaded before gizmo initialization. "
+                               + repr(module_identifier))
+        context = self.get_module_context()
+        context.load_module(module_identifier, alias)
+
+    def _add_module_support(self):
+        context = self._module_context
+        if context is not None:
+            import_map = context.import_map_html()
+            self.insert_html(import_map)
+            script = context.module_loader_html()
+            self.insert_html(script)
 
     def gizmo_attached_future(self):
         """
@@ -286,6 +317,7 @@ class Component:
         """
         Add libraries, css files, references, or other resources required by the component to the gizmo.
         """
+        self._add_module_support()
         stylesheet_path = self.stylesheet_path
         if (stylesheet_path):
             gizmo._css_file(stylesheet_path)
