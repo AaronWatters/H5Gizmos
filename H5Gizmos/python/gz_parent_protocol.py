@@ -75,7 +75,7 @@ class Gizmo:
     KEEPALIVE = "K"
     RECONNECT_ID = "reconnect_id"
 
-    # derault slot -- override this to optimize transfers of 1-d numeric arrays
+    # default slot -- override this to optimize transfers of 1-d numeric arrays
     _translate_1d_array = None
 
     def __init__(
