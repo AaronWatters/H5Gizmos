@@ -12,6 +12,7 @@ from . import gizmo_server
 from . import gz_parent_protocol as H5Gizmos
 from . import gz_get_blob
 import numpy as np
+import os
 import asyncio
 
 JS_COLLECTION_NAME_MAP = {
@@ -72,6 +73,36 @@ class Component:
                                + repr(module_identifier))
         context = self.get_module_context()
         context.load_module(module_identifier, alias)
+
+    def load_bundle(self, relative_bundle_path, module_file_path, url_prefix, module_id=None):
+        """
+        For example invoked in a Python module source file:
+
+        G.load_bundle("../dist/chart_js_gizmo.es.js", __file__, "chart_js")
+
+        loads the "../dist/chart_js_gizmo.es.js" module, accessible in Python
+        via the reference
+
+        G.modules.chart_js
+
+        module_file_path should normally be __file__ in module context.
+        relative_bundle_path should be the location of the bundle relative
+        to the module_file_path -- like "../dist/chart_js_gizmo.es.js".
+        url_prefix should be a name like "chart_js" to use as an URL bundle
+        prefix -- combining with module_file_path to "./chart_js/chart_js_gizmo.es.js".
+        """
+        if self.gizmo:
+            raise RuntimeError("Bundles must be loaded before gizmo initialization. "
+                               + repr(relative_bundle_path))
+        from_folder = os.path.dirname(module_file_path)
+        abs_bundle_path0 = os.path.join(from_folder, relative_bundle_path)
+        abs_bundle_path = os.path.abspath(abs_bundle_path0)
+        (bundle_folder, bundle_file_name) = os.path.split(abs_bundle_path)
+        module_url = "./" + url_prefix + "/" + bundle_file_name
+        self.serve_folder(url_prefix, bundle_folder)
+        if module_id is None:
+            module_id = url_prefix
+        self.load_module(module_url, module_id)
 
     def _add_module_support(self):
         context = self._module_context
@@ -302,8 +333,10 @@ class Component:
         return self.gizmo._entry_url()
 
     def configure_page(self, gizmo):
+        # reference shortcuts
         self.window = gizmo.window
         self.document = gizmo.document
+        self.modules = gizmo.modules
         body = self.body = gizmo.GIZMO_BODY
         interface = gizmo.H5GIZMO_INTERFACE
         element = self.dom_element_reference(gizmo)
