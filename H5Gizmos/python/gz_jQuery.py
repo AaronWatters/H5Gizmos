@@ -36,7 +36,52 @@ function add_websocket_error_callback() {
     };
     return tr.ws_error_message_callback;
 };
+
+function add_modal_warning_dialog() {
+    var tr = H5GIZMO_INTERFACE;
+    var modal_warning_dialog = $("<div>(no message)</div>").
+        appendTo($("#GIZMO_BODY"));
+    modal_warning_dialog.dialog({modal: true});
+    modal_warning_dialog.dialog("close");
+    modal_warning_dialog.is_active = false;
+    modal_warning_dialog.show_warning = function (text) {
+        modal_warning_dialog.html(text);
+        modal_warning_dialog.dialog("open");
+    };
+    modal_warning_dialog.delayed_warning = function(text, delay) {
+        modal_warning_dialog.is_active = true;
+        setTimeout(() => {
+            if (modal_warning_dialog.is_active) {
+                modal_warning_dialog.show_warning(text);
+            }
+        }, delay)
+    };
+    modal_warning_dialog.cancel_warning = function () {
+        modal_warning_dialog.is_active = false;
+        modal_warning_dialog.dialog("close");
+    };
+    return modal_warning_dialog;
+};
 """
+
+class WarningContextManager:
+
+    """
+    Show modal dialog warning until parent processing completes.
+    """
+
+    def __init__(self, component, message="Working...", delay_ms=100):
+        self.component = component
+        self.message = message
+        self.delay_ms = delay_ms
+
+    async def __aenter__(self):
+        await get(self.component.gizmo.modal_warning_dialog.delayed_warning(
+            self.message, self.delay_ms
+        ))
+
+    async def __aexit__(self, *ignored):
+        await get(self.component.gizmo.modal_warning_dialog.cancel_warning())
 
 class jQueryComponent(gz_components.Component):
 
@@ -81,6 +126,16 @@ class jQueryComponent(gz_components.Component):
         t = truncate(self.tag)
         i = truncate(self.init_text)
         return self.__class__.__name__ + repr( (t, i))
+    
+    def modal_warning(self, operation, arguments=[], message="working...", delay_ms=100):
+        """
+        Display a modal warning if operation takes longer than delay.
+        Close the warning when the operation completes.
+        """
+        async def task():
+            async with WarningContextManager(self, message, delay_ms):
+                operation(*arguments)
+        schedule_task(task())
 
     def set_on_click(self, on_click):
         self.on_click = on_click
@@ -104,6 +159,7 @@ class jQueryComponent(gz_components.Component):
         gizmo._embedded_script(MISC_JAVASCRIPT)
         gizmo._initial_reference("jQuery")
         gizmo._initial_reference("websocket_error_callback", "add_websocket_error_callback()")
+        gizmo._initial_reference("modal_warning_dialog", "add_modal_warning_dialog()")
 
     def prepare_application(self, gizmo):
         super().prepare_application(gizmo)
