@@ -59,13 +59,26 @@ class Component:
             result = self._module_context = gz_module_support.Module_context()
         return result
     
-    def load_node_modules(self, node_modules_folder, url_prefix="node_modules"):
+    def load_node_modules(self, node_modules_folder, url_prefix="node_modules", module_file_path=None):
+        """
+        Load node_modules directory.  Must execute before gizmo server initialization.
+
+        To load relative to module __file__ location:
+
+        H = Html("<h1>Hello modules!</a>")
+        H.load_node_modules(node_modules, "nm", module_file_path=__file__)
+        # prepare references to modules
+        H.load_module("qd_vector")
+        ...
+        await H.link()
+        name = await get(H.gizmo.modules.qd_vector.name)
+        """
         if self.gizmo:
             raise RuntimeError("Node modules must be loaded before gizmo initialization. "
                                + repr(node_modules_folder))
-        self.serve_folder(url_prefix, node_modules_folder)
+        self.serve_folder(url_prefix, node_modules_folder, module_file_path)
         context = self.get_module_context()
-        context.map_node_modules(node_modules_folder, url_prefix)
+        context.map_node_modules(node_modules_folder, url_prefix, module_file_path)
 
     def load_module(self, module_identifier, alias=None):
         if self.gizmo:
@@ -392,11 +405,11 @@ class Component:
         "Reference to a Javascript value, bound at initialization."
         return self.dependency("_initial_reference", (identity, js_expression))
 
-    def serve_folder(self, url_file_name, os_path):
+    def serve_folder(self, url_file_name, os_path, module_file_path=None):
         "Serve files from folder locally, guessing MIME type.."
         if self.gizmo is not None:
-            return self.gizmo._serve_folder(url_file_name, os_path)
-        return self.dependency("_serve_folder", (url_file_name, os_path))
+            return self.gizmo._serve_folder(url_file_name, os_path, module_file_path)
+        return self.dependency("_serve_folder", (url_file_name, os_path, module_file_path))
 
     def relative_js(self, js_url, in_body=False, check=True):
         "Load a Javascript URL from a locally served folder."

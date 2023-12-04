@@ -408,12 +408,16 @@ class Gizmo:
             relative_url = self.relative_url(filename)
             self._remote_css(relative_url, check=False)
 
-    def _serve_folder(self, url_file_name, os_path):
+    def _serve_folder(self, url_file_name, os_path, module_file_path=None):
         """
         Serve all files below os_path using prefix url_file_name
         """
         # this is prolly not really correct
         assert "/" not in url_file_name, "Url file name should not contain subfolders."
+        if module_file_path is not None:
+            from_folder = os.path.dirname(module_file_path)
+            abs_os_path0 = os.path.join(from_folder, os_path)
+            os_path = os.path.abspath(abs_os_path0)
         full_path = gz_resources.get_file_path(os_path)
         mgr = self._manager
         mgr.serve_folder(full_path, url_file_name)

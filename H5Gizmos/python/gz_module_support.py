@@ -42,11 +42,16 @@ class Module_context:
     def add_import_mapping(self, identifier, location):
         self.import_mapping[identifier] = location
 
-    def map_node_modules(self, node_modules_folder, url_prefix="./node_modules"):
+    def map_node_modules(self, node_modules_folder, url_prefix="./node_modules", module_file_path=None):
         """
         Look for package.json entries in subfolders of node_modules_folder.
         Add import mapping for modules found.
         """
+        # should refactor copied from _serve_folder and elsewhere... xxxx
+        if module_file_path is not None:
+            from_folder = os.path.dirname(module_file_path)
+            abs_os_path0 = os.path.join(from_folder, node_modules_folder)
+            node_modules_folder = os.path.abspath(abs_os_path0)
         assert os.path.isdir(node_modules_folder), "not a dir: " + repr(node_modules_folder)
         if not url_prefix.startswith("./"):
             url_prefix = "./" + url_prefix
@@ -55,9 +60,10 @@ class Module_context:
             if os.path.isfile(json_fn):
                 module_url = os.path.join(url_prefix, fn) + "/"
                 json_descriptor = json.load(open(json_fn))
+                (name, mapping) = map_package_descriptor(json_descriptor)
                 # ignore anything not of type module
-                if json_descriptor.get("type") == "module":
-                    (name, mapping) = map_package_descriptor(json_descriptor)
+                if (json_descriptor.get("type") == "module") or (json_descriptor.get("module")):
+                    # (name, mapping) = map_package_descriptor(json_descriptor)
                     for (relative_link, entry_point) in mapping.items():
                         if relative_link == ".":
                             # module main entry point.
