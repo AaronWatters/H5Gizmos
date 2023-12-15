@@ -64,16 +64,21 @@ def open_in_tab_html(suffix):
 link_template = """
 var ident = "{ident}";
 var suffix = "{suffix}";
-var link = document.getElementById(ident);
+var div = document.getElementById(ident);
 var url = suffix_at(window.location.href, suffix);
+link = document.createElement("a");
 link.href = url;
+link.target = "_blank";
+link.innerHTML = url;
+div.appendChild(link);
 """
 
 def show_link(suffix):
     ident = new_identifier("gizmo_href")
     D = dict(ident=ident, suffix=suffix)
     code = link_template.format(**D)
-    anchor = '<a href="_blank" target="_blank" id="{ident}">open {suffix}.</a>'.format(**D)
+    anchor = '<div id="{ident}">Link:&nbsp;</div>'.format(**D)
+    #anchor = '<a href="_blank" target="_blank" id="{ident}">open {suffix}.</a>'.format(**D)
     return anchor + anonymous_wrap_js_script(suffix_at_js + code)
 
 def display_link(suffix):
