@@ -124,6 +124,8 @@ static_folder =  os.path.abspath(
 
 LINK_PREFIX = "GIZMO_LINK:"
 
+JUPYTER_SERVER_PLUGIN_NAME = "GizmoLink"
+
 REDIRECT_AUTOMATICALLY = True
 
 icon_path = os.path.join(static_folder, "logo.svg")
@@ -133,7 +135,7 @@ def setup_gizmo_link():
     "Jupyter server plugin setup callback."
     assert os.path.isfile(icon_path)
     return {
-        'command': ['gizmo_link', '{port}', '{base_url}', "GizmoLink"],
+        'command': ['gizmo_link', '{port}', '{base_url}', JUPYTER_SERVER_PLUGIN_NAME],
         'environment': {},
         'launcher_entry': {
             'title': 'Gizmo Link',
