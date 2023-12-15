@@ -809,6 +809,31 @@ class GizmoManager:
         assert handler is not None, "No web socket handler for id " + repr(self.identifier)
         await handler.handle(info, request, interface)
 
+    def jupyter_url_suffix(
+            self,
+            for_gizmo,
+            method,
+            filename=None,
+            action="connect",
+    ):
+        # eg: GizmoLink/connect/54211/gizmo/http/MGR_1702579977573_3/index.html
+        from .gizmo_link import JUPYTER_SERVER_PLUGIN_NAME
+        port = for_gizmo._port
+        prefix = self.prefix
+        identifier = self.identifier
+        components = [
+            JUPYTER_SERVER_PLUGIN_NAME,
+            action,
+            str(port),
+            prefix,
+            method,
+            identifier,
+        ]
+        if filename is not None:
+            components.append(filename)
+        result = "/".join(components)
+        return result
+
     def local_url(
             self, 
             for_gizmo, 
