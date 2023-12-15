@@ -272,6 +272,36 @@ class Gizmo:
         self._start_confirm_future.set_result(True)
 
     async def _show_start_link(self, proxy=False):
+        if gizmo_server.isnotebook():
+            await self._show_jupyter_start_link()
+        else:
+            await self._print_start_link()
+
+    async def _show_jupyter_start_link(self):
+        # xxxx why is this async?
+        from . import jupyter_gizmo_support
+        mgr = self._manager
+        suffix = mgr.jupyter_url_suffix(
+            for_gizmo=self,
+            method="http",
+            filename=self._filename,
+        )
+        jupyter_gizmo_support.display_link(suffix)
+
+    async def _print_start_link(self):
+        from .gizmo_link import LINK_PREFIX
+        url = self._entry_url()
+        link = '<a href="%s" target="_blank">Click to open</a> <br> \n %s %s \n' % (
+            url, LINK_PREFIX, url)
+        OKGREEN = '\033[92m'
+        ENDC = '\033[0m'
+        msg = "Open gizmo using link (control-click / open link)\n\n" + link + "\n\n"
+        txt = "%s\n%s\n%s" % (OKGREEN, msg, ENDC)
+        print (txt, flush=True)
+        await self._has_started()
+
+    async def _show_start_link0(self, proxy=False):
+        # xxxx old version -- delete.
         from .gizmo_link import LINK_PREFIX
         #from IPython.display import HTML, display
         url = self._entry_url(proxy=proxy)
@@ -305,6 +335,18 @@ class Gizmo:
             webbrowser.open_new_tab(url)
 
     async def _open_in_jupyter_iframe(self, height=20, proxy=False):
+        # xxxx why is this async?
+        from . import jupyter_gizmo_support
+        mgr = self._manager
+        suffix = mgr.jupyter_url_suffix(
+            for_gizmo=self,
+            method="http",
+            filename=self._filename,
+        )
+        jupyter_gizmo_support.display_iframe(suffix)
+
+    async def _open_in_jupyter_iframe0(self, height=20, proxy=False):
+        # xxxx old version: delete.
         await gizmo_server.display_gizmo_jupyter_iframe(
             self, min_height=height, proxy=proxy)
 
