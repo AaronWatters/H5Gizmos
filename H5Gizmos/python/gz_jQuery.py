@@ -93,16 +93,12 @@ class jQueryComponent(gz_components.Component):
 
     def __init__(self, init_text="Uninitialized JQuery Gizmo.", tag="<div/>", title=None):
         super().__init__()
-        #(self, "initialized")
         if title:
             self.set_title(title)
         ttag = type(tag)
         assert ttag is str, "Tag should be str: " + repr((ttag, tag))
         self.init_text = init_text
         self.tag = tag
-        #self.element_name = H5Gizmos.new_identifier("JQuery_element")
-        #self.info_name = H5Gizmos.new_identifier("JQuery_info")
-        #self.container_name = H5Gizmos.new_identifier("JQuery_container")
         self.container = None
         self.element = None
         self.info_div = None
@@ -149,9 +145,6 @@ class jQueryComponent(gz_components.Component):
 
     def add_dependencies(self, gizmo):
         super().add_dependencies(gizmo)
-        #gizmo._css_file("../static/jquery-ui-1.12.1/jquery-ui.css")
-        #gizmo._js_file("../static/jquery-ui-1.12.1/jquery.min.js")
-        #gizmo._js_file("../static/jquery-ui-1.12.1/jquery-ui.js")
         gizmo._relative_css("GIZMO_STATIC/jquery-ui-1.12.1/jquery-ui.css")
         gizmo._relative_css("GIZMO_STATIC/JQuery_overrides.css")
         gizmo._relative_js("GIZMO_STATIC/jquery-ui-1.12.1/jquery.min.js")
@@ -219,12 +212,9 @@ class jQueryComponent(gz_components.Component):
             #("   ... reference is cached", result)
             return result
         super().dom_element_reference(gizmo)
-        # ??? does it cause harm to always create an extra container around the element ???
-        #self.container = name(self.container_name, gizmo.jQuery("<div/>"))
         self.container = self.cache("container", gizmo.jQuery("<div/>"))
         # Convenience access to jQuery reference:
         self.jQuery = gizmo.jQuery
-        #divtext = "<div>%s</div>" % self.init_text
         self.element = self.cache("element", gizmo.jQuery(self.tag))
         self.resize(width=self.width, height=self.height)
         classes = " ".join(self.class_list)
@@ -237,8 +227,6 @@ class jQueryComponent(gz_components.Component):
             do(self.element.html(self.init_text))
         if self.title_string:
             do(self.element.prop("title", self.title_string))
-        #if self.tooltips_enabled:
-        #    self.enable_tooltips()
         do(self.element.appendTo(self.container))
         self.configure_jQuery_element(self.element)
         # handle deferred event callbacks
@@ -572,11 +560,7 @@ class RadioButtons(jQueryComponent):
             label_value_pairs = pairs
         label_value_pairs = [(label, value) for (label, value) in label_value_pairs]
         self.label_value_pairs = label_value_pairs
-        #self.labels = [pair[0] for pair in label_value_pairs]
         self.values = [pair[1] for pair in label_value_pairs]
-        #assert selected_value is None or selected_value in self.values, \
-        #    "no such value to select: " + repr(selected_value)
-        #self.selected_value = selected_value
         self.legend = legend
         self.radio_on_click = on_click
         self.options = options or {}
@@ -611,8 +595,6 @@ class RadioButtons(jQueryComponent):
             checked = ""
             if value in self.selected_values:
                 checked = " checked "
-            #input_options = options.copy()
-            #input_options["label"] = label
             identity = H5Gizmos.new_identifier("gzRadio")
             id2value[identity] = value
             label_tag = '<label for="%s">%s</label>' % (identity, label)
@@ -636,11 +618,8 @@ class RadioButtons(jQueryComponent):
         selector = self.selector_checked
         id = await get(jQuery(selector).attr("id"))
         value = self.id2value[id]
-        #self.add("got id %s with value %s" % (repr(id), repr(value)))
-        #self.selected_value = value
         self.select_values(value)
         on_click = self.radio_on_click
-        #("calling update_values onclick")
         if on_click:
             on_click(value)
 
@@ -860,24 +839,6 @@ class Slider(jQueryComponent):
             c(v)
             #self.change_pending = True
             #schedule_task(self.delayed_callback())
-
-    '''async def delayed_callback(self):
-        "delay the change callback and ignore other change requests that arrive too quickly to prevent jitter"
-        # xxxx this method should probably be used for other callbacks too...
-        c = self.on_change
-        if c is None:
-            self.change_pending = False
-            return
-        self.change_pending = True  # redundant
-        try:
-            # sleep a little to prevent other changes coming in too quickly
-            await asyncio.sleep(self.change_delay)
-        finally:
-            # allow other changes to arrive while the callback executes
-            self.change_pending = False
-        # use the current value which may have changed during the sleep
-        v = self.value
-        c(v)'''
 
 class DeJitterCallback:
     """
@@ -1136,20 +1097,6 @@ class Template(ChildContainerSuper):
 
 class GridStack(ChildContainerSuper):
 
-    '''element_css_defaults = {
-        "display": "grid",
-        "grid-gap": "3px",
-        "padding": "3px",
-        "border-radius": "3px",
-        "background-color": "#ddd",
-        #"width": "100vw"
-    }
-
-    child_css_defaults = {
-        "background-color": "white",
-        "padding": "3px",
-    }'''
-
     default_class = "H5Gizmo-stack"
 
     def __init__(
@@ -1198,10 +1145,6 @@ class GridStack(ChildContainerSuper):
         children = self.children = self.check_children(children)
         # xxxx maybe use child.element?
         references = [self.child_reference(child, gizmo) for child in children]
-        #jq = gizmo.jQuery
-        #references = [jq(child.dom_element_reference(gizmo)) for child in children]
-        #seq = H5Gizmos.GizmoSequence(references, self.gizmo)  # not needed?
-        #name(self.children_name, seq)
         css = self.main_css(children)
         #css.update(self.element_css_defaults)
         css.update(self._css)
