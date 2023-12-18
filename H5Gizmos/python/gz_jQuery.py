@@ -1610,24 +1610,3 @@ Label = jQueryLabel
 Stack = FlexColumn
 Shelf = FlexRow
 
-# Tests and Demos:
-
-def hello_jquery(message="<h2>Hello world: click me.</h2>", auto_start=False):
-    #from .H5Gizmos import do
-    E = jQueryComponent("initializing jquery component.")
-    E.counter = 0
-
-    async def task():
-        #("setting message", message)
-        do(E.element.html(message))
-        #("setting on click", click_callback)
-        do(E.element.on("click", click_callback))
-        info = E.get_info_div()
-        do(info.html("info here."))
-
-    def click_callback(*ignored):
-        E.counter += 1
-        do(E.element.html("<h1><em>That tickles!</em></h1>"))
-        do(E.get_info_div().html("click " + repr(E.counter)))
-
-    E.run(task, auto_start=auto_start)
