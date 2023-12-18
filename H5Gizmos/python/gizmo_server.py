@@ -47,6 +47,7 @@ def get_or_create_event_loop():
         asyncio.set_event_loop(loop)
     return loop
 
+'''
 def run(main_awaitable, server=None, run_forever=True, exit_on_disconnect=None, log_messages=False, verbose=True):
     """
     Get a gizmo and run it in an asynchronous run program.
@@ -59,6 +60,7 @@ def run(main_awaitable, server=None, run_forever=True, exit_on_disconnect=None, 
     if run_forever:
         #get_or_create_event_loop().run_forever()
         run_until_exit()
+'''
 
 def serve(coroutine, verbose=False, delay=0.5):
     """
@@ -170,6 +172,7 @@ def print_reachable_server_name(verbose=True):
     Print the most useful reachable server name.
     External script entry point.
     """
+    # xxxx is this historical?  why is it here?
     import io, sys
     # work around some sort of anomaly with printing for now, ignore stdout...
     stdout = sys.stdout
