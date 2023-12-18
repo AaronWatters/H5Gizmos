@@ -219,7 +219,7 @@ class Component:
         Try to guess the right way to display self as iframe, in browser tab, or default to link.
         """
         if gizmo_server.isnotebook():
-            return await self.link(verbose=verbose, log_messages=log_messages)
+            return await self.iframe(verbose=verbose, log_messages=log_messages)
         use_link = False
         # Use a link if local guis are not supported.
         if not gizmo_server.use_local_gui():
