@@ -251,12 +251,13 @@ class Component:
         self, 
         title="Gizmo",
         auto_start=True, 
-        verbose=True, 
+        verbose=False, 
         log_messages=False, 
         #close_button=False,
         await_start=True,
         proxy=False,
         shutdown_on_close=True,
+        force=False,
         ):
         if auto_start:
             # override auto_start if running under gizmo_link server
@@ -264,9 +265,14 @@ class Component:
                 if verbose:
                     print("Overriding auto start inside gizmo_link.")
                 auto_start = False
+        in_notebook = gizmo_server.isnotebook()
+        # Unless forced use links from jupyter
+        # to prevent error messages when the note book is openned
+        # again later.
+        if (not force) and in_notebook:
+            auto_start = False
         if auto_start:
             H5Gizmos.check_browser()
-        in_notebook = gizmo_server.isnotebook()
         if verbose:
             print("Display gizmo component in new browser window.")
         gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages, title=title)
