@@ -6,7 +6,7 @@ Composable gizmo factories.
 
 #from time import time
 #from numpy.lib.function_base import _ARGUMENT
-from H5Gizmos import do, get, name, run, get_gizmo, schedule_task
+from H5Gizmos import do, get, name, get_gizmo, schedule_task
 from . import gizmo_server
 #from . import H5Gizmos
 from . import gz_parent_protocol as H5Gizmos
