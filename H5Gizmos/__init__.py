@@ -1,7 +1,7 @@
 "Tools for building interactive graphical interfaces for applications using browser technology and HTML5"
 
 from .python.gizmo_server import (
-    run,
+    #run,
     serve,
     get_gizmo,
     set_url_prefix,
