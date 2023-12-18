@@ -52,10 +52,6 @@ def run(main_awaitable, server=None, run_forever=True, exit_on_disconnect=None, 
     Get a gizmo and run it in an asynchronous run program.
     Start a server if no server is provided.
     """
-    #if exit_on_disconnect is None:
-    #    # If not specified exit on disconnect when not in notebook.
-    #    exit_on_disconnect = not isnotebook()
-    #print("Running.  Exit on disconnect", exit_on_disconnect)
     server = _check_server(server, verbose=verbose)
     # create and schedule the main task
     gizmo = server.gizmo(exit_on_disconnect=exit_on_disconnect, log_messages=log_messages)
@@ -79,13 +75,6 @@ def serve(coroutine, verbose=False, delay=0.5):
             await task
         except Exception:
             print("---- Exception in main gizmo task.  Terminating.")
-            #traceback.print_exc(file=sys.stdout)
-            #print("---- Terminating")
-            # prevent duplicate exception
-            #try:
-            #    task.result()
-            #except:
-            #    pass
             sys.exit(1)
 
     H5Gizmos.schedule_task(deferred_task())
@@ -192,7 +181,6 @@ def print_reachable_server_name(verbose=True):
         print("Validating connection to", repr(local_ip), "port", random_port)
     server = GzServer(server=local_ip, port=random_port)
     server.verbose = verbose
-    #_check_server(server, verbose=verbose)
     server.run_in_task(log=True)
     async def print_task():
         # allow server to start
@@ -209,7 +197,6 @@ def print_reachable_server_name(verbose=True):
         sys.stdout = sys.stderr = io.StringIO()
         sys.exit()
     loop = get_or_create_event_loop()
-    #asyncio.run(print_task())
     H5Gizmos.schedule_task(print_task())
     run_until_exit()
 
@@ -415,25 +402,6 @@ async def display_gizmo_jupyter_iframe(
     #print("displaying", url)
     #print(iframe_html)
     display(HTML(iframe_html))
-
-'''
-async def embed(gizmo, allow_list='allow="camera;microphone"', delay=0.1):
-    "Embed gizmo in jupyter.  Create or use the global server if needed."
-    from IPython.display import HTML, display
-    assert isnotebook(), "Gizmo embedding is only supported inside jupyter notebooks."
-    identifier = gizmo._identifier
-    url = gizmo._entry_url()
-    D = dict(
-        IDENTIFIER = identifier,
-        TITLE = identifier,
-        #HEIGHT = height,
-        URL = url,
-        ALLOW_LIST = allow_list,
-        #DELAY = 10000,
-    )
-    iframe_html = IFRAME_TEMPLATE.format(**D)
-    await asyncio.sleep(delay)  # This should allow the server to start if needed.
-    display(HTML(iframe_html))'''
 
 # name aliases (maybe rename later?)
 #launch_in_browser = run_gizmo_standalone
@@ -872,14 +840,6 @@ class GizmoManager:
             if verbose:
                 print("using full url from prefix", (url_prefix, fully_specified_url))
             return fully_specified_url
-        # xxxx gizmo_link_reference is not used?
-        #if gizmo_link_reference:
-        #    # Return the port and path info only for proxy redirect logic of form
-        #    # /PORT/SOME_PATH
-        #    link_reference = "%s/%s" % (port, path)
-        #    if verbose:
-        #        print("using link reference", link_reference)
-        #    return link_reference
         if gizmo_link is not None:
             # Try to make a relative link like:
             #   BASEURL/GizmoLink/connect/PORT/SOME_PATH
