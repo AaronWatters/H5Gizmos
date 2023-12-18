@@ -15,11 +15,14 @@ import unittest
 import asyncio
 import numpy as np
 
+# https://stackoverflow.com/questions/60296873/sessionnotcreatedexception-message-session-not-created-this-version-of-chrome
+from webdriver_manager.chrome import ChromeDriverManager
+
 
 def selenium_watcher_process(url, identity, snooze, retries, verbose=False):
     if verbose:
         print("watcher: getting driver")
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome(ChromeDriverManager().install())
     if verbose:
         print("watcher: sleeping before url", url)
         time.sleep(60)
