@@ -142,15 +142,11 @@ class Component:
         """
         f = self._component_started_future
         if f is None:
-            #(self, "set up start future to wait for initialization.")
             f = self._component_started_future = H5Gizmos.make_future()
             self._actions_awaiting_start = []
             attached = self.gizmo_attached_future()
             async def start_test_task():
-                #(self, "wait for the gizmo to attach")
                 await attached
-                #conf = self.gizmo._start_confirm_future
-                #(self, "wait for confirmation of communication to front end")
                 await self.gizmo._has_started()
                 #(self, "signal component has started.")
                 f.set_result(True)
@@ -274,13 +270,9 @@ class Component:
         if verbose:
             print("Display gizmo component in new browser window.")
         gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages, title=title)
-        #if close_button:
-        #    gizmo._insert_html('<button onclick="self.close()">Close</button>')
         self.prepare_application(gizmo)
         if verbose:
             print("   entry_url=", gizmo._entry_url(proxy=proxy))
-        #if close_button:
-        #    gizmo._insert_html('<button onclick="self.close()">Close</button>')
         if shutdown_on_close and not in_notebook:
             self.shutdown_on_unload(gizmo)
         self.add_std_icon(gizmo)
