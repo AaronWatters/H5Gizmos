@@ -345,11 +345,6 @@ class Gizmo:
         )
         jupyter_gizmo_support.display_iframe(suffix)
 
-    async def _open_in_jupyter_iframe0(self, height=20, proxy=False):
-        # xxxx old version: delete.
-        await gizmo_server.display_gizmo_jupyter_iframe(
-            self, min_height=height, proxy=proxy)
-
     def _initial_reference(self, identity, js_expression=None):
         assert type(identity) == str, "identity must be str " + repr(identity)
         if js_expression is None:
