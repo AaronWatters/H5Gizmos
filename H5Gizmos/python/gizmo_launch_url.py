@@ -16,6 +16,25 @@ Exception encountered when creating component to launch:
 </pre>
 """
 
+REDIRECT_PAGE = """
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="UTF-8">
+    <script>
+    function open_gizmo() {{
+        window.location.href = "{redirect_url}";
+    }}
+    setTimeout(open_gizmo, {delay_ms});
+    </script>
+    </head>
+
+    <body id="GIZMO_BODY" class="gizmobody">
+    Redirecting: {redirect_url}.
+    </body>
+</html>
+"""
+
 class LaunchGizmoAndRedirect(FileGetter):
 
     def __init__(self, component_maker, title="launched gizmo", proxy=False, parent_component=None):
@@ -23,6 +42,7 @@ class LaunchGizmoAndRedirect(FileGetter):
         self.component_maker = component_maker
         self.proxy = proxy
         self.parent_component = parent_component
+        self.delay_ms = 50  # hardcoded for now.
 
     async def handle_get(self, info, request, interface=STDInterface):
         #redirect_url = "https://www.yahoo.com"
@@ -32,7 +52,8 @@ class LaunchGizmoAndRedirect(FileGetter):
             return self.error_response(interface)
         gizmo = await get_gizmo(title=self.title)
         component.prepare_application(gizmo)
-        print("schedule round-trip communication test...")
+        component.add_std_icon(gizmo)
+        #print("schedule round-trip communication test...")
         schedule_task(gizmo._has_started())
         nonce = new_identifier("N")
         #redirect_url = gizmo._entry_url(proxy=self.proxy)
@@ -40,10 +61,12 @@ class LaunchGizmoAndRedirect(FileGetter):
         parent_component = self.parent_component
         if parent_component is not None:
             parent_component.add("created new gizmo at " + repr(redirect_url))
-        sbody = 'redirect to: <a href="%s">%s</a>.' % (redirect_url, redirect_url)
+        #sbody = 'redirect to: <a href="%s">%s</a>.' % (redirect_url, redirect_url)
+        sbody = REDIRECT_PAGE.format(redirect_url=redirect_url, delay_ms=self.delay_ms)
         bbody = sbody.encode("utf8")
-        response = interface.respond(body=bbody, content_type="text/html", status=301)
-        response.headers["location"] = redirect_url
+        response = interface.respond(body=bbody, content_type="text/html", status=200)
+        #response = interface.respond(body=bbody, content_type="text/html", status=301)
+        #response.headers["location"] = redirect_url
         response.headers["Cache-Control"] = "no-store"
         return response
     
