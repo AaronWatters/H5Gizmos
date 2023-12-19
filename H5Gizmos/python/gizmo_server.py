@@ -346,68 +346,6 @@ async def display_gizmo_in_jupyter_new_tab(url, delay=0.1):
     await asyncio.sleep(delay)
     display(HTML(script))
 
-# https://blog.addpipe.com/camera-and-microphone-access-in-cross-oirigin-iframes-with-feature-policy/
-# https://stackoverflow.com/questions/9162933/make-iframe-height-dynamic-based-on-content-inside-jquery-javascript
-# https://stackoverflow.com/questions/22086722/resize-cross-domain-iframe-height
-
-IFRAME_TEMPLATE = """
-<script>
-(function () {{
-    var identifier = "{IDENTIFIER}";
-    window.addEventListener("message", function(e) {{
-        var this_frame = document.getElementById(identifier);
-        var margin = {MARGIN};
-        var min_height = {MIN_HEIGHT};
-        if ((this_frame) && (this_frame.contentWindow === e.source)) {{
-            //console.log("processing message", e.data.height);
-            var height = Math.max(min_height, e.data.height + margin)
-            var height_px = (height) + "px";
-            this_frame.height = height_px;
-            this_frame.style.height = height_px;
-        }}
-    }});
-}}) ();
-</script>
-
-<iframe id="{IDENTIFIER}"
-    title="{TITLE}"
-    width="100%"
-    height="{MIN_HEIGHT}px"
-    src="{URL}"
-    {ALLOW_LIST}
-</iframe>"""
-
-STD_ALLOW_LIST = 'allow="camera;microphone;display-capture;autoplay"'
-
-async def display_gizmo_jupyter_iframe(
-    gizmo, 
-    min_height=20, 
-    delay=0.1, 
-    allow_list=STD_ALLOW_LIST,
-    proxy=False,
-    ):
-    identifier = gizmo._identifier
-    url = gizmo._entry_url(proxy=proxy)
-    D = dict(
-        IDENTIFIER = identifier,
-        TITLE = identifier,
-        #HEIGHT = height,
-        MARGIN = 10,
-        URL = url,
-        ALLOW_LIST = allow_list,
-        DELAY = 10000,
-        MIN_HEIGHT = min_height,
-    )
-    from IPython.display import HTML, display
-    iframe_html = IFRAME_TEMPLATE.format(**D)
-    #server_task = server.run_in_task(**args)
-    await asyncio.sleep(delay)
-    #print("displaying", url)
-    #print(iframe_html)
-    display(HTML(iframe_html))
-
-# name aliases (maybe rename later?)
-#launch_in_browser = run_gizmo_standalone
 
 class GzServer:
 
