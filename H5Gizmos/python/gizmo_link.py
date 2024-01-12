@@ -293,20 +293,26 @@ class GizmoLink:
         assert prefix == "connect", "bad prefix: " + repr(prefix)
         target_url = "http://localhost:%s/%s" % (port, target_path)
         if self.verbose:
-            print("forwarding POST to target", repr(target_url))
+            print("forwarding POST to target", repr(protocol), repr(target_url))
         if protocol == "http":
-            # post request
-            # xxxx kiss for now.
-            post_bytes = await request.read()
+            # Streaming uploads
+            # https://docs.aiohttp.org/en/stable/client_quickstart.html
+            content = request.content
+            async def content_sender():
+                chunk = await content.readany()
+                while chunk:
+                    yield chunk
+                    chunk = await content.readany()
             async with aiohttp.ClientSession() as session:
-                # xxxx should stream post data (?)
-                async with session.post(target_url, data=post_bytes) as resp:
+                # stream post data
+                async with session.post(target_url, data=content_sender()) as resp:
                     status = resp.status
                     content_type = resp.content_type
                     # xxxx should probably stream this?
                     bytes = await resp.read()
-                    # forward....
-                    # xxxx should use streaming?
+                    #print("    got post response", len(bytes), status, content_type)
+                    #if len(bytes) < 1000:
+                    #    print (repr(bytes))
                     return self.respond_bytes(bytes, content_type, status)
         else:
             assert protocol == "http", "POST expects 'http' protocol marker: " + repr(protocol)
