@@ -20,6 +20,8 @@ from aiohttp import web
 from . import gz_resources
 from . import gizmo_server
 
+# Max size of packet sent over web socket.
+PACKET_LIMIT = 1000000
 
 # Default wait time for JS future values.
 DEFAULT_TIMEOUT = 10
@@ -1233,7 +1235,7 @@ class WebSocketIsClosed(IOError):
 
 class GZPipeline:
 
-    def __init__(self, gizmo, packet_limit=1000000, auto_flush=True):
+    def __init__(self, gizmo, packet_limit=PACKET_LIMIT, auto_flush=True):
         self.gizmo = gizmo
         gizmo._set_pipeline(self)
         #self.sender = None

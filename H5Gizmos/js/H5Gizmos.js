@@ -57,9 +57,11 @@ var H5Gizmos = {};
     h5.CALL = "C";
     h5.CALLBACK = "CB";
     h5.SET = "S";
-    h5.EXCEPTION = "X"
-    h5.KEEPALIVE = "K"
-    h5.RECONNECT_ID = "reconnect_id"
+    h5.EXCEPTION = "X";
+    h5.KEEPALIVE = "K";
+    h5.RECONNECT_ID = "reconnect_id";
+
+    h5.PACKET_LIMIT = 1000000;
 
     const ws_open = 1;
 
@@ -768,7 +770,7 @@ var H5Gizmos = {};
     class Packer {
         constructor(web_socket, process_packet, packet_limit) {
             var that = this;
-            this.packet_limit = packet_limit || 1000000;
+            this.packet_limit = packet_limit || h5.PACKET_LIMIT;
             this.collector = [];
             //this.ws_url = ws_url;
             this.packet_receiver = process_packet;
@@ -972,7 +974,7 @@ var H5Gizmos = {};
 
     // pipeline ... hooks everything together...
     function pipeline(from_web_socket, to_translator, packet_limit) {
-        packet_limit = packet_limit || 1000000;
+        packet_limit = packet_limit || h5.PACKET_LIMIT;
         var process_json = function(json_ob) {
             //cl("process json: ", json_ob)
             to_translator.handle_message(json_ob);
