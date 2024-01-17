@@ -61,7 +61,7 @@ var H5Gizmos = {};
     h5.KEEPALIVE = "K";
     h5.RECONNECT_ID = "reconnect_id";
 
-    h5.PACKET_LIMIT = 1000000;
+    h5.PACKET_LIMIT = 100000;
 
     const ws_open = 1;
 
@@ -766,6 +766,8 @@ var H5Gizmos = {};
 
     const FINISHED_UNICODE = "F";
     const CONTINUE_UNICODE = "C";
+    const LOCK_DELAY = 50;  // milliseconds
+    const LOCK_TIMEOUT = 60000; // one minute in milliseconds
 
     class Packer {
         constructor(web_socket, process_packet, packet_limit) {
@@ -779,6 +781,35 @@ var H5Gizmos = {};
             this.ws.onmessage = function(event) {
                 that.onmessage(event);
             };
+            // only permit on send at a time.
+            this.send_locked = false;
+        };
+        lock_for_sending(delay, timeout) {
+            var that = this;
+            delay = delay || LOCK_DELAY;
+            timeout = timeout || LOCK_TIMEOUT;
+            //var lock_grabbed = false;
+            var timed_out = false;
+            const start_time = Date.now();
+            function grab_lock(resolve, reject) {
+                timed_out = ((Date.now() - start_time) > timeout);
+                if (timed_out) {
+                    return reject("lock time out.");
+                }
+                if (!that.send_locked) {
+                    that.send_locked = true;
+                    //lock_grabbed = true;
+                    return resolve();
+                } else {
+                    // try again later
+                    setTimeout(() => {
+                        grab_lock(resolve, reject)
+                    }, delay);
+                }
+            };
+            return new Promise((resolve, reject) => {
+                grab_lock(resolve, reject);
+            });
         };
         onmessage(event) {
             //debugger;
@@ -789,6 +820,7 @@ var H5Gizmos = {};
             var collector = this.collector;
             if (indicator == CONTINUE_UNICODE) {
                 collector.push(payload);
+                // send ok reply XXXX
             } else if (indicator == FINISHED_UNICODE) {
                 this.collector = []
                 collector.push(payload);
@@ -799,7 +831,16 @@ var H5Gizmos = {};
                 throw new Error("unknown indicator: " + data.slice(0, 10));
             }
         };
-        send_unicode(packet_unicode) {
+        async send_unicode(packet_unicode) {
+            try {
+                await this.lock_for_sending();
+                await this.send_unicode_locked(packet_unicode);
+            } finally {
+                // release the lock
+                this.send_locked = false;
+            }
+        };
+        async send_unicode_locked(packet_unicode) {
             var ln = packet_unicode.length;
             var limit = this.packet_limit;
             var ws = this.ws;
@@ -814,6 +855,7 @@ var H5Gizmos = {};
                 var data = indicator + chunk;
                 ////cl("sending data: ", data);
                 ws.send(data);
+                // wait for ok if not finished XXXXX
             }
         };
     };
@@ -980,6 +1022,8 @@ var H5Gizmos = {};
             to_translator.handle_message(json_ob);
         };
         var send_unicode = function(packet_unicode) {
+            // async send to enable confirmation handshake for large messages.
+            // XXXX
             packer.send_unicode(packet_unicode);
         };
         var in_codec_error = false;
