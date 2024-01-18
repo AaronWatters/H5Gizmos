@@ -1088,6 +1088,7 @@ class GizmoPacker:
         self.flush_queue = []
         self.flush_queue_task = None
         self.last_flush_queue_task = None
+        self.send_lock = asyncio.Lock()
 
     async def execute_flush_queue(self):
         "execute the flushes in sequence (prevent interleaving)."
@@ -1151,6 +1152,10 @@ class GizmoPacker:
             return None
 
     async def awaitable_flush(self, outgoing=None):
+        async with self.send_lock:
+            await self.awaitable_flush_locked(outgoing)
+            
+    async def awaitable_flush_locked(self, outgoing=None):
         limit = self.packet_limit
         #if self.last_flush_task is not None:
         #    # wait for last flush to complete (for testing mainly?)
