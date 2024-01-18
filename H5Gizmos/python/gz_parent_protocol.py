@@ -21,7 +21,7 @@ from . import gz_resources
 from . import gizmo_server
 
 # Max size of packet sent over web socket.
-PACKET_LIMIT = 10000
+PACKET_LIMIT = 500000 # half a meg
 
 # Default wait time for JS future values.
 DEFAULT_TIMEOUT = 10
@@ -1078,7 +1078,7 @@ CONTINUE_UNICODE = "C"
 
 class GizmoPacker:
 
-    def __init__(self, process_packet, awaitable_sender, packet_limit=1000000, auto_flush=True):
+    def __init__(self, process_packet, awaitable_sender, packet_limit=PACKET_LIMIT, auto_flush=True):
         self.process_packet = process_packet
         self.packet_limit = packet_limit
         self.collector = []
@@ -1089,6 +1089,14 @@ class GizmoPacker:
         self.flush_queue_task = None
         self.last_flush_queue_task = None
         self.send_lock = asyncio.Lock()
+        self.ack_future = None
+
+    def receive_acknowledgement(self):
+        "Return awaitable that resolves when ack arrives."
+        assert self.ack_future is None, "Cannot await more than one ack at a time."
+        future = asyncio.Future()
+        self.ack_future = future
+        return future
 
     async def execute_flush_queue(self):
         "execute the flushes in sequence (prevent interleaving)."
@@ -1154,7 +1162,7 @@ class GizmoPacker:
     async def awaitable_flush(self, outgoing=None):
         async with self.send_lock:
             await self.awaitable_flush_locked(outgoing)
-            
+
     async def awaitable_flush_locked(self, outgoing=None):
         limit = self.packet_limit
         #if self.last_flush_task is not None:
@@ -1166,17 +1174,22 @@ class GizmoPacker:
             self.outgoing_packets = []
         for string in outgoing:
             ln = len(string)
+            #p("now sending", ln)
             for start in range(0, ln, limit):
                 end = start + limit
                 chunk = string[start : end]
-                final = end >= ln
+                final = (end >= ln)
                 if final:
                     data = FINISHED_UNICODE + chunk
                 else:
                     data = CONTINUE_UNICODE + chunk
                 # ("awaiting flush")
                 await self.awaitable_sender(data)
-                # wait for ok if not finished. XXXXX
+                # wait for ok if not finished.
+                if not final:
+                    #p("waiting for ack", start, limit)
+                    await self.receive_acknowledgement()
+                    #p("got ack", start, limit)
 
     def send_unicode(self, string):
         self.outgoing_packets.append(string)
@@ -1202,6 +1215,14 @@ class GizmoPacker:
             collector.append(remainder)
             packet = "".join(collector)
             self.process_packet(packet)
+        elif indicator == Gizmo.ACKNOWLEDGE:
+            #p("got ack message")
+            future = self.ack_future
+            self.ack_future = None
+            if future is not None:
+                future.set_result(message)
+            else:
+                print("Unexpected ack", repr(message[:20]))
         else:
             raise BadMessageIndicator(repr(message[:20]))
 

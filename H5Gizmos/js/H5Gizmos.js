@@ -62,7 +62,8 @@ var H5Gizmos = {};
     h5.RECONNECT_ID = "reconnect_id";
     h5.ACKNOWLEDGE = "A";
 
-    h5.PACKET_LIMIT = 10000;
+    // Limit for websocket packets
+    h5.PACKET_LIMIT = 500000;  // half a meg
 
     const ws_open = 1;
 
@@ -834,7 +835,9 @@ var H5Gizmos = {};
             var collector = this.collector;
             if (indicator == CONTINUE_UNICODE) {
                 collector.push(payload);
-                // send ok reply XXXX
+                // send ok reply, don't worry about locking.
+                //c.l("ack", collector.length);
+                this.ws.send(h5.ACKNOWLEDGE);
             } else if (indicator == FINISHED_UNICODE) {
                 this.collector = []
                 collector.push(payload);
@@ -843,10 +846,10 @@ var H5Gizmos = {};
                 this.packet_receiver(packet);
             } else if (indicator == h5.ACKNOWLEDGE) {
                 const resolve = this.resolve_acknowledgment;
+                this.resolve_acknowledgment = null;
                 //c.l("debug got ack", data, resolve);
                 if (resolve) {
                     resolve(payload);
-                    this.resolve_acknowledgment = null;
                 } else {
                     console.warn("unexpected ack", data.slice(0, 10));
                 }
