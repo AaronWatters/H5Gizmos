@@ -60,8 +60,9 @@ var H5Gizmos = {};
     h5.EXCEPTION = "X";
     h5.KEEPALIVE = "K";
     h5.RECONNECT_ID = "reconnect_id";
+    h5.ACKNOWLEDGE = "A";
 
-    h5.PACKET_LIMIT = 100000;
+    h5.PACKET_LIMIT = 10000;
 
     const ws_open = 1;
 
@@ -126,7 +127,7 @@ var H5Gizmos = {};
             var path_split = location.pathname.split("/");
             var ws_path_split = path_split.slice(0, path_split.length - 1);
             var i = ws_path_split.length - 2;
-            //console.log("fixing path", ws_path_split);
+            //c.l("fixing path", ws_path_split);
             if (ws_path_split[i] == "http") {
                 ws_path_split[i] = "ws"
             }
@@ -227,7 +228,7 @@ var H5Gizmos = {};
             xhr.onreadystatechange = function() {
                 if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
                     // Request finished. Do processing here.
-                    //console.log("request finished", xhr)
+                    //c.l("request finished", xhr)
                     // The POST is for sending data -- reply is ignored if not in error.
                 } else if (this.readyState === XMLHttpRequest.DONE) {
                     var status = this.status;
@@ -252,7 +253,7 @@ var H5Gizmos = {};
                 return;
             }
             var keep_sending = function () {
-                //console.log("DEBUG: sending keepalive.")
+                //c.l("DEBUG: sending keepalive.")
                 if (this.halted) {
                     throw new Error("Erroring keepalive loop because gizmo is halted.")
                 }
@@ -462,7 +463,7 @@ var H5Gizmos = {};
             this.op = "GET";
             var [oid, command, to_depth] = payload;
             this.oid = oid;
-            //console.log("GET", this.oid, command, to_depth)
+            //c.l("GET", this.oid, command, to_depth)
             this.command = translator.parse_command(command);
             this.to_depth = to_depth;
         };
@@ -470,7 +471,7 @@ var H5Gizmos = {};
             try {
                 this.json_value = translator.json_safe(value, this.to_depth);
                 this.payload = [h5.GET, this.oid, this.json_value];
-                //console.log("GET resolves", this.payload)
+                //c.l("GET resolves", this.payload)
                 translator.send(this.payload);
                 return value;
             } catch (err) {
@@ -783,7 +784,20 @@ var H5Gizmos = {};
             };
             // only permit on send at a time.
             this.send_locked = false;
+            this.resolve_acknowledgment = null;
+            // xxxx add ack timestamp and ack reject loop task...
         };
+        receive_acknowledgment() {
+            // return a promise which resolves upon ack
+            // xxxx add timeout mechanism?
+            var that = this;
+            if (this.resolve_acknowledgment) {
+                throw new Error("Cannot await more than one ack at a time.");
+            }
+            return new Promise((resolve, reject) => {
+                that.resolve_acknowledgment = resolve;
+            });
+        }
         lock_for_sending(delay, timeout) {
             var that = this;
             delay = delay || LOCK_DELAY;
@@ -827,6 +841,15 @@ var H5Gizmos = {};
                 var packet = collector.join("");
                 ////cl("finishing: ", packet)
                 this.packet_receiver(packet);
+            } else if (indicator == h5.ACKNOWLEDGE) {
+                const resolve = this.resolve_acknowledgment;
+                //c.l("debug got ack", data, resolve);
+                if (resolve) {
+                    resolve(payload);
+                    this.resolve_acknowledgment = null;
+                } else {
+                    console.warn("unexpected ack", data.slice(0, 10));
+                }
             } else {
                 throw new Error("unknown indicator: " + data.slice(0, 10));
             }
@@ -856,6 +879,10 @@ var H5Gizmos = {};
                 ////cl("sending data: ", data);
                 ws.send(data);
                 // wait for ok if not finished XXXXX
+                if (!last) {
+                    //c.l("debug: awaiting ack", start, ln)
+                    await this.receive_acknowledgment();
+                }
             }
         };
     };
@@ -1079,7 +1106,7 @@ var H5Gizmos = {};
     H5Gizmos.periodically_send_height_to_parent = function(identifier, delay) {
         delay = delay || 1000;
         if(window.self === window.top) { 
-            //console.log("gizmo not running in iframe.")
+            //c.l("gizmo not running in iframe.")
             return;
         }
         var html_element = document.getElementsByTagName("html")[0];
@@ -1087,7 +1114,7 @@ var H5Gizmos = {};
             var send_height_to_parent = function () {
                 var height = html_element.offsetHeight;
                 var message = { identifier: identifier, height: height };
-                //console.log("sending to parent", height, message);
+                //c.l("sending to parent", height, message);
                 parent.postMessage(message, "*");
                 setTimeout(send_height_to_parent, delay);
             }

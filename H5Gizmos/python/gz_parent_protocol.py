@@ -21,7 +21,7 @@ from . import gz_resources
 from . import gizmo_server
 
 # Max size of packet sent over web socket.
-PACKET_LIMIT = 1000000
+PACKET_LIMIT = 10000
 
 # Default wait time for JS future values.
 DEFAULT_TIMEOUT = 10
@@ -76,6 +76,7 @@ class Gizmo:
     EXCEPTION = "X"
     KEEPALIVE = "K"
     RECONNECT_ID = "reconnect_id"
+    ACKNOWLEDGE = "A"
 
     # default slot -- override this to optimize transfers of 1-d numeric arrays
     _translate_1d_array = None
@@ -1170,6 +1171,7 @@ class GizmoPacker:
                     data = CONTINUE_UNICODE + chunk
                 # ("awaiting flush")
                 await self.awaitable_sender(data)
+                # wait for ok if not finished. XXXXX
 
     def send_unicode(self, string):
         self.outgoing_packets.append(string)
@@ -1181,11 +1183,14 @@ class GizmoPacker:
         else:
             return None
 
-    def on_unicode_message(self, message):
+    async def on_unicode_message(self, message):
         indicator = message[0:1]
         remainder = message[1:]
         if indicator == CONTINUE_UNICODE:
             self.collector.append(remainder)
+            # send ok reply XXXX
+            #p ("debug: now sending ack", self.awaitable_sender, len(remainder))
+            await self.awaitable_sender(Gizmo.ACKNOWLEDGE)
         elif indicator == FINISHED_UNICODE:
             collector = self.collector
             self.collector = []
@@ -1300,7 +1305,7 @@ class GZPipeline:
         return result
 
     async def _send(self, chunk):
-        #pr ("pipeline sending", repr(chunk))
+        #p ("pipeline sending", repr(chunk[:10]))
         with self.my_stderr():
             with self.my_stdout():
                 self.check_web_socket_not_closed()
@@ -1336,6 +1341,7 @@ class GZPipeline:
         await self.listen_to_websocket(ws)
 
     async def sender(self, data):
+        #p("   sender", repr(data[:20]))
         await self.web_socket.send_str(data)
         # after every send, give the other side a chance to send (?)
         await self.web_socket.drain()
@@ -1358,7 +1364,7 @@ class GZPipeline:
             if typ == self.MSG_TYPE_TEXT:
                 data = msg.data
                 try:
-                    self.receive_unicode(data)
+                    await self.receive_unicode(data)
                 except Exception as e:
                     self.last_receive_error = e
                     # continue to process messages.
@@ -1371,10 +1377,10 @@ class GZPipeline:
             else:
                 pass   # ??? ignore ???
 
-    def receive_unicode(self, unicode_str):
+    async def receive_unicode(self, unicode_str):
         #pr("pipeline receive unicode", repr(unicode_str))
         self.last_unicode_received = unicode_str
-        return self.packer.on_unicode_message(unicode_str)
+        return await self.packer.on_unicode_message(unicode_str)
 
     def process_packet(self, packet):
         #pr("pipeline process packet", repr(packet))
