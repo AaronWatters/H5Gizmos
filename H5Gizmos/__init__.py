@@ -12,6 +12,8 @@ from .python.gz_parent_protocol import (
     do,
     get,
     name,
+    wait_for,
+    unname,
     DoAllMethods,
     new_identifier,
 )
