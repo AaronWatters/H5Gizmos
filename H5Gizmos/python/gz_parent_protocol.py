@@ -32,6 +32,11 @@ def do(link_action, to_depth=None):
     # command style convenience convenience accessor
     return link_action._exec(to_depth=to_depth)
 
+async def wait_for(promise_reference, to_depth=None):
+    "await the promise_reference, return a cached reference to resolution."
+    gz = promise_reference._owner_gizmo
+    return await gz._js_await(promise_reference, to_depth=to_depth)
+
 async def get(link_action, to_depth=None, timeout=DEFAULT_TIMEOUT):
     "Run the link in javascript and return the result."
     # command style convenience convenience accessor
@@ -41,6 +46,10 @@ def name(id, link_action, to_depth=None):
     "Run the link in javascript and cache the result using the id."
     # command style convenience convenience accessor
     return link_action._connect(id, to_depth=to_depth)
+
+def unname(cache_ref):
+    "uncache the object associated with the cache_ref"
+    cache_ref._disconnect()
 
 def new_identifier(prefix="Gizmo"):
     Gizmo.COUNTER += 1
@@ -372,6 +381,9 @@ class Gizmo:
 
     def _dereference_identity(self, identity):
         ##pr("deref id", repr(identity))
+        # Silently ignore if the attribute is missing.
+        if not hasattr(self, identity):
+            return
         old_value = getattr(self, identity)
         assert isinstance(old_value, GizmoReference), (
             "Deref does not apply to non-references.")
@@ -502,6 +514,59 @@ class Gizmo:
             c2o[callable] = oid
             cbs[oid] = callable
         return oid
+    
+    async def _js_await(self, promise_reference, to_depth=None):
+        """
+        Return cached reference to resolution of promise_reference.
+        """
+        future = self._js_promise(promise_reference, to_depth=to_depth)
+        await future
+        return future.result()
+    
+    def _js_promise(self, promise_reference, to_depth=None):
+        """
+        Return an awaitable which resolves or errors
+        when the denotee of the promise reference resolves
+        or errors on the JS side.
+
+        Result of future is reference to resolved JS object in cache.
+        """
+        # xxxx should add timeout...
+        # Get a reference to the cached promise result
+        refid = new_identifier("js_promise")
+        reference = GizmoReference(refid, self)
+        # Construct a Python future.
+        future = asyncio.Future()
+        def clean_up():
+            self._unregister_callback(callable=fullfill)
+            self._unregister_callback(callable=reject)
+            #reference._disconnect()
+        def fullfill(*args):
+            future.set_result(reference)
+            clean_up()
+        def reject(*args):
+            exc = JavascriptEvalException("js future rejected: " + repr(args))
+            future.set_exception(exc)
+            clean_up()
+        # attach the python future to the js future
+        do(self.H5GIZMO_INTERFACE.cache_promise_result(
+            refid,
+            promise_reference,
+            fullfill,
+            reject,
+        ), to_depth=to_depth)
+        return future
+    
+    def _unregister_callback(self, oid=None, callable=None):
+        if oid is not None:
+            callable = self._call_backs[oid]
+        elif callable is not None:
+            oid = self._callable_to_oid[callable]
+        # silently ignore missing values due to previous errors
+        if oid in self._call_backs:
+            del self._call_backs[oid]
+        if callable in self._callable_to_oid:
+            del self._callable_to_oid[callable]
 
     def _send(self, json_message):
         if self._log_messages:
@@ -733,6 +798,7 @@ class GizmoLink:
         return future.result()
 
     def _connect(self, id, to_depth=None):
+        "Store the command result in the JS object_cache using the id."
         gz = self._owner_gizmo
         to_depth = to_depth or gz._default_depth
         cmd = self._command(to_depth)
@@ -742,6 +808,7 @@ class GizmoLink:
         return GizmoReference(id, gz)
 
     def _disconnect(self, id=None):
+        "Remove the id and referent from the JS object_cache"
         if id is None:
             id = self._get_id()
         gz = self._owner_gizmo
