@@ -87,6 +87,21 @@ var H5Gizmos = {};
             // modules cache
             this.modules = {};
         };
+        cache_promise_result(identifier, promise, on_resolve, on_reject) {
+            var that = this;
+            function onFullfilled(value) {
+                that.object_cache[identifier] = value;
+                if (on_resolve) {
+                    on_resolve();  // don't automatically send value, use cache.
+                }
+            };
+            function onRejected(reason) {
+                if (on_reject) {
+                    on_reject(reason);
+                }
+            };
+            promise.then(onFullfilled, onRejected);
+        };
         shutdown() {
             console.log("Shutting down gizmo.")
             this.halted = true;
@@ -912,6 +927,7 @@ var H5Gizmos = {};
 
     H5Gizmos.DeferredValue = DeferredValue;
 
+    /* NOT USED
     class PromisedValue extends DeferredValue {
         // Link a JS promise to a Gizmo get request.
         constructor(promise) {
@@ -924,6 +940,7 @@ var H5Gizmos = {};
     };
 
     H5Gizmos.PromisedValue = PromisedValue;
+    */
 
     class StoreBlob extends DeferredValue {
         constructor(url, to_object, property_name, converter, responseType) {
