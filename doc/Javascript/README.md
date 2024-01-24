@@ -298,6 +298,99 @@ which evaluated to
 'http://192.168.1.173:8675/gizmo/http/MGR_1651093175260_20/index.html'
 ```
 
+## `H5Gizmos.unname`
+
+The `H5Gizmos.unname` method removes a cached object from the child
+process cache.
+
+```Python
+from H5Gizmos import unname
+unname(location)
+```
+
+After the above `unname`, attempts to access the `location` in the child
+will fail.
+
+```Python
+await get(location.toString())
+```
+```
+...
+JavascriptEvalException: js error: 'Error: no such object found for id: location'
+```
+
+## Accessing asynchronous child values
+
+The following script `async_js_example.py` illustrates how
+to interact with asynchronous values (futures) in the child process.
+The script fetches a local URL and formats and displays the JSON value
+in the URL content:
+
+```Python
+from H5Gizmos import Html, do, serve, wait_for, get, unname, js_await
+import json
+
+async def task():
+    G = Html("<h1>", "JSON downloaded asynchronously")
+    G.serve_folder("local", ".")
+    await G.browse()
+    log = G.window.console.log
+    f = await wait_for(G.window.fetch("local/example.json"))
+    do(log("fetched", f))
+    data = await js_await(f.json(), to_depth=5)
+    fmt = json.dumps(data, indent=4)
+    pre = Html('<pre>\n%s\n</pre>' % fmt)
+    G.add(pre)
+    # clean up reference
+    unname(f)
+
+serve(task())
+```
+The resulting Gizmo page looks like this:
+
+<img src="async.png"/>
+
+The following sections discuss the async methods in detail.
+
+## `H5Gizmos.wait_for`
+
+The `H5Gizmos.wait_for(promise_reference, to_depth=None)` 
+awaitable awaits the result of a child side
+future object and caches the result upon success.  If the future triggers
+an error then `H5Gizmos.wait_for` will generate an exception in the parent.
+Upon success `H5Gizmos.wait_for` returns a reference to the cached value.
+
+```Python
+from H5Gizmos import wait_for
+f = await wait_for(G.window.fetch("local/example.json"))
+```
+
+The `f` above is a reference to the cached response object.
+
+## `H5Gizmos.js_await`
+
+The `H5Gizmos.js_await(promise_reference, get_result=True, to_depth=None)` 
+awaitable awaits the resulf of a child side
+future object and optionally returns the translated result object to
+the parent process.
+
+```Python
+data = await js_await(f.json(), to_depth=5)
+```
+
+The `data` above will be the resolved `f.json()` value
+truncated at level 5.
+
+The alternate signature
+
+```Python
+await js_await(future_reference, get_result=False)
+```
+
+waits for the referent of the `future_reference` to resolve
+and discards any value for the resolution.  It can be important
+to discard results if they are not needed, particularly if they are large.
+
 ## Parent argument conversion
 
 The parent and child contexts do not share memory space,
