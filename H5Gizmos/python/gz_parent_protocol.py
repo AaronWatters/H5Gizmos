@@ -32,6 +32,19 @@ def do(link_action, to_depth=None):
     # command style convenience convenience accessor
     return link_action._exec(to_depth=to_depth)
 
+async def js_await(promise_reference, get_result=True, to_depth=None):
+    """
+    Await promise, 
+    dispose of result reference, 
+    optionally return resolved value.
+    """
+    result = None
+    result_ref = await wait_for(promise_reference, to_depth=to_depth)
+    if get_result:
+        result = await get(result_ref, to_depth=to_depth)
+    result_ref._disconnect()
+    return result
+
 async def wait_for(promise_reference, to_depth=None):
     "await the promise_reference, return a cached reference to resolution."
     gz = promise_reference._owner_gizmo
