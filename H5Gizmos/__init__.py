@@ -13,6 +13,7 @@ from .python.gz_parent_protocol import (
     get,
     name,
     wait_for,
+    js_await,
     unname,
     DoAllMethods,
     new_identifier,
