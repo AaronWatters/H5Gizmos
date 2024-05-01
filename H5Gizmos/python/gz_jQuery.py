@@ -763,7 +763,26 @@ class jQueryInput(jQueryComponent):
         return value
 
 
-class Slider(jQueryComponent):
+class SliderSuper(jQueryComponent):
+
+    "Shared slider behavior."
+
+    def set_range(self, minimum=None, maximum=None, step=None):
+        if minimum is not None:
+            self.minimum = minimum
+        if maximum is not None:
+            self.maximum = maximum
+        if step is not None:
+            self.step = step
+        def action():
+            do(self.element.slider("option", "min", self.minimum))
+            do(self.element.slider("option", "max", self.maximum))
+            if self.step:
+                do(self.element.slider("option", "step", self.step))
+        self.call_when_started(action)
+
+
+class Slider(SliderSuper):
 
     def __init__(
         self, 
@@ -867,7 +886,7 @@ class DeJitterCallback:
         # execute the callback with the most recent args
         callback(*args)
 
-class RangeSlider(jQueryComponent):
+class RangeSlider(SliderSuper):
 
     # xxx cut/paste from Slider -- too hard to refactor for now
     # xxx should add delay logic...
@@ -920,6 +939,7 @@ class RangeSlider(jQueryComponent):
         )
         do(element.slider(options), to_depth=2)
 
+    '''
     def set_range(self, minimum=None, maximum=None, step=None):
         if minimum is not None:
             self.minimum = minimum
@@ -931,7 +951,7 @@ class RangeSlider(jQueryComponent):
             do(self.element.slider("option", "min", self.minimum))
             do(self.element.slider("option", "max", self.maximum))
         self.call_when_started(action)
-        #do(self.element.slider("step", self.step))
+        #do(self.element.slider("step", self.step))'''
 
     def set_values(self, low_value=None, high_value=None):
         "Set the value of the slider, triggering any attached callback."
