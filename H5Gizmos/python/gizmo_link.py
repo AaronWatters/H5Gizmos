@@ -327,10 +327,18 @@ class GizmoLink:
             prefix = spath[1]
             port = int(spath[2])
             marker = spath[3]
-            assert marker == "gizmo", "path marker should be 'gizmo': " + repr(path)
-            protocol = spath[4]
-            assert protocol in PROTOCOLS, "Bad protocol indicator: " + repr((path, PROTOCOLS))
-            target_path = "/".join(spath[3:])
+            # permit ping requests, for connection testing
+            marker0 = marker.split("?")[0]
+            acceptible_markers = ("gizmo", "ping")
+            assert marker0 in acceptible_markers, "path marker %s should be in %s: %s" % (
+                marker0, acceptible_markers, repr(path))
+            if marker0 == "ping":
+                protocol = "http"
+                target_path = marker
+            else:
+                protocol = spath[4]
+                assert protocol in PROTOCOLS, "Bad protocol indicator: " + repr((path, PROTOCOLS))
+                target_path = "/".join(spath[3:])
             return (prefix, port, protocol, target_path)
         except Exception as e:
             print("path parse failed:", e)
