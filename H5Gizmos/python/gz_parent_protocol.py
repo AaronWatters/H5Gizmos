@@ -311,7 +311,11 @@ class Gizmo:
             method="http",
             filename=self._filename,
         )
-        jupyter_gizmo_support.display_link(suffix)
+        fallback_url = self._entry_url(proxy=False)
+        #self._display_html_in_ipython("<p>iframe url: " + url + "</p>")
+        #self._display_html_in_ipython("<p>suffix: " + suffix + "</p>")
+        # end debug
+        jupyter_gizmo_support.display_link(suffix, fallback_url)
 
     async def _print_start_link(self):
         from .gizmo_link import LINK_PREFIX
@@ -363,12 +367,14 @@ class Gizmo:
         # xxxx why is this async?
         from . import jupyter_gizmo_support
         mgr = self._manager
+        fallback_url = self._entry_url(proxy=False)
+        #self._display_html_in_ipython("<p>iframe url: " + fallback_url + "</p>")
         suffix = mgr.jupyter_url_suffix(
             for_gizmo=self,
             method="http",
             filename=self._filename,
         )
-        jupyter_gizmo_support.display_iframe(suffix)
+        jupyter_gizmo_support.display_iframe(suffix, fallback_url)
 
     def _initial_reference(self, identity, js_expression=None):
         assert type(identity) == str, "identity must be str " + repr(identity)
