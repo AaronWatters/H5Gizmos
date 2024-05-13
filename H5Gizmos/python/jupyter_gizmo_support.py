@@ -78,6 +78,14 @@ async function ping_fallback(info_div, ping_url, fallback_url) {
     <a href="${fallback_url}" target="_blank">${fallback_url}</a>.<br>
     The fallback URL may not work if the Jupyter server is running behind a firewall.`;
 };
+async function frame_fallback(info_div, frame, ping_url, fallback_url) {
+    info_div.innerHTML = "ping failed: " + ping_url + `.<br>
+    This might indicate that the Jupyter server does not have H5Gizmos installed
+    but the IPython kernel has H5Gizmos installed.<br>
+    Attempting to open the fallback URL: ${fallback_url}.<br>
+    The fallback URL may not work if the Jupyter server is running behind a firewall.`;
+    frame.src = fallback_url;
+};
 """
 
 # xxx not used xxx
@@ -188,8 +196,9 @@ iframe_structure = """
             this_frame.src = url;
         }} else {{
             console.log("no pong", ping_url);
-            ping_fallback(info_div, ping_url, fallback_url);
-            this_frame.remove();
+            frame_fallback(info_div, this_frame, ping_url, fallback_url);
+            //ping_fallback(info_div, ping_url, fallback_url);
+            //this_frame.remove();
         }}
     }}
     ping();
