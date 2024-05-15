@@ -5,9 +5,40 @@ Support functions for launching H5Gizmos from withing Jupyter.
 
 from H5Gizmos import new_identifier
 
+# Ping formats:
+# link URL
+# https://jupyter.flatironinstitute.org/user/awatters/GizmoLink/connect/40889/ping?now=17
+# proxy url
+# https://jupyter.flatironinstitute.org/user/awatters/proxy/40889/ping?now=17
+
 def inject_html_in_jupyter(html_string):
     from IPython.display import HTML, display
     display(HTML(html_string))
+
+ping_test_js = """
+async function ping_test(url) {
+    var ping_url = replaceGizmo(url, "/ping?now=" + Date.now());
+    var pong = await startsWithPong(ping_url);
+    return {
+        url: url,
+        success: pong,
+        ping_url: ping_url,
+    };
+};
+async function ping_proxies(url) {
+    var pingable = await ping_test(url);
+    if (!pingable.success) {
+        var proxy_url = url.replace("/GizmoLink/connect/", "/proxy/");
+        if (proxy_url != url) {
+            var pingable_proxy = await ping_test(proxy_url);
+            if (pingable_proxy.success) {
+                return pingable_proxy;
+            }
+        }
+    }
+    return pingable;
+};
+"""
 
 suffix_at_js = """
 function suffix_at(from_url, suffix, at_strings) {
@@ -43,6 +74,7 @@ pong_test_js = """
 async function startsWithPong(url) {
     try {
         // Fetch the content from the given URL
+        console.log("fetching", url);
         const response = await fetch(url);
 
         // Check if the fetch was successful (HTTP status 200)
@@ -124,18 +156,20 @@ var fallback_url = "{fallback_url}";
 var div = document.getElementById(ident);
 var url = suffix_at(window.location.href, suffix);
 link = document.createElement("a");
-link.href = url;
+//link.href = url;
 var ping_url = replaceGizmo(url, "/ping?now=" + Date.now());
 async function ping() {{
-    var pong = await startsWithPong(ping_url);
-    if (pong) {{
-        console.log("pong received", ping_url);
+    //var pong = await startsWithPong(ping_url);
+    var pingable = await ping_proxies(url);
+    if (pingable.success) {{
+        console.log("pong received", pingable.ping_url);
+        link.href = pingable.url;
         link.target = "_blank";
-        link.innerHTML = url;
+        link.innerHTML = pingable.url;
         div.appendChild(link);
     }} else {{
         console.log("no pong", ping_url);
-        ping_fallback(div, ping_url, fallback_url);
+        ping_fallback(div, pingable.ping_url, fallback_url);
     }}
 }};
 ping();
@@ -150,7 +184,7 @@ def show_link(suffix, fallback_url):
     code = link_template.format(**D)
     anchor = '<div id="{ident}">Link:&nbsp;</div>'.format(**D)
     #anchor = '<a href="_blank" target="_blank" id="{ident}">open {suffix}.</a>'.format(**D)
-    return anchor + anonymous_wrap_js_script(suffix_at_js + pong_test_js + code)
+    return anchor + anonymous_wrap_js_script(ping_test_js + suffix_at_js + pong_test_js + code)
 
 def display_link(suffix, fallback_url):
     show = show_link(suffix, fallback_url)
@@ -174,6 +208,7 @@ iframe_structure = """
 
 <script>
 (function () {{
+{ping_test_js}
 {suffix_at_js}
 {event_listener_js}
 {pong_test_js}
@@ -186,17 +221,18 @@ iframe_structure = """
     var this_frame = document.getElementById(identifier);
     var info_div = document.getElementById(identifier + "-div");
     var url = suffix_at(window.location.href, suffix);
-    var ping_url = replaceGizmo(url, "/ping?now=" + Date.now());
+    //var ping_url = replaceGizmo(url, "/ping?now=" + Date.now());
     async function ping() {{
-        info_div.innerHTML = "pinging " + ping_url;
-        var pong = await startsWithPong(ping_url);
-        if (pong) {{
-            console.log("pong received", ping_url);
+        //info_div.innerHTML = "pinging " + ping_url;
+        //var pong = await startsWithPong(ping_url);
+        var pingable = await ping_proxies(url);
+        if (pingable.success) {{
+            console.log("pong received", pingable.ping_url);
             info_div.remove();
-            this_frame.src = url;
+            this_frame.src = pingable.url;
         }} else {{
-            console.log("no pong", ping_url);
-            frame_fallback(info_div, this_frame, ping_url, fallback_url);
+            console.log("no pong", pingable.ping_url);
+            frame_fallback(info_div, this_frame, pingable.ping_url, fallback_url);
             //ping_fallback(info_div, ping_url, fallback_url);
             //this_frame.remove();
         }}
@@ -233,6 +269,7 @@ def open_in_iframe_html(suffix, fallback_url, margin=10, min_height=20):
         event_listener_js = event_listener_js,
         pong_test_js = pong_test_js,
         fallback_url = fallback_url,
+        ping_test_js = ping_test_js,
     )
     return iframe_html
 
