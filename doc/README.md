@@ -16,13 +16,13 @@ or a similar github emulator.  I start it like this:
 # What is H5Gizmos?
 
 The H5Gizmos infrastructure
-allows "parent" process implemented using the Python programming language to create an interactive graphical interfaces using
+allows "parent" process implemented using the Python programming language to create interactive graphical interfaces using
 Javascript libraries running in a "child" HTML5 browser environment. This enables applications to connect the scientific capabilities of
-Numeric Python and similar libraries to a wide selection of Javascript interactive visualization libraries as well as advanced HTML5
-graphical capabilities such as WebGL2 and WebCPU. 
+Numeric Python or similar libraries to a wide selection of Javascript interactive visualization libraries as well as advanced HTML5
+graphical capabilities such as WebGL2 and WebGPU. 
 
 The H5Gizmos interface implements straightforward and efficient two-way
-communication between the parent and child processes appropriate for transfering large and complex data collections from the parent
+communication between the parent and child processes appropriate for transferring large and complex data collections from the parent
 to the child or from the child back to the parent. 
 
 H5Gizmo implementations are useful for creating special purpose interactive scientific
