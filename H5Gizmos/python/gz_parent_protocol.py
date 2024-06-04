@@ -1442,7 +1442,9 @@ class GZPipeline:
         self.reconnect_id = incoming_id
         ws = get_websocket()
         self.web_socket = ws
-        await ws.prepare(request)
+        # xxxx hack -- In Jupyter this generates an error that seems harmless...
+        with TemporaryDisableWSLogging():
+            await ws.prepare(request)
         self.request = request
         #self.sender = ws.send_str
         wc = self.waiting_chunks
@@ -1577,3 +1579,14 @@ class DoAllMethodsMethodWrapper:
         call_link = self._wrapped_method_link(*args)
         do(call_link, to_depth=self._to_depth)
 
+class TemporaryDisableWSLogging:
+    "Hack to suppress logging messages from aiohttp."
+    def __enter__(self):
+        from aiohttp import log
+        import logging
+        log.ws_logger.setLevel(logging.CRITICAL)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        from aiohttp import log
+        import logging
+        log.ws_logger.setLevel(logging.WARNING)
