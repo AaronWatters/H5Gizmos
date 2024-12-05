@@ -1154,7 +1154,11 @@ class ValueConverter:
         if hasattr(np, type_name):
             ty = getattr(np, type_name)
             translators[ty] = np_literal_to_float
-    for type_name in "int int0 int16 int32 int64".split():
+    for type_name in "int int8 int0 int16 int32 int64 uintc uintp".split():
+        if hasattr(np, type_name):
+            ty = getattr(np, type_name)
+            translators[ty] = np_literal_to_int
+        type_name = "u" + type_name
         if hasattr(np, type_name):
             ty = getattr(np, type_name)
             translators[ty] = np_literal_to_int
