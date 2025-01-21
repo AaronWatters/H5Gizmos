@@ -1358,6 +1358,7 @@ class jQueryImage(jQueryComponent):
         alt="image",
         title=None,
         scale=False,
+        pixelated=False,
         ):
         self._getter = None
         self.scaled = scale
@@ -1386,6 +1387,9 @@ class jQueryImage(jQueryComponent):
                 self.width = self.img_width
         self.pixel_click_callback = None
         self.content_type = mime_type
+        self.pixelated = pixelated
+        if pixelated:
+            self.css({"image-rendering": "pixelated"})
 
     def on_pixel(self, callback, type="click"):
         """
