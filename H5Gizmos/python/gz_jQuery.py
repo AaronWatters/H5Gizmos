@@ -1357,8 +1357,10 @@ class jQueryImage(jQueryComponent):
         mime_type=None, 
         alt="image",
         title=None,
+        scale=False,
         ):
         self._getter = None
+        self.scaled = scale
         assert array is None or bytes_content is None, (
             "ambiguous content -- both array and bytes provided."
         )
@@ -1438,6 +1440,7 @@ class jQueryImage(jQueryComponent):
 
     def change_array(self, array, url=True, scale=False, epsilon=1e-12):
         from PIL import Image
+        self.scaled = scale
         if self.element is None:
             # not displayed -- defer.
             (self.img_height, self.img_width) = array.shape[:2]
@@ -1445,7 +1448,7 @@ class jQueryImage(jQueryComponent):
             return
         m = array.min()
         M = array.max()
-        if scale:
+        if self.scaled:
             if (M - m) > epsilon:
                 A = array.astype(np.float)
                 scaled = 255 * (A - m) / (M - m)
@@ -1485,7 +1488,7 @@ class jQueryImage(jQueryComponent):
         gizmo._add_getter(self.filename, self._getter)
         self.resize(height=self.height, width=self.width)
         if self.array is not None:
-            self.change_array(self.array)
+            self.change_array(self.array, scale=self.scaled)
 
 def content_url(bytes_content, mime_type):
     import base64
