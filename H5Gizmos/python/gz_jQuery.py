@@ -1385,27 +1385,30 @@ class jQueryImage(jQueryComponent):
                 self.height = self.img_height
             if width is None:
                 self.width = self.img_width
-        self.pixel_click_callback = None
+        self.pixel_click_callbacks = {}
         self.content_type = mime_type
         self.pixelated = pixelated
         if pixelated:
             self.css({"image-rendering": "pixelated"})
 
-    def on_pixel(self, callback, type="click"):
+    def on_pixel(self, callback, type="click", delay=0.1):
         """
         When the image is clicked call the callback with the pixel_row, pixel_column coordinates added
         and also the pixel_data, the array entry value at array[row, column]
         This only works if the image is populated using an array at present.
         """
-        self.pixel_click_callback = callback
+        if delay:
+            callback = DeJitterCallback(callback, delay)
+        self.pixel_click_callbacks[type] = callback
         self.on(type, self._pixel_callback)
 
     def _pixel_callback(self, event):
         assert self.img_height is not None and self.img_width is not None, (
             "Cannot determine pixel coordinates from non-array data."
         )
-        cb = self.pixel_click_callback
-        assert cb is not None, "No pixel click callback defined."
+        type = event["type"]
+        cb = self.pixel_click_callbacks.get(type)
+        assert cb is not None, "No pixel click callback defined for type: " + repr(type)
         # https://stackoverflow.com/questions/56451370/how-to-get-pixel-number-from-image-by-click
         offsetX = event["offsetX"]
         offsetY = event["offsetY"]
