@@ -45,6 +45,41 @@ STD_HTML_PAGE_TEMPLATE = """
 </html>
 """
 
+HEAD_FRAGMENT_BEFORE = "</head>"
+HEAD_FRAGMENT_AFTER = """
+{HEAD}
+    </head>
+"""
+
+BODY_FRAGMENT_BEFORE = "</body>"
+BODY_FRAGMENT_AFTER = """
+{BODY}
+        <div id="GIZMO_BODY"></div>
+    </body>
+"""
+
+def custom_html_page_template(from_html):
+    """
+    Create a custom HTML template by replacing strings.
+    """
+    head_pos = from_html.find(HEAD_FRAGMENT_BEFORE)
+    body_pos = from_html.find(BODY_FRAGMENT_BEFORE)
+    assert head_pos >= 0, "HEAD fragment not found"
+    assert body_pos >= 0, "BODY fragment not found"
+    # quote any curly braces
+    from_html = from_html.replace("{", "{{").replace("}", "}}")
+    html = from_html.replace(HEAD_FRAGMENT_BEFORE, HEAD_FRAGMENT_AFTER)
+    html = html.replace(BODY_FRAGMENT_BEFORE, BODY_FRAGMENT_AFTER)
+    return html
+
+def custom_html_file(file_path):
+    """
+    Create a custom HTML template by replacing strings.
+    """
+    with open(file_path, "r") as f:
+        html = f.read()
+    return custom_html_page_template(html)
+
 class DelegatePOSTtoGETMixin:
 
     async def handle_post(self, info, request, interface=None):
