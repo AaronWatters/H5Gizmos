@@ -112,8 +112,10 @@ class Gizmo:
         exit_on_disconnect=False,
         log_messages=False,
         # file-like where to send callback Prints (set to false to send to server log StringIO)
-        callback_stdout=None, 
+        callback_stdout=None,
+        template=None,
         ):
+        self.template = template
         self._log_messages = log_messages
         self._exit_on_disconnect = exit_on_disconnect
         self._identifier = self._new_identifier_string()
@@ -188,6 +190,7 @@ class Gizmo:
         handler = self._html_page = gz_resources.HTMLPage(
             #ws_url=self._ws_url, 
             title=title,
+            template=self.template,
             identifier=self._identifier,
             log_messages=self._log_messages,
             )

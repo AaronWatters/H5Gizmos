@@ -47,6 +47,7 @@ class Component:
     _component_started_future = None
     _actions_awaiting_start = None
     _module_context = None
+    template = None
 
     def __init__(self):
         # start the task which waits for gizmo initialization
@@ -241,7 +242,7 @@ class Component:
 
     async def iframe(self, height=20, verbose=False, log_messages=False, proxy=False):
         assert gizmo_server.isnotebook(), "iframe method only runs in IPython kernel."
-        gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages)
+        gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages, template=self.template)
         self.prepare_application(gizmo)
         await gizmo.start_in_iframe(height=height, proxy=proxy)
         # Make sure all deferred actions complete before continuing...
@@ -275,7 +276,7 @@ class Component:
             H5Gizmos.check_browser()
         if verbose:
             print("Display gizmo component in new browser window.")
-        gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages, title=title)
+        gizmo = await get_gizmo(verbose=verbose, log_messages=log_messages, title=title, template=self.template)
         self.prepare_application(gizmo)
         if verbose:
             print("   entry_url=", gizmo._entry_url(proxy=proxy))

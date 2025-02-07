@@ -90,13 +90,19 @@ def run_until_exit():
     except SystemExit as e:
         print ("System exit:")
 
-async def get_gizmo(from_server=None, verbose=False, log_messages=False, title="Gizmo"):
+async def get_gizmo(
+        from_server=None, 
+        verbose=False, 
+        log_messages=False, 
+        title="Gizmo",
+        template=None,
+        ):
     """
     Get a gizmo (the official way).  Set up a server iff needed.
     """
     from_server = _check_server(from_server, verbose=verbose)
     await from_server.check_server_name_is_reachable()
-    return from_server.gizmo(log_messages=log_messages, title=title)
+    return from_server.gizmo(log_messages=log_messages, title=title, template=template)
 
 def _check_server(server=None, verbose=False):
     "Make sure the gizmo server is set up."
@@ -450,8 +456,14 @@ class GzServer:
             poll_for_exceptions=True,
             exit_on_disconnect=False,
             log_messages=False,
+            template=None,
             ):
-        result = H5Gizmos.Gizmo(server=self, exit_on_disconnect=exit_on_disconnect, log_messages=log_messages)
+        result = H5Gizmos.Gizmo(
+            server=self, 
+            exit_on_disconnect=exit_on_disconnect, 
+            log_messages=log_messages,
+            template=template,
+            )
         handler = GizmoPipelineSocketHandler(result, packet_limit=packet_limit, auto_flush=auto_flush)
         result._set_pipeline(handler.pipeline)
         mgr = self.get_new_manager(websocket_handler=handler)
