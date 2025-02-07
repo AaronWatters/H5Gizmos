@@ -9,6 +9,7 @@ Composable gizmo factories.
 from H5Gizmos import do, get, name, get_gizmo, schedule_task
 from . import gizmo_server
 #from . import H5Gizmos
+from . import gz_resources
 from . import gz_parent_protocol as H5Gizmos
 from . import gz_get_blob
 import numpy as np
@@ -52,6 +53,14 @@ class Component:
     def __init__(self):
         # start the task which waits for gizmo initialization
         self.component_started_future()
+
+    def make_template(self, from_html):
+        self.template = gz_resources.Template(from_html)
+        return self.template
+    
+    def make_template_from_file(self, file_path):
+        self.template = gz_resources.Template.from_file(file_path)
+        return self.template
 
     def get_module_context(self):
         from . import gz_module_support
