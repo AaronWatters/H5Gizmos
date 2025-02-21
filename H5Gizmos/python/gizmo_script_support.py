@@ -3,7 +3,7 @@ Utilities for launching Gizmo scripts using entry point annotations.
 """
 
 from operator import mod
-import pkg_resources
+#import pkg_resources
 
 ENTRY_POINT_GROUP_NAME = "H5Gizmos.scripts"
 
@@ -12,6 +12,7 @@ GIZMO_SCRIPT = "gizmo_script"
 module_to_name_to_entry = {}
 
 def find_entry_points():
+    import pkg_resources
     if len(module_to_name_to_entry) == 0:
         for entry in pkg_resources.iter_entry_points(group=ENTRY_POINT_GROUP_NAME):
             entry_name = entry.name
