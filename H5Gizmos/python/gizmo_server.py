@@ -942,7 +942,8 @@ class BytesGetter(FileGetter):
             self.content_type = content_type
         self.bytes = bytes(byte_content)
 
-    get_sanity_limit = 1590000000
+    #get_sanity_limit = 1590000000
+    get_sanity_limit = None  # no limit
 
     async def handle_get(self, info, request, interface=STDInterface):
         # based on https://gist.github.com/buxx/d0a749b6673a18a90b47464b79254124
@@ -952,7 +953,7 @@ class BytesGetter(FileGetter):
         content_type = self.content_type
         if ln < chunksize:
             return interface.respond(body=bytes, content_type=content_type)
-        elif ln < self.get_sanity_limit:
+        elif (self.get_sanity_limit is None) or (ln < self.get_sanity_limit):
             response = web.StreamResponse(
                 status=200,
                 reason='OK',
