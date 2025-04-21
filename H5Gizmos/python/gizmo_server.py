@@ -609,29 +609,29 @@ class GzServer:
             #pr("... 404 for assertion failure: ", e)
             return interface.stream_respond(status=404, reason=repr(e))
 
-    def handle_http_get(self, request, interface=None):
+    async def handle_http_get(self, request, interface=None):
         #pr(" ... server get", request.path)
         with self.my_stderr():
             with self.my_stdout():
                 if interface is None:
                     interface = self.interface
-                return self.handle(request, method=GET, interface=interface)
+                return await self.handle(request, method=GET, interface=interface)
 
-    def handle_http_post(self, request, interface=None):
+    async def handle_http_post(self, request, interface=None):
         with self.my_stderr():
             with self.my_stdout():
                 #pr(" ... server post", request.path)
                 if interface is None:
                     interface = self.interface
-                return self.handle(request, method=POST, interface=interface)
+                return await self.handle(request, method=POST, interface=interface)
 
-    def handle_web_socket(self, request, interface=None):
+    async def handle_web_socket(self, request, interface=None):
         with self.my_stderr():
             with self.my_stdout():
                 #pr(" ... server socket", request.path)
                 if interface is None:
                     interface = self.interface
-                return self.handle(request, method=WS, interface=interface)
+                return await self.handle(request, method=WS, interface=interface)
 
     async def shutdown(self):
         with self.my_stderr():
