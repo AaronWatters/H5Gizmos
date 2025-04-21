@@ -39,6 +39,7 @@ USE_SERVER_ADDRESS_VAR = "GIZMO_USE_SERVER_ADDRESS"
 # set/unset to enable/disable auto detection of prefix
 DETECT_PREFIX_ENV_VAR = True
 
+'''
 def get_or_create_event_loop():
     try:
         # xxxx this is deprecated in python 3.10 -- need a workaround that gets an unstarted event loop(?) or something
@@ -46,7 +47,15 @@ def get_or_create_event_loop():
     except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-    return loop
+    return loop'''
+
+def get_or_create_event_loop():
+    try:
+        return asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop
 
 '''
 def run(main_awaitable, server=None, run_forever=True, exit_on_disconnect=None, log_messages=False, verbose=True):
