@@ -1465,7 +1465,8 @@ class GZPipeline:
         #p("   sender", repr(data[:20]))
         await self.web_socket.send_str(data)
         # after every send, give the other side a chance to send (?)
-        await self.web_socket.drain()
+        #await self.web_socket.drain() -- deprecated
+        await asyncio.sleep(0.001) # is this needed?
 
     MSG_TYPE_TEXT = aiohttp.WSMsgType.text
     MSG_TYPE_ERROR = aiohttp.WSMsgType.error
