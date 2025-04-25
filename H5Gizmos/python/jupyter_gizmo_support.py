@@ -26,6 +26,7 @@ async function ping_test(url) {
     };
 };
 async function ping_proxies(url) {
+    //console.log("in ping proxies", url);
     var pingable = await ping_test(url);
     if (!pingable.success) {
         var proxy_url = url.replace("/GizmoLink/connect/", "/proxy/");
@@ -41,7 +42,7 @@ async function ping_proxies(url) {
 """
 
 suffix_at_js = """
-function suffix_at(from_url, suffix, at_strings) {
+function suffix_at(from_url, suffix, fallback_url, at_strings) {
     // for example
     //  var url = "http://localhost:8888/notebooks/repos/H5Gizmos/doc/Demo.ipynb";
     //  var at_strings = ["notebooks/", "lab/"];
@@ -58,6 +59,10 @@ function suffix_at(from_url, suffix, at_strings) {
         }
     }
     if (prefix.length >= from_url.length) {
+        // use the fallback if provided
+        if (fallback_url) {
+            return fallback_url;
+        }
         throw new Error("no split found: " + from_url);
     }
     //console.log("chose prefix", prefix, prefix.length, from_url.length);
@@ -74,7 +79,7 @@ pong_test_js = """
 async function startsWithPong(url) {
     try {
         // Fetch the content from the given URL
-        console.log("fetching", url);
+        //console.log("starts with pong fetching", url);
         const response = await fetch(url);
 
         // Check if the fetch was successful (HTTP status 200)
@@ -151,25 +156,36 @@ def open_in_tab_html(suffix):
 
 link_template = """
 var ident = "{ident}";
+//console.log("link_template", ident);
 var suffix = "{suffix}";
+//console.log("link_template suffix", suffix);
 var fallback_url = "{fallback_url}";
+//console.log("link_template fallback_url", fallback_url);
 var div = document.getElementById(ident);
-var url = suffix_at(window.location.href, suffix);
-link = document.createElement("a");
+//console.log("link_template div", div);
+var url = suffix_at(window.location.href, suffix, fallback_url);
+//console.log("link_template url", url);
+var link = document.createElement("a");
 //link.href = url;
-var ping_url = replaceGizmo(url, "/ping?now=" + Date.now());
 async function ping() {{
-    //var pong = await startsWithPong(ping_url);
-    var pingable = await ping_proxies(url);
-    if (pingable.success) {{
-        console.log("pong received", pingable.ping_url);
-        link.href = pingable.url;
-        link.target = "_blank";
-        link.innerHTML = pingable.url;
+    // if the url wasn't recognized, just use the fallback.
+    var href_url = fallback_url;
+    var set_href = true;
+    if (url != fallback_url) {{
+        console.log("pinging proxies", url);
+        var pingable = await ping_proxies(url);
+        href_url = pingable.url;
+        set_href = pingable.success;
+    }}
+    if (set_href) {{
+        //console.log("setting href", href_url);
+        link.href = href_url;
+        link.target = "_blank"; // open in new tab
+        link.innerHTML = href_url;
         div.appendChild(link);
     }} else {{
-        console.log("no pong", ping_url);
-        ping_fallback(div, pingable.ping_url, fallback_url);
+        console.log("no pong", url);
+        ping_fallback(div, url, fallback_url);
     }}
 }};
 ping();
@@ -220,19 +236,27 @@ iframe_structure = """
     window.addEventListener("message", event_listener);
     var this_frame = document.getElementById(identifier);
     var info_div = document.getElementById(identifier + "-div");
-    var url = suffix_at(window.location.href, suffix);
+    var url = suffix_at(window.location.href, suffix, fallback_url);
     //var ping_url = replaceGizmo(url, "/ping?now=" + Date.now());
     async function ping() {{
         //info_div.innerHTML = "pinging " + ping_url;
         //var pong = await startsWithPong(ping_url);
-        var pingable = await ping_proxies(url);
-        if (pingable.success) {{
-            console.log("pong received", pingable.ping_url);
+        var src_url = fallback_url;
+        var set_src = true;
+        // if the url wasn't recognized, just use the fallback.
+        if (url != fallback_url) {{
+            //console.log("pinging proxies", url);
+            var pingable = await ping_proxies(url);
+            src_url = pingable.url;
+            set_src = pingable.success;
+        }}
+        if (set_src) {{
+            console.log("setting frame src", src_url);
             info_div.remove();
-            this_frame.src = pingable.url;
+            this_frame.src = src_url;
         }} else {{
-            console.log("no pong", pingable.ping_url);
-            frame_fallback(info_div, this_frame, pingable.ping_url, fallback_url);
+            console.log("no pong", url);
+            frame_fallback(info_div, this_frame, url, fallback_url);
             //ping_fallback(info_div, ping_url, fallback_url);
             //this_frame.remove();
         }}
