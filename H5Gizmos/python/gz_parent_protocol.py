@@ -1460,6 +1460,7 @@ class GZPipeline:
             #pr ("pipeline sending waiting chunk", repr(chunk))
             await self._send(chunk)
         await self.listen_to_websocket(ws)
+        return ws
 
     async def sender(self, data):
         #p("   sender", repr(data[:20]))

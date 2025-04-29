@@ -285,6 +285,14 @@ def choose_port(verbose=True):
 # use the old version:
 #choose_port = choose_port0
 
+def force_print(*args, **kwargs):
+    """
+    Print to stdout even if it is redirected.
+    """
+    #print("FORCE PRINT", args, kwargs)
+    with contextlib.redirect_stdout(sys.__stdout__):
+        print(*args, **kwargs)
+
 
 def get_file_bytes(path):
     # xxxx what about binary files?
@@ -722,24 +730,29 @@ class GizmoManager:
         f2h = self.filename_to_http_handler
         if method == WS:
             assert filename is None, "WS request should have no filename " + repr(info.splitpath)
-            return await self.handle_ws(info, request, interface)
+            result = await self.handle_ws(info, request, interface)
+            #pr("... handle_ws returning", result)
         else:
             assert filename is not None, "HTTP requests should have a filename " + repr(info.splitpath)
             handler = f2h.get(filename)
             assert handler is not None, "No handler for filename " + repr(info.splitpath)
             #pr("... mgr delegating to handler", handler)
             if method == GET:
-                return await handler.handle_get(info, request, interface=interface)
+                result = await handler.handle_get(info, request, interface=interface)
             elif method == POST:
-                return await handler.handle_post(info, request, interface=interface)
+                result = await handler.handle_post(info, request, interface=interface)
             else:
                 raise AssertionError("unknown http method: " + repr(method))
+        #pr("... mgr handled", request.path, "method", method)
+        #pr("... returning", result)
+        return result
 
     async def handle_ws(self, info, request, interface=STDInterface):
         handler = self.web_socket_handler
-        #pr ("delegating web socket handling to", handler)
+        #pr("delegating web socket handling to", handler)
         assert handler is not None, "No web socket handler for id " + repr(self.identifier)
-        await handler.handle(info, request, interface)
+        result = await handler.handle(info, request, interface)
+        return result
 
     def jupyter_url_suffix(
             self,
@@ -992,7 +1005,8 @@ class GizmoPipelineSocketHandler:
 
     async def handle(self, info, request, interface):
         #print("**** pipeline handler started")
-        await self.pipeline.handle_websocket_request(request)
+        #pr("pipeline", self.pipeline)
+        return await self.pipeline.handle_websocket_request(request)
 
 class ValidateServerConnection:
 
