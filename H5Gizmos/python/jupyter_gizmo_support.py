@@ -117,7 +117,8 @@ async function ping_fallback(info_div, ping_url, fallback_url) {
 };
 async function frame_fallback(info_div, frame, ping_url, fallback_url) {
     info_div.innerHTML = "ping failed: " + ping_url + `.<br>
-    This might indicate that the Jupyter server does not have H5Gizmos installed
+    If this happens when you (re)run the notebook
+    it might indicate that the Jupyter server does not have H5Gizmos installed
     but the IPython kernel has H5Gizmos installed.<br>
     Attempting to open the fallback URL: ${fallback_url}.<br>
     The fallback URL may not work if the Jupyter server is running behind a firewall.`;
