@@ -432,10 +432,10 @@ class GzServer:
         await validator.future
         if not validator.succeeded:
             # fall back to localhost
-            #print("server", server, "is not reachable -- using localhost.")
+            #pr("server", server, "is not reachable -- using localhost.")
             self.server = "localhost"
         else:
-            #print("server", server, "reachable")
+            #pr("server", server, "reachable")
             pass
         return validator.succeeded
 
@@ -556,7 +556,7 @@ class GzServer:
             port = self.port
             if port is None:
                 port = choose_port()
-                #print("chose port", port)
+                #pr("chose port", port)
                 self.port = port
             else:
                 #raise ValueError("didn't choose port???")
@@ -695,7 +695,7 @@ class GizmoManager:
         return self.add_http_handler(filename, handler)
 
     def serve_folder(self, full_path, url_file_name, interface=STDInterface):
-        #print("\n making folder getter for", full_path)
+        #pr("\n making folder getter for", full_path)
         handler = FolderGetter(full_path, url_file_name, self, interface=interface)
         return self.add_http_handler(url_file_name, handler)
 
@@ -839,7 +839,7 @@ class GizmoManager:
             if server_info is not None:
                 base_url = server_info["base_url"]
                 relative_url = "%s%s/connect/%s/%s" % (base_url, gizmo_link, port, path)
-                #print ("relative_url is", relative_url)
+                #pr ("relative_url is", relative_url)
                 if verbose:
                     print("using relative url", relative_url)
                 return relative_url
@@ -865,7 +865,12 @@ class FileGetter:
 
     "Serve the contents of a file from the file system."
 
-    def __init__(self, fs_path, filename, mgr, content_type=None, interface=STDInterface):
+    chunksize = DEFAULT_PACKET_SIZE
+    get_sanity_limit = None  # no limit
+
+    def __init__(self, fs_path, filename, mgr, content_type=None, interface=STDInterface, chunksize=None):
+        if chunksize is not None:
+            self.chunksize = chunksize
         assert self.path_ok(fs_path, interface), "Bad path: " + repr(fs_path)
         self.fs_path = fs_path
         self.get_url_info(filename, mgr, content_type)
@@ -906,9 +911,39 @@ class FileGetter:
         path = self.fs_path
         apath = info.additional_path
         assert not apath, "File is not a folder: " + repr((path, apath))
+        #pr ("file get path", path)
         assert interface.file_exists(path)
         bytes = interface.get_file_bytes(path)
-        return interface.respond(body=bytes, content_type=self.content_type)
+        #return interface.respond(body=bytes, content_type=self.content_type)
+        return await self.send_bytes(bytes, request, interface=interface, content_type=self.content_type)
+    
+    async def send_bytes(self, bytes, request, interface, content_type):
+        # based on https://gist.github.com/buxx/d0a749b6673a18a90b47464b79254124
+        ln = len(bytes)
+        chunksize = self.chunksize
+        if ln < chunksize:
+            #pr("sending small file", ln, "bytes")
+            return interface.respond(body=bytes, content_type=content_type)
+        elif (self.get_sanity_limit is None) or (ln < self.get_sanity_limit):
+            #pr("sending large file", ln, "bytes")
+            response = web.StreamResponse(
+                status=200,
+                reason='OK',
+                headers={'Content-Type': content_type},
+            )
+            await response.prepare(request)
+            cursor = 0
+            while cursor < ln:
+                #pr("cursor", cursor)
+                end = cursor + chunksize
+                chunk = bytes[cursor : end]
+                await response.write(chunk)
+                cursor = end
+            await response.write_eof()
+            return response
+        else:
+            raise ValueError("transfers larger than %s not yet supported" %
+                self.get_sanity_limit)
 
     async def handle_post(self, info, request, interface=STDInterface):
         return await self.handle_get(info, request, interface=interface)
@@ -920,7 +955,7 @@ class FolderGetter(FileGetter):
     """
 
     def path_ok(self, fs_path, interface):
-        #print ("\n checking folder", fs_path, "\n")
+        #pr ("\n checking folder", fs_path, "\n")
         return interface.folder_exists(fs_path)
 
     async def handle_get(self, info, request, interface=STDInterface):
@@ -929,10 +964,12 @@ class FolderGetter(FileGetter):
         assert apath, "Folder requires sub-path: " + repr((path))
         all = [path] + list(apath)
         full_os_path = "/".join(all)
+        #pr("folder get full_os_path", full_os_path)
         assert interface.file_exists(full_os_path), "No such file found: " + repr(full_os_path)
         bytes = interface.get_file_bytes(full_os_path)
         (content_type, encoding) = mimetypes.guess_type(full_os_path)
-        return interface.respond(body=bytes, content_type=content_type)
+        #return interface.respond(body=bytes, content_type=content_type)
+        return await self.send_bytes(bytes, request, interface=interface, content_type=content_type)
 
     def validate_relative_path(self, remainder, interface=STDInterface):
         path = self.fs_path
@@ -965,36 +1002,13 @@ class BytesGetter(FileGetter):
             self.content_type = content_type
         self.bytes = bytes(byte_content)
 
-    #get_sanity_limit = 1590000000
-    get_sanity_limit = None  # no limit
-
     async def handle_get(self, info, request, interface=STDInterface):
         # based on https://gist.github.com/buxx/d0a749b6673a18a90b47464b79254124
         bytes = self.bytes
         ln = len(bytes)
         chunksize = self.chunksize
         content_type = self.content_type
-        if ln < chunksize:
-            return interface.respond(body=bytes, content_type=content_type)
-        elif (self.get_sanity_limit is None) or (ln < self.get_sanity_limit):
-            response = web.StreamResponse(
-                status=200,
-                reason='OK',
-                headers={'Content-Type': content_type},
-            )
-            await response.prepare(request)
-            cursor = 0
-            while cursor < ln:
-                #print("cursor", cursor)
-                end = cursor + chunksize
-                chunk = bytes[cursor : end]
-                await response.write(chunk)
-                cursor = end
-            await response.write_eof()
-            return response
-        else:
-            raise ValueError("transfers larger than %s not yet supported" %
-                self.get_sanity_limit)
+        return await self.send_bytes(bytes, request, interface=interface, content_type=content_type)
 
 class GizmoPipelineSocketHandler:
 
@@ -1004,7 +1018,7 @@ class GizmoPipelineSocketHandler:
         self.ws = None
 
     async def handle(self, info, request, interface):
-        #print("**** pipeline handler started")
+        #pr("**** pipeline handler started")
         #pr("pipeline", self.pipeline)
         return await self.pipeline.handle_websocket_request(request)
 
