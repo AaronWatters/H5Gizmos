@@ -206,8 +206,8 @@ class Component:
             if gizmo is None:
                 gizmo = self.gizmo
             assert gizmo is not None, "No gizmo attached -- cannot add listener."
-            do(gizmo.window.console.log("adding unload callback"))
-            do(gizmo.window.addEventListener("unload", callback), to_depth=1)
+            do(gizmo.window.console.log("adding pagehide callback"))
+            do(gizmo.window.addEventListener("pagehide", callback), to_depth=1)
         self.call_when_started(action)
 
     _icon_path = "../static/icon.png"
