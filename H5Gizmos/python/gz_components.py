@@ -90,6 +90,12 @@ class Component:
         context = self.get_module_context()
         context.map_node_modules(node_modules_folder, url_prefix, module_file_path)
 
+    def print(self, *args, **kwargs):
+        """
+        Print to standard output.
+        """
+        return gizmo_server.force_print(*args, **kwargs)
+
     def load_module(self, module_identifier, alias=None):
         if self.gizmo:
             raise RuntimeError("Modules must be loaded before gizmo initialization. "
