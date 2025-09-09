@@ -247,6 +247,7 @@ class jQueryComponent(gz_components.Component):
         before the gizmo started.
         Return the added component.
         """
+        #print("jQuery add", component)
         if not isinstance(component, jQueryComponent):
             ty = type(component)
             assert type(component) is str, "Only strings or jQuery components may be added: " + repr(ty)
@@ -257,7 +258,9 @@ class jQueryComponent(gz_components.Component):
         def action():
             gizmo = self.gizmo
             assert gizmo is not None, "add() only to a component of a started gizmo."
-            do(component.get_element(gizmo).appendTo(self.container))
+            target = self.container or self.element
+            #print("adding component", component, "to", self, "target", target)
+            do(component.get_element(gizmo).appendTo(target))
         self.call_when_started(action)
         return component
 
