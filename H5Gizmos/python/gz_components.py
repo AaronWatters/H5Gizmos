@@ -176,6 +176,9 @@ class Component:
         return f
     
     def call_when_started(self, action):
+        # shortcut -- if gizmo is attached, then it's started.
+        if self.gizmo is not None:
+            return action()
         #(self, "call when started", action)
         # make sure future is created...
         started = self.component_started_future()
