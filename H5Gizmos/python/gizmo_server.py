@@ -39,6 +39,23 @@ USE_SERVER_ADDRESS_VAR = "GIZMO_USE_SERVER_ADDRESS"
 # set/unset to enable/disable auto detection of prefix
 DETECT_PREFIX_ENV_VAR = True
 
+class CounterCtx:
+    "dummy context manager that counts entries"
+    def __init__(self):
+        self.count = 0
+
+    def __enter__(self):
+        self.count += 1
+        return self.count  # you can capture this as "as n"
+
+    def __exit__(self, exc_type, exc, tb):
+        # no cleanup needed
+        return False  # don't suppress exceptions
+
+dummy_context_handler = CounterCtx()
+
+DISABLE_CONTEXT_HANDLER = True
+
 def get_or_create_event_loop0():
     try:
         # xxxx this is deprecated in python 3.10 -- need a workaround that gets an unstarted event loop(?) or something
@@ -193,8 +210,8 @@ def print_reachable_server_name(verbose=True):
     import io, sys
     # work around some sort of anomaly with printing for now, ignore stdout...
     stdout = sys.stdout
-    if not verbose:
-        sys.stdout = io.StringIO()
+    #if not verbose:
+    #    sys.stdout = io.StringIO()
     local_ip = get_local_ip()
     random_port = choose_port1()
     if verbose:
@@ -214,7 +231,7 @@ def print_reachable_server_name(verbose=True):
         print(name)
         if verbose:
             print("print task exitting with name", repr(name))
-        sys.stdout = sys.stderr = io.StringIO()
+        #sys.stdout = sys.stderr = io.StringIO()
         sys.exit()
     loop = get_or_create_event_loop()
     H5Gizmos.schedule_task(print_task())
@@ -452,15 +469,21 @@ class GzServer:
     def capture_stdout(self):
         import contextlib
         import io
+        if DISABLE_CONTEXT_HANDLER:
+            return
         self.captured_stdout = io.StringIO()
         self.out = contextlib.redirect_stdout(self.captured_stdout)
 
     def my_stdout(self):
+        if DISABLE_CONTEXT_HANDLER:
+            return dummy_context_handler
         if self.out:
             return self.out
         return contextlib.redirect_stdout(sys.stdout)
 
     def my_stderr(self):
+        if DISABLE_CONTEXT_HANDLER:
+            return dummy_context_handler
         if self.err:
             return self.err
         return contextlib.redirect_stderr(sys.stderr)
@@ -563,7 +586,8 @@ class GzServer:
                 pass
             #self.my_print ("runner using port", port)
             if "print" not in args:
-                args["print"] = self.my_print
+                #args["print"] = self.my_print
+                args["print"] = None
             # Start the validator (which delays immediately to permit server start)
             #H5Gizmos.schedule_task(self.check_server_name_is_reachable())
             if log:
