@@ -2,7 +2,7 @@
 from .gizmo_server import FileGetter, STDInterface, get_gizmo
 from H5Gizmos import new_identifier
 from .gz_jQuery import Html
-from .gz_parent_protocol import schedule_task
+from .gz_parent_protocol import schedule_task, new_identifier
 import traceback
 import html
 
@@ -91,7 +91,11 @@ def add_launcher(to_gizmo, component_maker, filename=None, parent_component=None
 
 class Launcher:
 
-    def __init__(self, component, component_maker, filename=None):
+    def __init__(self, component, component_maker, filename=None, duplicate_ok=False):
+        if duplicate_ok:
+            self.tabName = "_blank"
+        else:
+            self.tabName = new_identifier("LauncherTab")
         self.to_gizmo = component.gizmo
         self.component_maker = component_maker
         (self.relative_url, self.full_url, self.filename) = add_launcher(
@@ -105,7 +109,8 @@ class Launcher:
             url = self.full_url
         if text is None:
             text = url
-        return '<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>' % (url, text)
+        target = self.tabName
+        return '<a href="%s" target="%s">%s</a>' % (url, target, text)
 
     def anchor(self, text=None, relative=True):
         link = self.anchor_string(text, relative)

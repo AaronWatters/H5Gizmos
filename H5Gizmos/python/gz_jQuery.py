@@ -400,9 +400,9 @@ class jQueryComponent(gz_components.Component):
                 do(self.element.removeClass(class_string))
         return self
 
-    def launcher_link(self, text, component_maker):
+    def launcher_link(self, text, component_maker, duplicate_ok=False):
         from . import gizmo_launch_url
-        launcher = gizmo_launch_url.Launcher(self, component_maker)
+        launcher = gizmo_launch_url.Launcher(self, component_maker, duplicate_ok=duplicate_ok)
         return launcher.anchor(text)
 
     def resize(self, width=None, height=None):
