@@ -111,6 +111,7 @@ class jQueryComponent(gz_components.Component):
         self.cached_dom_element_reference = None
         self.class_list = []
         self.event_name_to_callback_and_depth = {}
+        self.tabs = {}  # name to page launcher
 
     def __repr__(self):
         def truncate(x):
@@ -401,9 +402,30 @@ class jQueryComponent(gz_components.Component):
         return self
 
     def launcher_link(self, text, component_maker, duplicate_ok=False):
+        "Create a link that will launch a new unnamed gizmo page."
         from . import gizmo_launch_url
         launcher = gizmo_launch_url.Launcher(self, component_maker, duplicate_ok=duplicate_ok)
         return launcher.anchor(text)
+    
+    def name_tab(self, name, component_maker):
+        """Create a named tab that will launch a new gzmo page or switch to it if already launched.
+        The component_maker must be a function of no arguments that returns a jQueryComponent,
+        The component returned should be "fresh" each time the function is called.
+        """
+        from . import gizmo_launch_url
+        assert name not in self.tabs, "Tab already exists: " + repr(name)
+        # check that component_maker is callable
+        ty = type(component_maker)
+        assert callable(component_maker), "component_maker must be callable: " + repr(ty)
+        launcher = gizmo_launch_url.Launcher(self, component_maker, duplicate_ok=False, name=name)
+        self.tabs[name] = launcher
+        return launcher
+
+    def switch_to_tab_action(self, name):
+        "Return an action that will switch to the named tab, launching it if necessary."
+        assert name in self.tabs, "No such tab: " + repr(name)
+        launcher = self.tabs[name]
+        return launcher.open_or_switch_action()
 
     def resize(self, width=None, height=None):
         """

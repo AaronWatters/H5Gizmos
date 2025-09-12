@@ -91,16 +91,44 @@ def add_launcher(to_gizmo, component_maker, filename=None, parent_component=None
 
 class Launcher:
 
-    def __init__(self, component, component_maker, filename=None, duplicate_ok=False):
+    def __init__(self, component, component_maker, filename=None, duplicate_ok=False, name="LauncherTab"):
+        self.name = name
         if duplicate_ok:
             self.tabName = "_blank"
         else:
-            self.tabName = new_identifier("LauncherTab")
+            self.tabName = new_identifier(name)
         self.to_gizmo = component.gizmo
+        self.component = component
         self.component_maker = component_maker
         (self.relative_url, self.full_url, self.filename) = add_launcher(
             self.to_gizmo, component_maker, filename)
         self.active = True
+
+    def open_or_switch_action0(self):
+        component = self.component
+        window = component.window
+        relative_url = self.relative_url
+        tabName = self.tabName
+        def action(*ignored):
+            js = window.open(relative_url, tabName)
+            tab = component.cache(tabName, js)
+            print("tab", tab)
+            focus_js = "debugger;try { w && w.focus(); } catch {}"
+            component.js_init(focus_js, w=tab)
+        return action
+    
+    def open_or_switch_action(self):
+        component = self.component
+        #window = component.window
+        relative_url = self.relative_url
+        tabName = self.tabName
+        def action(*ignored):
+            js = """
+            debugger;
+                var w = window.open(r, t);
+                try { w && w.focus(); } catch {}"""
+            component.js_init(js, r=relative_url, t=tabName)
+        return action
 
     def anchor_string(self, text=None, relative=True):
         assert self.active, "Launcher link is not active: " + repr(self.filename)
