@@ -213,7 +213,7 @@ var H5GIZMO_INTERFACE;
         tr.pipeline_websocket(tr.get_ws_url(window.location));
 
         [SET_REFERENCES_HERE]
-        console.log("gizmo interface initialized");
+        console.log("gizmo interface initialized at ", (new Date()).toLocaleTimeString());
     };
     // https://stackoverflow.com/questions/33785313/javascript-loading-multiple-functions-onload
     window.addEventListener("load", initialize_gizmo, true);
