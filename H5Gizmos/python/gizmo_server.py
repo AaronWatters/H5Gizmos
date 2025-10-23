@@ -623,7 +623,9 @@ class GzServer:
 
     async def handle_ping(self, request):
         message = b'pong ' + self.secret
-        http_response = web.Response(body=message, content_type="text/plain")
+        headers = {}
+        headers['Access-Control-Allow-Origin'] = '*'
+        http_response = web.Response(body=message, content_type="text/plain", headers=headers)
         return http_response
 
     async def handle(self, request, method="GET", interface=None):
