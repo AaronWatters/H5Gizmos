@@ -18,6 +18,7 @@ def inject_html_in_jupyter(html_string):
 ping_test_js = """
 async function ping_test(url) {
     var ping_url = replaceGizmo(url, "/ping?now=" + Date.now());
+    console.log("ping_test", ping_url, "from", url);
     var pong = await startsWithPong(ping_url);
     return {
         url: url,
@@ -102,11 +103,19 @@ async function startsWithPong(url) {
 // Function to replace occurrences of "/gizmo" and anything after it with replacement text
 function replaceGizmo(inputString, replacement) {
     // Use a regular expression to match "/gizmo" and anything following it
-    return inputString.replace(/\/gizmo.*$/, replacement);
+    return inputString.replace(/\\/gizmo.*$/, replacement);
 };
 
 // fallback on ping failure
 async function ping_fallback(info_div, ping_url, fallback_url) {
+    var pingable = await ping_test(fallback_url);
+    if (pingable.success) {
+        console.log("ping fallback success", fallback_url);
+        info_div.innerHTML = `
+        Link: <a href="${fallback_url}" target="_blank">${fallback_url}</a>.<br>
+        `;
+        return;
+    }
     info_div.innerHTML = "ping failed: " + ping_url + `.<br>
     If this happens when you (re)run the notebook
     it might indicate that the Jupyter server does not have H5Gizmos installed
@@ -116,6 +125,13 @@ async function ping_fallback(info_div, ping_url, fallback_url) {
     The fallback URL may not work if the Jupyter server is running behind a firewall.`;
 };
 async function frame_fallback(info_div, frame, ping_url, fallback_url) {
+    // if you can ping the fallback, go there
+    var pingable = await ping_test(fallback_url);
+    if (pingable.success) {
+        console.log("ping fallback success", fallback_url);
+        frame.src = fallback_url;
+        return;
+    };
     info_div.innerHTML = "ping failed: " + ping_url + `.<br>
     If this happens when you (re)run the notebook
     it might indicate that the Jupyter server does not have H5Gizmos installed
@@ -157,11 +173,11 @@ def open_in_tab_html(suffix):
 
 link_template = """
 var ident = "{ident}";
-//console.log("link_template", ident);
+console.log("link_template", ident);
 var suffix = "{suffix}";
-//console.log("link_template suffix", suffix);
+console.log("link_template suffix", suffix);
 var fallback_url = "{fallback_url}";
-//console.log("link_template fallback_url", fallback_url);
+console.log("link_template fallback_url", fallback_url);
 var div = document.getElementById(ident);
 //console.log("link_template div", div);
 var url = suffix_at(window.location.href, suffix, fallback_url);
@@ -204,6 +220,7 @@ def show_link(suffix, fallback_url):
     return anchor + anonymous_wrap_js_script(ping_test_js + suffix_at_js + pong_test_js + code)
 
 def display_link(suffix, fallback_url):
+    #("display_link", suffix, fallback_url)
     show = show_link(suffix, fallback_url)
     inject_html_in_jupyter(show)
 
@@ -282,6 +299,7 @@ function event_listener(e) {
 """
 
 def open_in_iframe_html(suffix, fallback_url, margin=10, min_height=20):
+    #("open_in_iframe_html", suffix, fallback_url)
     identifier = new_identifier("gizmo_iframe")
     iframe_html = iframe_structure.format(
         suffix = suffix,
@@ -305,4 +323,4 @@ def display_iframe(suffix, fallback_url):
 if __name__ == "__main__":
     #print(open_in_tab_html("/test/suffix"))
     #print (show_link("/test/suffix"))
-    print (open_in_iframe_html("test/suffix"))
+    print (open_in_iframe_html("test/suffix", "http://fallback.url/test"))
