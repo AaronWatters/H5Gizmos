@@ -1470,7 +1470,7 @@ class jQueryImage(jQueryComponent):
         self.call_when_started(action)
         self.img_height = self.img_width = self.array = None
 
-    def change_array(self, array, url=True, scale=False, epsilon=1e-12):
+    def change_array(self, array, url=False, scale=False, epsilon=1e-12):
         from PIL import Image
         self.scaled = scale
         if self.element is None:
