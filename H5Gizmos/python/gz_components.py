@@ -527,6 +527,9 @@ class Component:
         When done with the array in JS, break the array reference with component.uncache(cache_name).
         """
         # XXX add multiple get implementation for VERY large arrays.
+        # xxx In the notebook context the size can be truncated -- default to fallback.
+        if gizmo_server.isnotebook():
+            return self.cache(cache_name, array.ravel())
         gizmo = self.gizmo
         if dtype is None:
             dtype = array.dtype
