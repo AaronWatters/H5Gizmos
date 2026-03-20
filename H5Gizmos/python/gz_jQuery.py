@@ -856,7 +856,7 @@ class Slider(SliderSuper):
         do(element.slider(options), to_depth=1)
 
     def set_value(self, value):
-        "Set the value of the slider, triggering any attached callback."
+        "Set the value of the slider, NOT triggering any attached callback."
         self.value = value
         def action():
             do(self.element.slider("value", value))
