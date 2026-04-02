@@ -477,15 +477,23 @@ class Component:
             pass
         return H5Gizmos.new_identifier(prefix)
 
-    def cache(self, name, js_reference):
+    def cache(self, name, js_reference, soft=False):
         """
         Evaluate the js_reference and store the value in the object cache on the JS side.
         Return a reference to the cached value.  Name of None will generate an arbitrary fresh name.
+        A soft cache will automatically uncache the value when the returned reference is garbage collected on the Python side.  
+        A hard cache will persist until explicitly uncached.
         """
         if name is None:
             name = self.get_cache_name()
         do(self.js_object_cache._set(name, js_reference))
-        return self.js_object_cache[name]
+        result = self.js_object_cache[name]
+        if soft:
+            def uncache():
+                #print("uncaching", name)
+                self.uncache(name)
+            result.on_del(uncache)
+        return result
 
     def uncache(self, name):
         "Break the reference to the cached object."

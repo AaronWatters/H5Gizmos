@@ -781,6 +781,27 @@ class GizmoLink:
     _owner_gizmo = None  # set this in subclass
     _get_oid = None
     _get_future = None
+    _uncache_callback = None
+
+    def on_del(self, callback):
+        """
+        Set a callback to be called when this link is finalized, to uncache the referent on the JS side.
+        The callback should take no arguments and should trigger the uncache of the referent on the JS side.
+        """
+        if (self._uncache_callback is not None) and (self._uncache_callback != callback):
+            raise RuntimeError("Uncache callback already set to a different value.")
+        self._uncache_callback = callback
+
+    # on finalization call the uncache callback if it exists, to clean up the JS cache.
+    def __del__(self):
+        uncache = self._uncache_callback
+        if uncache is not None:
+            try:
+                #print("GizmoLink finalizing, calling uncache callback.")
+                uncache()
+            except Exception as e:
+                #print("Exception during GizmoLink finalization: " + repr(e))
+                pass
 
     def _register_get_future(self, timeout=None):
         if self._get_oid is not None:
