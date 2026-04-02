@@ -493,7 +493,7 @@ class ScriptWatcher:
         return url.decode("utf-8") 
 
     def html(self):
-        from cgi import escape
+        from html import escape
         L = ["<pre>\n"]
         def add(t):
             r = repr(t)
@@ -514,7 +514,8 @@ class ScriptWatcher:
         env = os.environ.copy()
         env[PREFIX_ENV_VAR] = self.server_prefix
         verbose = self.verbose
-        if self.verbose:
+        #verbose = True # debugging
+        if verbose:
             print("starting command", repr(self.command))
             print("prefix is", repr(env[PREFIX_ENV_VAR]))
         self.process = await asyncio.create_subprocess_shell(
