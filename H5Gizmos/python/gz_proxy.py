@@ -76,6 +76,13 @@ class Proxy:
         cache_reference = self.from_component.cache(None, result_js_reference, soft=True)
         constructor = constructor or Proxy
         return constructor(cache_reference, from_component=self.from_component)
+    
+    def _immediate_call(self, method_name, args=[]):
+        "Call the given method on the JavaScript reference that this proxy represents immediately, without caching the result, and return the result."
+        args = the_arguments(args)
+        call_ref = self.js_reference[method_name](*args)
+        gz.do(call_ref)
+        return self # for possible chaining.
 
 
 # Example usage:
@@ -88,8 +95,9 @@ class MiniDOMElementProxy(Proxy):
 
     def appendChild(self, reference):
         # if the reference is a proxy, get the JavaScript reference that it represents
-        child_js_reference = the_reference(reference)
-        gz.do(self.js_reference.appendChild(child_js_reference))
+        #child_js_reference = the_reference(reference)
+        #gz.do(self.js_reference.appendChild(child_js_reference))
+        return self._immediate_call("appendChild", args=[reference])
 
 
 class miniURLProxy(Proxy):
