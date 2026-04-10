@@ -54,6 +54,11 @@ class Component:
         # start the task which waits for gizmo initialization
         self.component_started_future()
 
+    def window_proxy(self):
+        "Get a proxy for the window of this component."
+        from .gz_proxy import get_window_proxy
+        return get_window_proxy(self)
+
     def make_template(self, from_html):
         self.template = gz_resources.Template(from_html)
         return self.template

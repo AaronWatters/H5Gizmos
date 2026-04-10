@@ -32,7 +32,7 @@ class JSDescriptor:
 
     def __get__(self, instance, owner):
         """Return a proxy for the JavaScript attribute."""
-        constructor = self.constructor or Proxy
+        constructor = self.constructor or PermissiveProxy
         source_js_reference = instance._js_reference
         js_reference = source_js_reference[self.name]
         # Don't cache the reference so method "this" binding works on the JS side.
@@ -127,6 +127,14 @@ class PermissiveProxy(Proxy):
         # don't cache the reference so method "this" binding works on the JS side. (???)
         #cache_reference = self._from_component.cache(None, call_ref, soft=True)
         return PermissiveProxy(call_ref, from_component=self._from_component)
+    
+# abbreviation:
+PP = PermissiveProxy
+JSD = JSDescriptor
+
+def get_window_proxy(component):
+    "Get a permissive proxy for the window of the given component."
+    return PermissiveProxy(component.window, from_component=component)
 
 # Example usage:
 
@@ -161,7 +169,7 @@ class MiniDocumentProxy(Proxy):
         return self._cache_result_proxy("createElement", constructor=MiniDOMElementProxy, args=[tag_name])
 
 
-def get_window_proxy(component):
+def get_mini_window_proxy(component):
     "Get a proxy for the window of the given component."
     return MiniWindowProxy(component.window, from_component=component)
 

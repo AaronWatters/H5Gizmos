@@ -53,3 +53,12 @@ from .python.gz_tools import (
 )
 
 from .python.gizmo_link import setup_gizmo_link
+
+from .python.gz_proxy import (
+    Proxy,
+    JSDescriptor,
+    get_window_proxy,
+    PermissiveProxy,
+    PP,
+    JSD,
+)
