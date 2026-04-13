@@ -47,6 +47,8 @@ class JSDescriptor:
 
 class Proxy:
 
+    new_constructor = None
+
     def __init__(self, js_reference, from_component):
         self._js_reference = js_reference
         self._from_component = from_component
@@ -85,6 +87,15 @@ class Proxy:
         call_ref = self._js_reference[method_name](*args)
         gz.do(call_ref)
         return self # for possible chaining.
+    
+    def new(self, *args, constructor=None):
+        "call the self as a constructor on the JavaScript side with the given arguments, and return a proxy for the result."
+        args = the_arguments(args)
+        call_ref = self._from_component.new(self._js_reference, *args)
+        cache_reference = self._from_component.cache(None, call_ref, soft=True)
+        constructor = constructor or self.new_constructor or PermissiveProxy
+        return constructor(cache_reference, from_component=self._from_component)
+    
     
 class PermissiveProxy(Proxy):
 
@@ -125,13 +136,6 @@ class PermissiveProxy(Proxy):
         args = the_arguments(args)
         call_ref = self._js_reference(*args)
         # execute the call and cache the result on the JS side.
-        cache_reference = self._from_component.cache(None, call_ref, soft=True)
-        return PermissiveProxy(cache_reference, from_component=self._from_component)
-    
-    def new(self, *args):
-        "call the self as a constructor on the JavaScript side with the given arguments, and return a proxy for the result."
-        args = the_arguments(args)
-        call_ref = self._from_component.new(self._js_reference, *args)
         cache_reference = self._from_component.cache(None, call_ref, soft=True)
         return PermissiveProxy(cache_reference, from_component=self._from_component)
     
