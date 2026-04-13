@@ -91,8 +91,9 @@ class Proxy:
     def new(self, *args, constructor=None):
         "call the self as a constructor on the JavaScript side with the given arguments, and return a proxy for the result."
         args = the_arguments(args)
-        call_ref = self._from_component.new(self._js_reference, *args)
-        cache_reference = self._from_component.cache(None, call_ref, soft=True)
+        from_component = self._from_component
+        call_ref = from_component.new(self._js_reference, *args)
+        cache_reference = from_component.cache(None, call_ref, soft=True)
         constructor = constructor or self.new_constructor or PermissiveProxy
         return constructor(cache_reference, from_component=self._from_component)
     
