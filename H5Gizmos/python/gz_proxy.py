@@ -102,7 +102,7 @@ class PermissiveProxy(Proxy):
     
     def __setattr__(self, name, value):
         "Set the JavaScript attribute with the given name to the given value."
-        if name in ["_js_reference", "_from_component"]:
+        if name in ["_js_reference", "_from_component", 'new']:
             super().__setattr__(name, value)
         else:
             final_value = the_reference(value)
@@ -125,6 +125,13 @@ class PermissiveProxy(Proxy):
         args = the_arguments(args)
         call_ref = self._js_reference(*args)
         # execute the call and cache the result on the JS side.
+        cache_reference = self._from_component.cache(None, call_ref, soft=True)
+        return PermissiveProxy(cache_reference, from_component=self._from_component)
+    
+    def new(self, *args):
+        "call the self as a constructor on the JavaScript side with the given arguments, and return a proxy for the result."
+        args = the_arguments(args)
+        call_ref = self._from_component.new(self._js_reference, *args)
         cache_reference = self._from_component.cache(None, call_ref, soft=True)
         return PermissiveProxy(cache_reference, from_component=self._from_component)
     
