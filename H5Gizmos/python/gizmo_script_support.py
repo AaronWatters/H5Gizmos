@@ -3,7 +3,6 @@ Utilities for launching Gizmo scripts using entry point annotations.
 """
 
 from operator import mod
-#import pkg_resources
 
 ENTRY_POINT_GROUP_NAME = "H5Gizmos.scripts"
 
@@ -12,12 +11,27 @@ GIZMO_SCRIPT = "gizmo_script"
 module_to_name_to_entry = {}
 
 def find_entry_points():
-    import pkg_resources
+    from importlib import metadata as importlib_metadata
+
+    def _entry_points_for_group(group_name):
+        try:
+            # Python 3.10+ supports selecting by group directly.
+            return importlib_metadata.entry_points(group=group_name)
+        except TypeError:
+            # Python 3.8/3.9 return a mapping-like structure.
+            return importlib_metadata.entry_points().get(group_name, [])
+
+    def _entry_module(entry):
+        module = getattr(entry, "module", None)
+        if module is None:
+            value = getattr(entry, "value", "")
+            module = value.split(":", 1)[0]
+        return module.split(".")[0]
+
     if len(module_to_name_to_entry) == 0:
-        for entry in pkg_resources.iter_entry_points(group=ENTRY_POINT_GROUP_NAME):
+        for entry in _entry_points_for_group(ENTRY_POINT_GROUP_NAME):
             entry_name = entry.name
-            entry_full_module = entry.module_name
-            entry_module = entry_full_module.split(".")[0]
+            entry_module = _entry_module(entry)
             name_to_entry = module_to_name_to_entry.get(entry_module, {})
             name_to_entry[entry_name] = entry
             module_to_name_to_entry[entry_module] = name_to_entry
