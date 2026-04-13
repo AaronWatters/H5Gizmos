@@ -124,9 +124,9 @@ class PermissiveProxy(Proxy):
     def __call__(self, *args):
         args = the_arguments(args)
         call_ref = self._js_reference(*args)
-        # don't cache the reference so method "this" binding works on the JS side. (???)
-        #cache_reference = self._from_component.cache(None, call_ref, soft=True)
-        return PermissiveProxy(call_ref, from_component=self._from_component)
+        # execute the call and cache the result on the JS side.
+        cache_reference = self._from_component.cache(None, call_ref, soft=True)
+        return PermissiveProxy(cache_reference, from_component=self._from_component)
     
 # abbreviation:
 PP = PermissiveProxy
