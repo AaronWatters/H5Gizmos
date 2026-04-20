@@ -787,6 +787,34 @@ class jQueryInput(jQueryComponent):
         self.value = value
         return value
 
+class jQueryTextArea(jQueryInput):
+
+    def __init__(
+        self, 
+        initial_value="", 
+        rows=None, 
+        cols=None, 
+        change_callback=None,
+        title=None,
+        readonly=False,
+        ):
+        sizetext = ""   
+        if rows is not None:
+            sizetext += ' rows="%s"' % rows
+        if cols is not None:
+            sizetext += ' cols="%s"' % cols
+        if readonly:
+            sizetext += " readonly"
+        q_initial_value = html_escape(initial_value, break_spaces=False)
+        tag = '<textarea %s>%s</textarea>' % (sizetext, q_initial_value)
+        super().__init__(
+            initial_value=initial_value,
+            input_type="text",
+            change_callback=change_callback,
+            title=title,
+            readonly=readonly,
+        )
+        self.tag = tag
 
 class SliderSuper(jQueryComponent):
 
@@ -1660,6 +1688,7 @@ def html_escape(txt, break_spaces=False):
 Button = jQueryButton
 Image = jQueryImage
 Input = jQueryInput
+TextArea = jQueryTextArea
 LabelledInput = LabelledjQueryInput
 Label = jQueryLabel
 Stack = FlexColumn

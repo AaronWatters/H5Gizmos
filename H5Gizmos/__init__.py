@@ -35,6 +35,7 @@ from .python.gz_jQuery import (
     Button,
     Image,
     Input,
+    TextArea,
     Text,
     DropDownSelect,
     RadioButtons,
