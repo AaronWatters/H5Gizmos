@@ -58,6 +58,13 @@ class Component:
         "Get a proxy for the window of this component."
         from .gz_proxy import get_window_proxy
         return get_window_proxy(self)
+    
+    async def sync_js(self, timeout=30):
+        "Synchronize with the JS event loop -- wait for pending JS events to complete."
+        gizmo = self.gizmo
+        if gizmo is None:
+            raise RuntimeError("Cannot sync with JS before gizmo is attached.")
+        return await get(gizmo.H5GIZMO_INTERFACE.reconnect_id, timeout=timeout)
 
     def make_template(self, from_html):
         self.template = gz_resources.Template(from_html)
