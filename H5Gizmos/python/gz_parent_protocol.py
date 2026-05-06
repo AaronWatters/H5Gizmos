@@ -19,6 +19,7 @@ from .hex_codec import bytearray_to_hex
 from aiohttp import web
 from . import gz_resources
 from . import gizmo_server
+from .gz_proxy import Proxy
 
 # Max size of packet sent over web socket.
 PACKET_LIMIT = 500000 # half a meg
@@ -1097,6 +1098,9 @@ class ValueConverter:
     """
 
     def __init__(self, value, owner):
+        # if the value is a proxy convert the js value
+        if isinstance(value, Proxy):
+            value = value._js_reference
         self.value = value
         self.is_literal = True
         ty = type(value)
