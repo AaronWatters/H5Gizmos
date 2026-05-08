@@ -1175,6 +1175,27 @@ var H5Gizmos = {};
         gizmo_translator.post_binary_data(end_point, pixels, json_metadata);
     };
 
+    // operators analogous to python's magic methods -- 
+    // not used by the protocol, but could be used by components.
+    // xxx some operators omitted for now.
+    H5Gizmos.add = function(a, b) { return a + b; };
+    H5Gizmos.multiply = function(a, b) { return a * b; };
+    H5Gizmos.equals = function(a, b) { return a == b; };
+    H5Gizmos.less_than = function(a, b) { return a < b; };
+    H5Gizmos.less_than_or_equal = function(a, b) { return a <= b; };
+    H5Gizmos.not_equals = function(a, b) { return a != b; };
+    H5Gizmos.subtract = function(a, b) { return a - b; };
+    H5Gizmos.negate = function(a) { return -a; };
+    H5Gizmos.positive = function(a) { return +a; };
+    H5Gizmos.invert = function(a) { return ~a; };
+    H5Gizmos.logical_not = function(a) { return !a; };
+    H5Gizmos.divide = function(a, b) { return a / b; };
+    H5Gizmos.bit_and = function(a, b) { return a & b; };
+    H5Gizmos.bit_or = function(a, b) { return a | b; };
+    H5Gizmos.bit_xor = function(a, b) { return a ^ b; };
+    H5Gizmos.modulo = function(a, b) { return a % b; };
+    H5Gizmos.boolean = function(a) { return !!a; };
+
     H5Gizmos.is_loaded = true;
 
 }) ();  // execute initialization in protected scope.
