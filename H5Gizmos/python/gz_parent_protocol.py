@@ -31,6 +31,8 @@ DEFAULT_TIMEOUT = 10
 def do(link_action, to_depth=None):
     "Run the link in javascript and discard the result."
     # command style convenience convenience accessor
+    if isinstance(link_action, Proxy):
+        link_action = link_action._js_reference
     return link_action._exec(to_depth=to_depth)
 
 async def js_await(promise_reference, get_result=True, to_depth=None):
@@ -54,11 +56,15 @@ async def wait_for(promise_reference, to_depth=None):
 async def get(link_action, to_depth=None, timeout=DEFAULT_TIMEOUT):
     "Run the link in javascript and return the result."
     # command style convenience convenience accessor
+    if isinstance(link_action, Proxy):
+        link_action = link_action._js_reference
     return await link_action._get(to_depth=to_depth, timeout=timeout)
 
 def name(id, link_action, to_depth=None):
     "Run the link in javascript and cache the result using the id."
     # command style convenience convenience accessor
+    if isinstance(link_action, Proxy):
+        link_action = link_action._js_reference
     return link_action._connect(id, to_depth=to_depth)
 
 def unname(cache_ref):
