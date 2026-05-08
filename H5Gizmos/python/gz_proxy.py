@@ -140,6 +140,128 @@ class PermissiveProxy(Proxy):
         cache_reference = self._from_component.cache(None, call_ref, soft=True)
         return PermissiveProxy(cache_reference, from_component=self._from_component)
     
+    '''def __truediv__(self, other):
+        try:
+            print("dividing", self, "by", other)
+            arg = the_reference(other)
+            ref = self._js_reference
+            H5Gizmos = self._from_component.gizmo.H5Gizmos
+            result_ref = H5Gizmos.divide(ref, arg)
+            cache_reference = self._from_component.cache(None, result_ref, soft=True)
+            return PermissiveProxy(cache_reference, from_component=self._from_component)
+        except Exception as e:
+            print("Error in __div__", e)
+            raise'''
+    
+    def _op(self, other, op_name):
+        "Perform the given operation with the other operand on the JavaScript side, and return a proxy for the result."
+        ref = self._js_reference
+        H5Gizmos = self._from_component.gizmo.H5Gizmos
+        method = getattr(H5Gizmos, op_name)
+        args = [ref]
+        if other is not None:
+            arg = the_reference(other)
+            args.append(arg)
+        result_ref = method(*args)
+        # evaluate once now and store in cache.
+        cache_reference = self._from_component.cache(None, result_ref, soft=True)
+        return PermissiveProxy(cache_reference, from_component=self._from_component)
+    
+    def _rop(self, other, op_name):
+        "Perform the given reverse operation with the other operand on the JavaScript side, and return a proxy for the result."
+        ref = self._js_reference
+        H5Gizmos = self._from_component.gizmo.H5Gizmos
+        method = getattr(H5Gizmos, op_name)
+        args = []
+        if other is not None:
+            arg = the_reference(other)
+            args.append(arg)
+        args.append(ref)
+        result_ref = method(*args)
+        cache_reference = self._from_component.cache(None, result_ref, soft=True)
+        return PermissiveProxy(cache_reference, from_component=self._from_component)
+    
+    # xxx some operators omitted for now...
+    
+    def __truediv__(self, other):
+        return self._op(other, "divide")
+    
+    def __rtruediv__(self, other):
+        return self._rop(other, "divide")
+    
+    def __mul__(self, other):
+        return self._op(other, "multiply")  
+    
+    def __rmul__(self, other):
+        return self._rop(other, "multiply")
+    
+    def __add__(self, other):
+        return self._op(other, "add")
+    
+    def __radd__(self, other):
+        return self._rop(other, "add")
+    
+    def __sub__(self, other):
+        return self._op(other, "subtract")
+    
+    def __rsub__(self, other):
+        return self._rop(other, "subtract")
+    
+    def __mod__(self, other):
+        return self._op(other, "modulo")
+    
+    def __rmod__(self, other):
+        return self._rop(other, "modulo")
+    
+    def __neg__(self):
+        return self._op(None, "negate")
+    
+    def __pos__(self):
+        return self._op(None, "positive")
+    
+    def __or__(self, value):
+        return self._op(value, "bit_or")
+    
+    def __ror__(self, value):
+        return self._rop(value, "bit_or")
+    
+    def __and__(self, value):
+        return self._op(value, "bit_and")
+    
+    def __rand__(self, value):
+        return self._rop(value, "bit_and")
+    
+    def __xor__(self, value):
+        return self._op(value, "bit_xor")
+    
+    def __rxor__(self, value):
+        return self._rop(value, "bit_xor")
+    
+    def __invert__(self):
+        return self._op(None, "invert")
+    
+    def __bool__(self):
+        return self._op(None, "boolean")
+    
+    def __eq__(self, other):
+        return self._op(other, "equals")
+    
+    def __ne__(self, other):
+        return self._op(other, "not_equals")
+    
+    def __lt__(self, other):
+        return self._op(other, "less_than")
+    
+    def __le__(self, other):
+        return self._op(other, "less_than_or_equal")
+    
+    # greater comparisons can be implemented in terms of the less than operations:
+    def __gt__(self, other):
+        return self._rop(other, "less_than")
+    
+    def __ge__(self, other):
+        return self._rop(other, "less_than_or_equal")
+    
 # abbreviation:
 PP = PermissiveProxy
 JSD = JSDescriptor
