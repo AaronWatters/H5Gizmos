@@ -24,6 +24,9 @@ from .gz_proxy import Proxy
 # Max size of packet sent over web socket.
 PACKET_LIMIT = 500000 # half a meg
 
+# Try a larger packet limit for unexpected ack issue.
+PACKET_LIMIT = 1000000
+
 # Default wait time for JS future values.
 DEFAULT_TIMEOUT = 10
 
