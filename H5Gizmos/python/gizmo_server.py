@@ -105,6 +105,12 @@ def serve(coroutine, verbose=False, delay=0.5):
             await task
         except Exception:
             print("---- Exception in main gizmo task.  Terminating.")
+            # restore stdout and stderr so we can see the traceback
+            sys.stdout = sys.__stdout__
+            sys.stderr = sys.__stderr__
+            # print traceback to stderr
+            import traceback
+            traceback.print_exc()
             sys.exit(1)
 
     H5Gizmos.schedule_task(deferred_task())
