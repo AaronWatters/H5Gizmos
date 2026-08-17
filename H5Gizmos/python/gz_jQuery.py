@@ -183,11 +183,17 @@ class jQueryComponent(gz_components.Component):
             self.dom_element_reference(gizmo)
         return self.element
     
-    def proxy(self):
+    def jQuery_proxy(self):
         "Return a proxy for this component's jQuery element for use in JavaScript calls."
         from .gz_proxy import PermissiveProxy
         element = self.get_element()
         return PermissiveProxy(element, from_component=self)
+
+    def proxy(self):
+        "Return a proxy to the DOM element wrapped by the JQuery element for self."
+        from .gz_proxy import PermissiveProxy
+        element = self.get_element()
+        return PermissiveProxy(element[0], from_component=self)
 
     def detach(self):
         """
