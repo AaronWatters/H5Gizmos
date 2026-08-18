@@ -1,25 +1,25 @@
-<img src="https://github.com/AaronWatters/H5Gizmos/raw/main/doc/lorenz.gif" width="50%">
+<img src="https://github.com/AaronWatters/H5Gizmos/raw/main/todo.gif" width="50%">
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/AaronWatters/H5Gizmos/HEAD)
 
 # H5Gizmos
 
-A computer dashboard is a graphical user interface that provides real-time feedback about the state of a system or process. It is typically used in scientific and engineering applications where it is important to monitor the status of complex systems.
+H5Gizmos presents an interactive graphical user interface for a Python program
+in a web browser using HTML5 and Javascript.  The interactive interface 
 
-The computer dashboard was first developed at Lawrence Livermore National Laboratory in the early 1990s. It was designed to provide immediate feedback about the performance of supercomputers, which were then used for simulations of nuclear weapons tests. The original dashboard included several hundred individual gauges that displayed various aspects of system performance.
+- Can use arbitrary Javascript libraries.
+- Can run as a stand alone application.
+- Can run embedded in a Jupyter notebook in the notebook page.
+- Can launch from a Jupyter notebook in a separate frame or window.
+- Can display on the same computer as the Python program.
+- Can display on a host that is remote from the host running the Python program.
 
-Today, computer dashboards are used in a wide variety of applications, from monitoring web servers and databases to tracking the progress of scientific experiments. They have also been adapted for use in business settings, where they can provide information about sales figures, customer satisfaction levels, and other key metrics.
-
-H5Gizmos provides
-tools for building dashboards and other
-interactive graphical interfaces for applications using browser technology and HTML5. 
-
-A Gizmo "child" interface displays in a standard web browser such as Chrome and communicates
-with a "parent" Python process using a web socket and other HTTP protocols.  H5Gizmos can load and
-use arbitrary Javascript resources to provide sophisticated interactive graphical interfaces.
+The "parent" Python program launches a "child" Javascript context in a web browser.
+The parent and child processes communicate using a web socket connection and HTTP protocols.
 
 The animation below shows a gizmo script displaying a matplotlib plot running from the VS code editor.
 The gizmo user interface appears as a new HTML frame in the browser instance below the editor.
+Parameters for the plot are controlled by HTML form elements interactively.
 
 <img src="https://github.com/AaronWatters/H5Gizmos/raw/main/doc/curves.gif" width="50%">
 
