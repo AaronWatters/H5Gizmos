@@ -18,6 +18,31 @@ import math
 MISC_JAVASCRIPT = """
 // miscellaneous javascript to support jQuery
 
+// Listen for an event and return specified attributes of the event object as a dictionary.
+// Here dotted member paths can be for example ["target.value", "keyCode"] to get the value of the target and the keyCode of the event.
+function listen_for_event(on_element, event_name, callback, dotted_member_paths) {
+    on_element.addEventListener(event_name, function(event) {
+        var result = {};
+        if (dotted_member_paths === null || dotted_member_paths === undefined) {
+            result = event; // return the whole event object if no specific paths are provided
+        } else {    
+            for (var i = 0; i < dotted_member_paths.length; i++) {
+                var path = dotted_member_paths[i];
+                var value = event;
+                var parts = path.split('.');
+                for (var j = 0; j < parts.length; j++) {
+                    value = value[parts[j]];
+                    if (value === undefined) {
+                        break;
+                    }
+                }
+                result[path] = value;
+            }
+        }
+        callback(result);
+    });
+};
+
 function add_websocket_error_callback() {
     var tr = H5GIZMO_INTERFACE;
     tr.ws_error_message_callback = function(message) {
@@ -142,6 +167,26 @@ class jQueryComponent(gz_components.Component):
             do(self.element.on("click", on_click), to_depth=self.on_click_depth)
         else:
             do(self.element.off("click"))
+        return self
+
+    def listen_for_event(self, event_name, callback, dotted_member_paths=None):
+        """
+        Listen for an event of this type on this component dom element.
+        The callback will be called with a dictionary of the specified dotted member paths
+        of the event object.  If dotted_member_paths is None, the whole event object will be returned.
+
+        Example dotted_member_paths:
+        dotted_member_paths=["type", "target.id", "clientX", "clientY"]
+
+        Callback called with dictionary like:
+        {'type': 'click', 'target.id': 'click-me', 'clientX': 54, 'clientY': 44}
+        """
+        def action():
+            window = self.window
+            add_listener = window.listen_for_event
+            dom_element = self.element[0]
+            do(add_listener(dom_element, event_name, callback, dotted_member_paths))
+        self.call_when_started(action)
         return self
 
     def add_dependencies(self, gizmo):
