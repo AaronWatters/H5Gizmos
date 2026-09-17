@@ -20,8 +20,11 @@ MISC_JAVASCRIPT = """
 
 // Listen for an event and return specified attributes of the event object as a dictionary.
 // Here dotted member paths can be for example ["target.value", "keyCode"] to get the value of the target and the keyCode of the event.
-function listen_for_event(on_element, event_name, callback, dotted_member_paths) {
+function listen_for_event(on_element, event_name, callback, dotted_member_paths, log_event) {
     on_element.addEventListener(event_name, function(event) {
+        if (log_event) {
+            console.log("Event received:", event);
+        }
         var result = {};
         if (dotted_member_paths === null || dotted_member_paths === undefined) {
             result = event; // return the whole event object if no specific paths are provided
@@ -38,6 +41,9 @@ function listen_for_event(on_element, event_name, callback, dotted_member_paths)
                 }
                 result[path] = value;
             }
+        }
+        if (log_event) {
+            console.log("result:", result);
         }
         callback(result);
     });
@@ -169,7 +175,7 @@ class jQueryComponent(gz_components.Component):
             do(self.element.off("click"))
         return self
 
-    def listen_for_event(self, event_name, callback, dotted_member_paths=None):
+    def listen_for_event(self, event_name, callback, dotted_member_paths=None, log_event=False):
         """
         Listen for an event of this type on this component dom element.
         The callback will be called with a dictionary of the specified dotted member paths
@@ -185,7 +191,7 @@ class jQueryComponent(gz_components.Component):
             window = self.window
             add_listener = window.listen_for_event
             dom_element = self.element[0]
-            do(add_listener(dom_element, event_name, callback, dotted_member_paths))
+            do(add_listener(dom_element, event_name, callback, dotted_member_paths, log_event))
         self.call_when_started(action)
         return self
 
