@@ -795,3 +795,31 @@ class TestPipelineWSErr(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(P.last_unicode_sent, None)
         self.assertEqual(P.last_json_received, None)
         self.assertNotEqual(P.ws_error_message, None)
+
+    async def test_ack_arrives_before_send_returns(self):
+        import asyncio
+        strings_sent = []
+
+        async def awaitable_sender(string):
+            strings_sent.append(string)
+            if string.startswith(CONTINUE_UNICODE):
+                # Simulate a fast browser acknowledging while
+                # the sender coroutine is still running.
+                await packer.on_unicode_message(Gizmo.ACKNOWLEDGE)
+
+        packer = GizmoPacker(
+            process_packet=lambda packet: None,
+            awaitable_sender=awaitable_sender,
+            packet_limit=4,
+            auto_flush=False,
+        )
+        packer.send_unicode("123abc")
+
+        # Bound the wait so the buggy implementation cannot hang the suite.
+        await asyncio.wait_for(packer.awaitable_flush(), timeout=1.0)
+
+        self.assertEqual(strings_sent, [
+            CONTINUE_UNICODE + "123a",
+            FINISHED_UNICODE + "bc",
+        ])
+        self.assertIsNone(packer.ack_future)

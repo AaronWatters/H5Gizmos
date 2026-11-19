@@ -1306,6 +1306,10 @@ class GizmoPacker:
                 end = start + limit
                 chunk = string[start : end]
                 final = (end >= ln)
+                ack = None
+                if not final:
+                    # prepare to receive acknowledgement for this chunk, avoid race conditions
+                    ack = self.receive_acknowledgement()
                 if final:
                     data = FINISHED_UNICODE + chunk
                 else:
@@ -1315,7 +1319,8 @@ class GizmoPacker:
                 # wait for ok if not finished.
                 if not final:
                     #p("waiting for ack", start, limit)
-                    await self.receive_acknowledgement()
+                    #await self.receive_acknowledgement()
+                    await ack
                     #p("got ack", start, limit)
 
     def send_unicode(self, string):
