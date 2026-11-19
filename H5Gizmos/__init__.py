@@ -63,3 +63,5 @@ from .python.gz_proxy import (
     PP,
     JSD,
 )
+
+from .python.gz_zoomer import Zoomer
