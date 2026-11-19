@@ -15,6 +15,7 @@ import socket
 #import traceback
 import sys
 import time
+import warnings
 
 # Max size for posts -- really big
 DEFAULT_MAX_SIZE = 1000 * 1000 * 1000 * 1000 * 100
@@ -56,6 +57,32 @@ dummy_context_handler = CounterCtx()
 
 DISABLE_CONTEXT_HANDLER = True
 
+def get_or_create_event_loop():
+    # Jupyter, async tests, or another running asyncio application.
+    try:
+        return asyncio.get_running_loop()
+    except RuntimeError:
+        pass
+
+    # Preserve an explicitly installed, not-yet-running loop.
+    try:
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="There is no current event loop",
+                category=DeprecationWarning,
+            )
+            loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop is None or loop.is_closed():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    return loop
+
+'''
 def get_or_create_event_loop0():
     try:
         # xxxx this is deprecated in python 3.10 -- need a workaround that gets an unstarted event loop(?) or something
@@ -74,6 +101,7 @@ def get_or_create_event_loop1():
         return loop
     
 get_or_create_event_loop = get_or_create_event_loop0
+'''
 
 '''
 def run(main_awaitable, server=None, run_forever=True, exit_on_disconnect=None, log_messages=False, verbose=True):
