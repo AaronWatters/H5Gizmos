@@ -2,6 +2,7 @@
     class Zoomer {
         static DEFAULT_ZOOM_RATE = 1.2;
         static DEFAULT_REQUEST_THROTTLE_MS = 300;
+        static DEFAULT_ON_CHANGE_THROTTLE_MS = 200;
 
         static isPositiveInteger(value) {
             return Number.isInteger(value) && value > 0;
@@ -30,13 +31,19 @@
 
         static parseConfig(configMaybe) {
             if (configMaybe === undefined) {
-                return { requestThrottleMs: Zoomer.DEFAULT_REQUEST_THROTTLE_MS };
+                return {
+                    requestThrottleMs: Zoomer.DEFAULT_REQUEST_THROTTLE_MS,
+                    onChangeThrottleMs: Zoomer.DEFAULT_ON_CHANGE_THROTTLE_MS
+                };
             }
             if (typeof configMaybe === "number") {
                 if (!Number.isFinite(configMaybe) || configMaybe < 0) {
                     throw new Error("requestThrottleMs must be a finite number >= 0.");
                 }
-                return { requestThrottleMs: configMaybe };
+                return {
+                    requestThrottleMs: configMaybe,
+                    onChangeThrottleMs: Zoomer.DEFAULT_ON_CHANGE_THROTTLE_MS
+                };
             }
             if (!configMaybe || typeof configMaybe !== "object") {
                 throw new Error("options must be a number or object.");
@@ -45,7 +52,11 @@
             if (!Number.isFinite(requestThrottleMs) || requestThrottleMs < 0) {
                 throw new Error("options.requestThrottleMs must be a finite number >= 0.");
             }
-            return { requestThrottleMs };
+            const onChangeThrottleMs = configMaybe.onChangeThrottleMs ?? Zoomer.DEFAULT_ON_CHANGE_THROTTLE_MS;
+            if (!Number.isFinite(onChangeThrottleMs) || onChangeThrottleMs < 0) {
+                throw new Error("options.onChangeThrottleMs must be a finite number >= 0.");
+            }
+            return { requestThrottleMs, onChangeThrottleMs };
         }
 
         static clamp(value, minValue, maxValue) {
@@ -120,7 +131,6 @@
 
         static validateDimensions(width, height, namePrefix) {
             if (!Zoomer.isPositiveInteger(width) || !Zoomer.isPositiveInteger(height)) {
-                console.error(`${namePrefix} width:`, width, "height:", height);
                 throw new Error(`${namePrefix} width and height must be positive integers.`);
             }
         }
@@ -161,12 +171,6 @@
         }
 
         constructor(domElement, updateRequestCallback, width, height, arrayShape, options) {
-            // debug: list the arguments
-            //console.log("domElement:", domElement);
-            //console.log("updateRequestCallback:", updateRequestCallback);
-            //console.log("width:", width, "height:", height);
-            //console.log("arrayShape:", arrayShape);
-            //console.log("options:", options);
             if (!domElement || typeof domElement.appendChild !== "function") {
                 throw new Error("dom_element must be a valid DOM element.");
             }
@@ -179,6 +183,7 @@
 
             this.zoomRate = Zoomer.DEFAULT_ZOOM_RATE;
             this.requestThrottleMs = config.requestThrottleMs;
+            this.onChangeThrottleMs = config.onChangeThrottleMs;
             this.domElement = domElement;
             this.updateRequestCallback = updateRequestCallback;
             this.canvasWidth = width;
@@ -204,6 +209,10 @@
             this.cachedPanel = null;
             this.previewFrameHandle = null;
             this.clickCallback = null;
+            this.changeCallback = null;
+            this.lastChangeNotifiedAt = -Infinity;
+            this.changeNotificationPending = false;
+            this.changeTimeoutHandle = null;
 
             this.pointerCaptureId = null;
             this.dragState = null;
@@ -402,9 +411,43 @@
                 return false;
             }
             this.desiredViewport = integerViewport;
+            this._scheduleChangeNotification();
             this._schedulePreviewRedraw();
             this._scheduleThrottledRequest();
             return true;
+        }
+
+        _emitChangeNotification() {
+            if (this.destroyed || typeof this.changeCallback !== "function") {
+                return;
+            }
+            this.lastChangeNotifiedAt = this._now();
+            this.changeNotificationPending = false;
+            this.changeCallback(this.dump_parameters());
+        }
+
+        _scheduleChangeNotification() {
+            if (this.destroyed || typeof this.changeCallback !== "function") {
+                return;
+            }
+            const now = this._now();
+            const elapsed = now - this.lastChangeNotifiedAt;
+            if (elapsed >= this.onChangeThrottleMs) {
+                this._emitChangeNotification();
+                return;
+            }
+            this.changeNotificationPending = true;
+            if (this.changeTimeoutHandle !== null) {
+                return;
+            }
+            const wait = this.onChangeThrottleMs - elapsed;
+            this.changeTimeoutHandle = setTimeout(() => {
+                this.changeTimeoutHandle = null;
+                if (this.destroyed || !this.changeNotificationPending) {
+                    return;
+                }
+                this._emitChangeNotification();
+            }, wait);
         }
 
         _eventPointInCanvas(event) {
@@ -645,6 +688,61 @@
             this._issueRequestForDesiredViewport();
         }
 
+        dump_parameters() {
+            const size = this._getViewportSize(this.desiredViewport);
+            const centerRow = (this.desiredViewport.rowStart + this.desiredViewport.rowStop) / 2;
+            const centerCol = (this.desiredViewport.colStart + this.desiredViewport.colStop) / 2;
+            return {
+                shape: [this.arrayRows, this.arrayCols],
+                center: [centerRow / this.arrayRows, centerCol / this.arrayCols],
+                span: [size.rows / this.arrayRows, size.cols / this.arrayCols]
+            };
+        }
+
+        load_parameters(json) {
+            if (this.destroyed) {
+                return false;
+            }
+            const parsed = typeof json === "string" ? JSON.parse(json) : json;
+            if (!parsed || typeof parsed !== "object") {
+                throw new Error("load_parameters(json) requires a JSON object or JSON string.");
+            }
+            const { center, span } = parsed;
+            if (!Array.isArray(center) || center.length !== 2 || !center.every((v) => Number.isFinite(v))) {
+                throw new Error("load_parameters(json) requires center: [row_center, col_center].");
+            }
+            if (!Array.isArray(span) || span.length !== 2 || !span.every((v) => Number.isFinite(v) && v > 0)) {
+                throw new Error("load_parameters(json) requires span: [row_span, col_span] with positive numbers.");
+            }
+
+            const nextRows = Zoomer.clamp(Math.round(span[0] * this.arrayRows), 1, this.arrayRows);
+            const nextCols = Zoomer.clamp(Math.round(span[1] * this.arrayCols), 1, this.arrayCols);
+            const centerRow = Zoomer.clamp(center[0] * this.arrayRows, 0, this.arrayRows);
+            const centerCol = Zoomer.clamp(center[1] * this.arrayCols, 0, this.arrayCols);
+            const rowStart = Zoomer.clamp(Math.round(centerRow - (nextRows / 2)), 0, this.arrayRows - nextRows);
+            const colStart = Zoomer.clamp(Math.round(centerCol - (nextCols / 2)), 0, this.arrayCols - nextCols);
+            return this._setDesiredViewportIfChanged({
+                rowStart,
+                rowStop: rowStart + nextRows,
+                colStart,
+                colStop: colStart + nextCols
+            });
+        }
+
+        on_change(callback) {
+            if (callback !== null && typeof callback !== "function") {
+                throw new Error("on_change(callback) requires a function or null.");
+            }
+            this.changeCallback = callback;
+            if (callback === null) {
+                this.changeNotificationPending = false;
+                if (this.changeTimeoutHandle !== null) {
+                    clearTimeout(this.changeTimeoutHandle);
+                    this.changeTimeoutHandle = null;
+                }
+            }
+        }
+
         on_click_callback(cb) {
             if (cb !== null && typeof cb !== "function") {
                 throw new Error("on_click_callback(cb) requires a function or null.");
@@ -670,6 +768,10 @@
             if (this.throttleTimeoutHandle !== null) {
                 clearTimeout(this.throttleTimeoutHandle);
                 this.throttleTimeoutHandle = null;
+            }
+            if (this.changeTimeoutHandle !== null) {
+                clearTimeout(this.changeTimeoutHandle);
+                this.changeTimeoutHandle = null;
             }
             if (this.pointerCaptureId !== null && this.canvas.hasPointerCapture(this.pointerCaptureId)) {
                 this.canvas.releasePointerCapture(this.pointerCaptureId);

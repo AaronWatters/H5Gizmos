@@ -37,6 +37,11 @@ class Zoomer(gz_jQuery.jQueryComponent):
         self.call_when_started(self._on_started)
         return result
 
+    def on_change(self, callback):
+        def register():
+            self.zoomer_proxy.on_change(callback)
+        self.call_when_started(register)
+
     def on_click_callback(self, row, col):
         callback = self._on_click_callback
         data = self.img_data[row, col]
