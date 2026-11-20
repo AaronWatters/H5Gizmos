@@ -68,6 +68,7 @@ class Zoomer(gz_jQuery.jQueryComponent):
         return result
 
     def _on_started(self):
+        self.empty()
         container_proxy = self.proxy()
         window_proxy = self.window_proxy()
         view_data = self.view_data
