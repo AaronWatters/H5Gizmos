@@ -38,10 +38,24 @@ class Zoomer(gz_jQuery.jQueryComponent):
         return result
 
     def on_change(self, callback):
+        """
+        Register a callback for zoom and pan changes.
+
+        The callback receives the JSON state from the browser.
+        Signature: callback(json_state).
+        """
         def register():
             self.zoomer_proxy.on_change(callback)
         self.call_when_started(register)
 
+    def load_parameters(self, json_spec):
+        def load():
+            self.zoomer_proxy.load_parameters(json_spec)
+        self.call_when_started(load)
+
+    async def dump_parameters(self):
+        return await self.zoomer_proxy.dump_parameters()._get_value()
+    
     def on_click_callback(self, row, col):
         callback = self._on_click_callback
         data = self.img_data[row, col]
