@@ -342,6 +342,7 @@ class Gizmo:
         print (txt, flush=True)
         await self._has_started()
 
+    ''' 
     async def _show_start_link0(self, proxy=False):
         # xxxx old version -- delete.
         from .gizmo_link import LINK_PREFIX
@@ -361,6 +362,7 @@ class Gizmo:
             txt = "%s\n%s\n%s" % (OKGREEN, msg, ENDC)
             print (txt, flush=True)
         await self._has_started()
+        '''
 
     def _display_html_in_ipython(self, msg):
         from IPython.display import HTML, display
